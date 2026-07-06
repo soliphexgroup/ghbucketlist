@@ -8,25 +8,25 @@ const verticals = [
     title: "Places to Stay",
     description: "Hotels, apartments, and vacation homes across Accra.",
     href: "/stay",
-    image: "https://picsum.photos/seed/ghbucketlist-vertical-stay/800/600",
+    image: "https://images.unsplash.com/photo-1702255489644-392758161f1f?auto=format&fit=crop&w=800&h=600&q=80",
   },
   {
     title: "Car Rental",
     description: "Self-drive and chauffeur car rentals for any occasion.",
     href: "/cars",
-    image: "https://picsum.photos/seed/ghbucketlist-vertical-cars/800/600",
+    image: "https://images.unsplash.com/photo-1630716059383-b3203bdda1e4?auto=format&fit=crop&w=800&h=600&q=80",
   },
   {
     title: "Curated Trips",
     description: "Personalized, fully-planned travel across three service tiers.",
     href: "/trips",
-    image: "https://picsum.photos/seed/ghbucketlist-vertical-trips/800/600",
+    image: "https://images.unsplash.com/photo-1494783367193-149034c05e8f?auto=format&fit=crop&w=800&h=600&q=80",
   },
   {
     title: "Handyman Services",
     description: "Trusted carpenters, electricians, plumbers, and more, on demand.",
     href: "/services",
-    image: "https://picsum.photos/seed/ghbucketlist-vertical-services/800/600",
+    image: "https://images.unsplash.com/photo-1567507145544-da3fe1b4f8f9?auto=format&fit=crop&w=800&h=600&q=80",
   },
 ];
 
