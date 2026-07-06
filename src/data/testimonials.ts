@@ -1,0 +1,58 @@
+import type { Testimonial } from "@/lib/types";
+
+export const testimonials: Testimonial[] = [
+  {
+    id: "test-1",
+    name: "Naa Adjeley",
+    location: "Accra, Ghana",
+    avatarUrl: "https://i.pravatar.cc/100?img=5",
+    rating: 5,
+    text: "GH Bucketlist turned my boring weekends into something I actually look forward to. I've met some of my closest friends through activities I found here.",
+    activityName: "Handbuilding + Wheel Throwing Pottery Class",
+  },
+  {
+    id: "test-2",
+    name: "Kofi Tetteh",
+    location: "Tema, Ghana",
+    avatarUrl: "https://i.pravatar.cc/100?img=8",
+    rating: 5,
+    text: "The street food crawl was the best GHS 280 I've spent all year. Booking was instant and the QR ticket made check-in painless.",
+    activityName: "Accra Street Food Crawl",
+  },
+  {
+    id: "test-3",
+    name: "Abigail Mensah",
+    location: "East Legon, Accra",
+    avatarUrl: "https://i.pravatar.cc/100?img=25",
+    rating: 5,
+    text: "I gifted a friend a yoga session and she ended up booking three more. Such a lovely way to introduce people to new things.",
+    activityName: "Sunrise Beach Yoga Flow",
+  },
+  {
+    id: "test-4",
+    name: "Michael Boateng",
+    location: "Airport Residential, Accra",
+    avatarUrl: "https://i.pravatar.cc/100?img=33",
+    rating: 4,
+    text: "As someone new to the city, this was the fastest way to find my people and my favourite spots.",
+    activityName: "Aburi Hills Sunrise Hike",
+  },
+  {
+    id: "test-5",
+    name: "Priscilla Asante",
+    location: "Cantonments, Accra",
+    avatarUrl: "https://i.pravatar.cc/100?img=36",
+    rating: 5,
+    text: "I've started hosting my own workshops too — the payout process is so smooth and the support team actually responds.",
+    activityName: "Jamestown Gallery & Mural Walk",
+  },
+  {
+    id: "test-6",
+    name: "Selorm Klu",
+    location: "Osu, Accra",
+    avatarUrl: "https://i.pravatar.cc/100?img=11",
+    rating: 5,
+    text: "The GP points actually add up fast. Redeemed mine for a discount on the natural wine tasting.",
+    activityName: "Natural Wine Tasting Evening",
+  },
+];

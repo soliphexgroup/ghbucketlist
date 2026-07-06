@@ -1,0 +1,51 @@
+import { serviceProviders } from "@/data/service-providers";
+import type { ServiceCategory, ServiceProvider } from "@/lib/service-types";
+
+export type ServiceFilters = {
+  q?: string;
+  categories?: ServiceCategory[];
+  verifiedOnly?: boolean;
+  minRating?: number;
+  sort?: "recommended" | "rate-asc" | "rate-desc" | "rating" | "response-time";
+};
+
+export function listProviders(filters: ServiceFilters = {}): ServiceProvider[] {
+  let results = [...serviceProviders];
+
+  if (filters.q) {
+    const q = filters.q.toLowerCase();
+    results = results.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.serviceArea.toLowerCase().includes(q) ||
+        p.skills.some((s) => s.toLowerCase().includes(q))
+    );
+  }
+
+  if (filters.categories && filters.categories.length > 0) {
+    results = results.filter((p) => filters.categories!.includes(p.category));
+  }
+
+  if (filters.verifiedOnly) {
+    results = results.filter((p) => p.verified);
+  }
+
+  if (filters.minRating) {
+    results = results.filter((p) => p.rating >= filters.minRating!);
+  }
+
+  const sort = filters.sort ?? "recommended";
+  results.sort((a, b) => {
+    if (sort === "rate-asc") return a.hourlyRate - b.hourlyRate;
+    if (sort === "rate-desc") return b.hourlyRate - a.hourlyRate;
+    if (sort === "rating") return b.rating - a.rating;
+    if (sort === "response-time") return a.responseTimeMinutes - b.responseTimeMinutes;
+    return b.rating * Math.log(b.reviewCount + 1) - a.rating * Math.log(a.reviewCount + 1);
+  });
+
+  return results;
+}
+
+export function listServiceCategories(): ServiceCategory[] {
+  return Array.from(new Set(serviceProviders.map((p) => p.category)));
+}
