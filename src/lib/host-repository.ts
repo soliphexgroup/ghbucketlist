@@ -6,24 +6,41 @@ import { useBookings } from "@/lib/bookings-store";
 import { useStayBookings } from "@/lib/stay-bookings-store";
 import { useHostCreatedExperiences } from "@/lib/host-experiences-store";
 import { useHostCreatedProperties } from "@/lib/host-properties-store";
+import { useAuth } from "@/lib/auth-context";
 import type { HostBooking } from "@/lib/host-types";
+import type { Host } from "@/lib/types";
 
-export const CURRENT_HOST_ID = "host-kwabena";
+/** Fallback used only when no one is signed in (dashboard routes require auth, so this is mostly defensive). */
+const DEMO_HOST_ID = "host-kwabena";
 
-export function getCurrentHost() {
-  return hosts.find((h) => h.id === CURRENT_HOST_ID)!;
+/** The signed-in host's id — real listings/bookings/payouts are all scoped to this. */
+export function useCurrentHostId() {
+  const { user } = useAuth();
+  return user?.id ?? DEMO_HOST_ID;
 }
 
-export function getHostExperiences() {
-  return experiences.filter((e) => e.hostId === CURRENT_HOST_ID);
+/** Display info (name/avatar/bio) for the signed-in host, for sidebar/header UI. */
+export function useCurrentHost(): Host {
+  const { user, profile } = useAuth();
+  if (!user) return hosts.find((h) => h.id === DEMO_HOST_ID)!;
+
+  const staticMatch = hosts.find((h) => h.id === user.id);
+  if (staticMatch) return staticMatch;
+
+  return {
+    id: user.id,
+    slug: user.id,
+    name: profile?.full_name || user.email || "Host",
+    avatarUrl: profile?.avatar_url || "https://i.pravatar.cc/150?img=1",
+    bio: "",
+    joinedYear: new Date(user.created_at).getFullYear(),
+    rating: 0,
+    reviewCount: 0,
+  };
 }
 
-export function getHostExperienceIds() {
-  return getHostExperiences().map((e) => e.id);
-}
-
-export function getHostExperience(experienceId: string) {
-  return experiences.find((e) => e.id === experienceId && e.hostId === CURRENT_HOST_ID);
+function getHostExperiences(hostId: string) {
+  return experiences.filter((e) => e.hostId === hostId);
 }
 
 /**
@@ -32,9 +49,10 @@ export function getHostExperience(experienceId: string) {
  * and replaces it in place, rather than appearing as a duplicate.
  */
 export function useHostExperiences() {
-  const created = useHostCreatedExperiences().filter((e) => e.hostId === CURRENT_HOST_ID);
+  const hostId = useCurrentHostId();
+  const created = useHostCreatedExperiences().filter((e) => e.hostId === hostId);
   const overrideIds = new Set(created.map((e) => e.id));
-  const staticOnes = getHostExperiences().filter((e) => !overrideIds.has(e.id));
+  const staticOnes = getHostExperiences(hostId).filter((e) => !overrideIds.has(e.id));
   return [...created, ...staticOnes];
 }
 
@@ -42,15 +60,16 @@ export function useHostExperienceIds() {
   return useHostExperiences().map((e) => e.id);
 }
 
-export function getHostProperties() {
-  return properties.filter((p) => p.hostId === CURRENT_HOST_ID);
+function getHostProperties(hostId: string) {
+  return properties.filter((p) => p.hostId === hostId);
 }
 
 /** Same static+override merge pattern as useHostExperiences, for Stay listings. */
 export function useHostProperties() {
-  const created = useHostCreatedProperties().filter((p) => p.hostId === CURRENT_HOST_ID);
+  const hostId = useCurrentHostId();
+  const created = useHostCreatedProperties().filter((p) => p.hostId === hostId);
   const overrideIds = new Set(created.map((p) => p.id));
-  const staticOnes = getHostProperties().filter((p) => !overrideIds.has(p.id));
+  const staticOnes = getHostProperties(hostId).filter((p) => !overrideIds.has(p.id));
   return [...created, ...staticOnes];
 }
 
@@ -89,7 +108,9 @@ export function useHostBookings(): HostBooking[] {
       createdAtISO: b.createdAtISO,
     }));
 
-  return [...hostBookings, ...fromLive].sort(
+  const staticForHost = hostBookings.filter((b) => hostExpIds.includes(b.experienceId));
+
+  return [...staticForHost, ...fromLive].sort(
     (a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime()
   );
 }

@@ -1,8 +1,15 @@
+"use client";
+
 import { Container } from "@/components/container";
 import { UserSidebarNav } from "@/components/dashboard/user-sidebar";
 import { DashboardMobileNav } from "@/components/dashboard/dashboard-mobile-nav";
+import { useAuth } from "@/lib/auth-context";
 
 export default function UserDashboardLayout({ children }: { children: React.ReactNode }) {
+  const { loading, user } = useAuth();
+
+  if (loading || !user) return null;
+
   return (
     <Container className="py-8 sm:py-10">
       <DashboardMobileNav />

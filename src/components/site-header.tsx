@@ -1,18 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChevronDown, Menu, User } from "lucide-react";
+import { ChevronDown, LogOut, Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Container } from "@/components/container";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
+import type { UserRole } from "@/types/profile";
 
 const exploreLinks = [
   { label: "Things To Do", href: "/activities", available: true },
@@ -28,8 +33,25 @@ const navLinks = [
   { label: "Blog", href: "/blog" },
 ];
 
+const dashboardHrefByRole: Record<UserRole, string> = {
+  customer: "/dashboard/user",
+  host: "/dashboard/host",
+  admin: "/dashboard/admin",
+};
+
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, profile, loading, signOut } = useAuth();
+  const router = useRouter();
+
+  const dashboardHref = profile ? dashboardHrefByRole[profile.role] : "/dashboard/user";
+
+  async function handleSignOut() {
+    await signOut();
+    setMobileOpen(false);
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
@@ -81,30 +103,38 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Demo dashboards">
-                <User className="size-4" />
+          {loading ? null : user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Account menu">
+                  <User className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate">
+                  {profile?.full_name || user.email}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href={dashboardHref}>Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={handleSignOut} className="text-destructive">
+                  <LogOut className="size-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Log in</Link>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/user">Customer Dashboard</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/host">Host Dashboard</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/admin">Admin Panel</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button variant="ghost" asChild>
-            <Link href="/login">Log in</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/signup">Sign up</Link>
-          </Button>
+              <Button asChild>
+                <Link href="/signup">Sign up</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -150,40 +180,42 @@ export function SiteHeader() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="/dashboard/user"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
-              >
-                Customer Dashboard
-              </Link>
-              <Link
-                href="/dashboard/host"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
-              >
-                Host Dashboard
-              </Link>
-              <Link
-                href="/dashboard/admin"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
-              >
-                Admin Panel
-              </Link>
               <div className="my-2 h-px bg-border" />
-              <div className="flex flex-col gap-2 px-1 pt-2">
-                <Button variant="outline" asChild>
-                  <Link href="/login" onClick={() => setMobileOpen(false)}>
-                    Log in
+              {!loading && user ? (
+                <>
+                  <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {profile?.full_name || user.email}
+                  </p>
+                  <Link
+                    href={dashboardHref}
+                    onClick={() => setMobileOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
+                  >
+                    Dashboard
                   </Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/signup" onClick={() => setMobileOpen(false)}>
-                    Sign up
-                  </Link>
-                </Button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-destructive hover:bg-accent"
+                  >
+                    <LogOut className="size-4" />
+                    Log out
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col gap-2 px-1 pt-2">
+                  <Button variant="outline" asChild>
+                    <Link href="/login" onClick={() => setMobileOpen(false)}>
+                      Log in
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/signup" onClick={() => setMobileOpen(false)}>
+                      Sign up
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </nav>
           </SheetContent>
         </Sheet>

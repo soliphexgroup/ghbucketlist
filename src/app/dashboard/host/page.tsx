@@ -6,7 +6,7 @@ import { CalendarCheck, Compass, Plus, Star, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EarningsSparkline } from "@/components/dashboard/earnings-sparkline";
-import { getCurrentHost, useHostExperiences, useHostBookings } from "@/lib/host-repository";
+import { useCurrentHost, useHostExperiences, useHostBookings } from "@/lib/host-repository";
 import { getExperienceById } from "@/data/experiences";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,7 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function HostOverviewPage() {
-  const host = getCurrentHost();
+  const host = useCurrentHost();
   const experiences = useHostExperiences();
   const bookings = useHostBookings();
   const now = new Date();

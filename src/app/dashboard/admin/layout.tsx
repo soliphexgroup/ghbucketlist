@@ -1,9 +1,26 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { Container } from "@/components/container";
 import { AdminSidebarNav } from "@/components/dashboard/admin-sidebar";
 import { AdminMobileNav } from "@/components/dashboard/admin-mobile-nav";
+import { useAuth } from "@/lib/auth-context";
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
+  const { profile, loading } = useAuth();
+  const router = useRouter();
+  const isAdmin = profile?.role === "admin";
+
+  useEffect(() => {
+    if (!loading && profile && !isAdmin) {
+      router.replace("/");
+    }
+  }, [loading, profile, isAdmin, router]);
+
+  if (loading || !profile || !isAdmin) return null;
+
   return (
     <Container className="py-8 sm:py-10">
       <AdminMobileNav />

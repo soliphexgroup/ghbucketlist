@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CURRENT_HOST_ID, getCurrentHost, useHostBookings, platformFee, netPayout } from "@/lib/host-repository";
+import { useCurrentHostId, useCurrentHost, useHostBookings, platformFee, netPayout } from "@/lib/host-repository";
 import { addPayout, usePayouts } from "@/lib/payouts-store";
 import { getExperienceById } from "@/data/experiences";
 import { formatGHS } from "@/lib/format";
@@ -32,10 +32,11 @@ const statusStyles = {
 };
 
 export default function EarningsPage() {
-  const host = getCurrentHost();
+  const host = useCurrentHost();
+  const hostId = useCurrentHostId();
   const bookings = useHostBookings();
   const allPayouts = usePayouts();
-  const payouts = allPayouts.filter((p) => p.hostId === CURRENT_HOST_ID);
+  const payouts = allPayouts.filter((p) => p.hostId === hostId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("mobile-money");
@@ -54,7 +55,7 @@ export default function EarningsPage() {
     if (!value || value <= 0 || value > availableBalance) return;
     addPayout({
       id: `PO-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
-      hostId: CURRENT_HOST_ID,
+      hostId,
       hostName: host.name,
       amount: value,
       method,

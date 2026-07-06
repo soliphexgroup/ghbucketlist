@@ -1,11 +1,27 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Container } from "@/components/container";
 import { HostSidebarNav } from "@/components/dashboard/host-sidebar";
 import { HostMobileNav } from "@/components/dashboard/host-mobile-nav";
-import { getCurrentHost } from "@/lib/host-repository";
+import { useAuth } from "@/lib/auth-context";
+import { useCurrentHost } from "@/lib/host-repository";
 
 export default function HostDashboardLayout({ children }: { children: React.ReactNode }) {
-  const host = getCurrentHost();
+  const { profile, loading } = useAuth();
+  const router = useRouter();
+  const host = useCurrentHost();
+  const isHost = profile?.role === "host" || profile?.role === "admin";
+
+  useEffect(() => {
+    if (!loading && profile && !isHost) {
+      router.replace("/");
+    }
+  }, [loading, profile, isHost, router]);
+
+  if (loading || !profile || !isHost) return null;
 
   return (
     <Container className="py-8 sm:py-10">

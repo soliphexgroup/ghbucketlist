@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { categories } from "@/data/categories";
-import { CURRENT_HOST_ID, useHostExperiences } from "@/lib/host-repository";
+import { useCurrentHostId, useHostExperiences } from "@/lib/host-repository";
 import { addHostCreatedExperience, upsertHostCreatedExperience } from "@/lib/host-experiences-store";
 import type { Experience, TicketType } from "@/lib/types";
 
@@ -68,6 +68,7 @@ function ExperienceFormResolver() {
 
 function ExperienceForm({ existing }: { existing?: Experience }) {
   const router = useRouter();
+  const hostId = useCurrentHostId();
   const isEditing = Boolean(existing);
 
   const [title, setTitle] = useState(existing?.title ?? "");
@@ -176,7 +177,7 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
       shortDescription: shortDescription.trim(),
       description: description.trim(),
       categoryId,
-      hostId: CURRENT_HOST_ID,
+      hostId,
       images: placeholderImages(slug, 5),
       venueName: venueName.trim(),
       neighbourhood: neighbourhood.trim(),

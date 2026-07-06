@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { amenities } from "@/data/amenities";
-import { CURRENT_HOST_ID, useHostProperties } from "@/lib/host-repository";
+import { useCurrentHostId, useHostProperties } from "@/lib/host-repository";
 import { addHostCreatedProperty, upsertHostCreatedProperty } from "@/lib/host-properties-store";
 import type { CancellationPolicy, Property, PropertyRoom, PropertyType, StayBookingType } from "@/lib/stay-types";
 
@@ -63,6 +63,7 @@ function PropertyFormResolver() {
 
 function PropertyForm({ existing }: { existing?: Property }) {
   const router = useRouter();
+  const hostId = useCurrentHostId();
   const isEditing = Boolean(existing);
 
   const [title, setTitle] = useState(existing?.title ?? "");
@@ -161,7 +162,7 @@ function PropertyForm({ existing }: { existing?: Property }) {
     const property: Property = {
       id: `prop-host-${Date.now()}`,
       slug,
-      hostId: CURRENT_HOST_ID,
+      hostId,
       images: placeholderImages(slug, 5),
       city: "Accra",
       rating: 0,
