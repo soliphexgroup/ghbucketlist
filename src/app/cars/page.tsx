@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { CarBrowser } from "@/components/cars/car-browser";
+import { VerticalHero } from "@/components/vertical-hero";
+import { CarsLanding } from "@/components/cars/cars-landing";
 
 export const metadata: Metadata = {
   title: "Car Rental",
@@ -7,5 +9,16 @@ export const metadata: Metadata = {
 };
 
 export default function CarsPage() {
-  return <CarBrowser />;
+  return (
+    <>
+      <VerticalHero
+        activeTab="car-rentals"
+        headline="Find your perfect rental car"
+        subheading="Self-drive or with a driver — compare rates on cars across Accra and beyond."
+      />
+      <Suspense fallback={null}>
+        <CarsLanding />
+      </Suspense>
+    </>
+  );
 }

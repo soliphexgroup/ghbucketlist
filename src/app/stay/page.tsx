@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { BrowseByPropertyType } from "@/components/stay/browse-by-property-type";
 import { StayBrowser } from "@/components/stay/stay-browser";
 
 export const metadata: Metadata = {
@@ -7,5 +9,12 @@ export const metadata: Metadata = {
 };
 
 export default function StayPage() {
-  return <StayBrowser />;
+  return (
+    <>
+      <BrowseByPropertyType />
+      <Suspense fallback={null}>
+        <StayBrowser />
+      </Suspense>
+    </>
+  );
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { ChevronDown, LogOut, Menu, User } from "lucide-react";
+import { Suspense, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { HelpCircle, LogOut, Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,18 +18,12 @@ import { Container } from "@/components/container";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import type { UserRole } from "@/types/profile";
+import { ServiceTabsBar } from "@/components/service-tabs-bar";
+import { serviceTabs, getActiveServiceTab, PAGES_WITH_OWN_HERO } from "@/lib/service-tabs";
 
-const exploreLinks = [
-  { label: "Things To Do", href: "/activities", available: true },
-  { label: "Date Experiences", href: "/activities?category=arts-culture", available: true },
-  { label: "Places To Stay", href: "/stay", available: true },
-  { label: "Car Rental", href: "/cars", available: true },
-  { label: "Handyman Services", href: "/services", available: true },
-];
-
-const navLinks = [
-  { label: "Become a Host", href: "/hosting" },
+const secondaryLinks = [
   { label: "Curated Trips", href: "/trips" },
+  { label: "Become a Host", href: "/hosting" },
   { label: "Blog", href: "/blog" },
 ];
 
@@ -39,12 +33,55 @@ const dashboardHrefByRole: Record<UserRole, string> = {
   admin: "/dashboard/admin",
 };
 
+function HeaderTabsRow() {
+  const pathname = usePathname();
+
+  if (PAGES_WITH_OWN_HERO.includes(pathname)) return null;
+
+  return (
+    <div className="hidden border-t border-white/10 lg:block">
+      <Container className="flex h-14 max-w-[64rem] items-center lg:px-6">
+        <ServiceTabsBar activeId={getActiveServiceTab(pathname)} />
+      </Container>
+    </div>
+  );
+}
+
+function MobileTabs({ onNavigate }: { onNavigate: () => void }) {
+  const pathname = usePathname();
+  const activeId = getActiveServiceTab(pathname);
+
+  return (
+    <>
+      {serviceTabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = tab.id === activeId;
+        return (
+          <Link
+            key={tab.id}
+            href={tab.href}
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium",
+              isActive ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-accent"
+            )}
+          >
+            <Icon className="size-4" />
+            {tab.label}
+          </Link>
+        );
+      })}
+    </>
+  );
+}
+
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, profile, loading, signOut } = useAuth();
   const router = useRouter();
 
   const dashboardHref = profile ? dashboardHrefByRole[profile.role] : "/dashboard/user";
+  const hostHref = user ? "/hosting" : "/signup?role=host";
 
   async function handleSignOut() {
     await signOut();
@@ -54,59 +91,44 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
-      <Container className="flex h-16 items-center justify-between gap-4">
+    <header className="sticky top-0 z-50 bg-gradient-to-br from-[var(--brand-primary-gradient-from)] via-[var(--brand-primary-gradient-via)] to-[var(--brand-primary-gradient-to)] text-white">
+      <Container className="flex h-16 max-w-[64rem] items-center justify-between gap-4 lg:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="font-heading text-2xl font-bold tracking-tight text-primary">
+          <span className="font-heading text-2xl font-bold tracking-tight text-white">
             GH Bucketlist
           </span>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-accent hover:text-accent-foreground"
-              >
-                Explore
-                <ChevronDown className="size-3.5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              {exploreLinks.map((link) =>
-                link.available ? (
-                  <DropdownMenuItem key={link.href} asChild>
-                    <Link href={link.href}>{link.label}</Link>
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem key={link.href} asChild>
-                    <Link href={link.href} className="flex items-center justify-between text-muted-foreground">
-                      {link.label}
-                      <span className="text-xs">Soon</span>
-                    </Link>
-                  </DropdownMenuItem>
-                )
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {navLinks.map((link) => (
+          {secondaryLinks.map((link) => (
             <Link
               key={link.href}
-              href={link.href}
-              className="rounded-full px-3 py-2 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-accent hover:text-accent-foreground"
+              href={link.href === "/hosting" ? hostHref : link.href}
+              className="rounded-full px-3 py-2 text-sm font-medium text-white/85 transition-colors duration-200 hover:bg-white/10 hover:text-white"
             >
               {link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-3 lg:flex">
+          <button
+            type="button"
+            aria-label="Help"
+            className="flex size-8 items-center justify-center rounded-full text-white/85 transition-colors duration-200 hover:bg-white/10 hover:text-white"
+          >
+            <HelpCircle className="size-4" />
+          </button>
+
           {loading ? null : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Account menu">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Account menu"
+                  className="text-white hover:bg-white/10 hover:text-white"
+                >
                   <User className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -127,11 +149,11 @@ export function SiteHeader() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" asChild>
-                <Link href="/login">Log in</Link>
+              <Button variant="outline" asChild className="border-white/60 bg-transparent text-white hover:bg-white/10 hover:text-white">
+                <Link href="/signup">Register</Link>
               </Button>
-              <Button asChild>
-                <Link href="/signup">Sign up</Link>
+              <Button variant="outline" asChild className="border-white/60 bg-transparent text-white hover:bg-white/10 hover:text-white">
+                <Link href="/login">Sign in</Link>
               </Button>
             </>
           )}
@@ -142,7 +164,7 @@ export function SiteHeader() {
             <button
               type="button"
               aria-label="Open menu"
-              className="flex size-10 items-center justify-center rounded-full text-foreground lg:hidden"
+              className="flex size-10 items-center justify-center rounded-full text-white lg:hidden"
             >
               <Menu className="size-5" />
             </button>
@@ -155,25 +177,14 @@ export function SiteHeader() {
               <p className="mt-2 mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Explore
               </p>
-              {exploreLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium",
-                    link.available ? "text-foreground hover:bg-accent" : "text-muted-foreground"
-                  )}
-                >
-                  {link.label}
-                  {!link.available && <span className="text-xs">Soon</span>}
-                </Link>
-              ))}
+              <Suspense fallback={null}>
+                <MobileTabs onNavigate={() => setMobileOpen(false)} />
+              </Suspense>
               <div className="my-2 h-px bg-border" />
-              {navLinks.map((link) => (
+              {secondaryLinks.map((link) => (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  href={link.href === "/hosting" ? hostHref : link.href}
                   onClick={() => setMobileOpen(false)}
                   className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
                 >
@@ -206,12 +217,12 @@ export function SiteHeader() {
                 <div className="flex flex-col gap-2 px-1 pt-2">
                   <Button variant="outline" asChild>
                     <Link href="/login" onClick={() => setMobileOpen(false)}>
-                      Log in
+                      Sign in
                     </Link>
                   </Button>
                   <Button asChild>
                     <Link href="/signup" onClick={() => setMobileOpen(false)}>
-                      Sign up
+                      Register
                     </Link>
                   </Button>
                 </div>
@@ -220,6 +231,10 @@ export function SiteHeader() {
           </SheetContent>
         </Sheet>
       </Container>
+
+      <Suspense fallback={null}>
+        <HeaderTabsRow />
+      </Suspense>
     </header>
   );
 }

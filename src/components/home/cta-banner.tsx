@@ -1,8 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 
 export function CtaBanner() {
+  const { user } = useAuth();
+  const hostHref = user ? "/hosting" : "/signup?role=host";
+
   return (
     <section className="bg-secondary/40 py-16 sm:py-20">
       <Container className="flex flex-col items-center text-center">
@@ -22,7 +28,7 @@ export function CtaBanner() {
             asChild
             className="rounded-full border-primary px-8 text-primary hover:bg-primary/10"
           >
-            <Link href="/hosting">Host an Activity</Link>
+            <Link href={hostHref}>Host an Activity</Link>
           </Button>
         </div>
       </Container>

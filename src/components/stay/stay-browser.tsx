@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
 import { Container } from "@/components/container";
 import { PropertyCard } from "@/components/stay/property-card";
@@ -19,7 +20,7 @@ import { useHostCreatedProperties } from "@/lib/host-properties-store";
 import type { PropertyType } from "@/lib/stay-types";
 
 export type StayFilterState = Required<
-  Pick<StayFilters, "propertyTypes" | "maxPrice" | "amenities" | "instantBookOnly" | "sort">
+  Pick<StayFilters, "q" | "propertyTypes" | "maxPrice" | "amenities" | "instantBookOnly" | "sort">
 > & { guests: number; bedrooms: number; minRating?: number };
 
 const sortOptions: { value: NonNullable<StayFilters["sort"]>; label: string }[] = [
@@ -31,6 +32,7 @@ const sortOptions: { value: NonNullable<StayFilters["sort"]>; label: string }[] 
 
 function defaultFilters(): StayFilterState {
   return {
+    q: "",
     propertyTypes: [] as PropertyType[],
     maxPrice: propertyPriceBounds().max,
     amenities: [],
@@ -42,8 +44,21 @@ function defaultFilters(): StayFilterState {
   };
 }
 
-export function StayBrowser() {
-  const [filters, setFilters] = useState<StayFilterState>(defaultFilters);
+function StayBrowserInner({
+  initialType,
+  initialSort,
+  initialQ,
+}: {
+  initialType: PropertyType | null;
+  initialSort: StayFilterState["sort"] | null;
+  initialQ: string;
+}) {
+  const [filters, setFilters] = useState<StayFilterState>(() => ({
+    ...defaultFilters(),
+    propertyTypes: initialType ? [initialType] : [],
+    sort: initialSort ?? "recommended",
+    q: initialQ,
+  }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const hostCreated = useHostCreatedProperties();
@@ -51,6 +66,7 @@ export function StayBrowser() {
     () =>
       listProperties(
         {
+          q: filters.q,
           propertyTypes: filters.propertyTypes,
           maxPrice: filters.maxPrice,
           bedrooms: filters.bedrooms || undefined,
@@ -148,5 +164,25 @@ export function StayBrowser() {
         </div>
       </div>
     </Container>
+  );
+}
+
+const validSorts = sortOptions.map((opt) => opt.value);
+
+export function StayBrowser() {
+  const params = useSearchParams();
+  const initialType = params.get("type") as PropertyType | null;
+  const sortParam = params.get("sort");
+  const initialSort = validSorts.includes(sortParam as StayFilterState["sort"])
+    ? (sortParam as StayFilterState["sort"])
+    : null;
+  const initialQ = params.get("q") ?? "";
+  return (
+    <StayBrowserInner
+      key={`${initialType ?? "all"}-${initialSort ?? "default"}-${initialQ}`}
+      initialType={initialType}
+      initialSort={initialSort}
+      initialQ={initialQ}
+    />
   );
 }

@@ -9,9 +9,15 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-heading: var(--font-heading);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-yellow-foreground: var(--brand-yellow-foreground);
+  --color-link: var(--link);
   --color-brand-coral: var(--brand-coral);
   --color-brand-coral-foreground: var(--brand-coral-foreground);
   --color-brand-gold: var(--brand-gold);
+  --color-search-accent: var(--search-accent);
+  --color-search-button: var(--search-button);
+  --color-search-button-foreground: var(--search-button-foreground);
   --color-success: var(--success);
   --color-error: var(--error);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -43,13 +49,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-sm: calc(var(--radius) * 0.55);
   --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-lg: calc(var(--radius) * 0.8);
+  --radius-xl: calc(var(--radius) * 0.85);
+  --radius-2xl: calc(var(--radius) * 0.8);
+  --radius-3xl: calc(var(--radius) * 0.9);
+  --radius-4xl: calc(var(--radius) * 0.95);
 }
 
 :root {
@@ -71,11 +77,18 @@
   --border: #ece4de;
   --input: #ece4de;
   --ring: #059669;
+  --brand-yellow: #059669;
+  --brand-yellow-foreground: #ffffff;
+  --link: #047857;
   --brand-coral: #e8703a;
   --brand-coral-foreground: #ffffff;
   --brand-gold: #f2a93b;
-  --brand-primary-gradient-from: #059669;
-  --brand-primary-gradient-to: #065f46;
+  --brand-primary-gradient-from: #006b3c;
+  --brand-primary-gradient-via: #0d7a43;
+  --brand-primary-gradient-to: #1f9d55;
+  --search-accent: #ffb700;
+  --search-button: #0a7a3f;
+  --search-button-foreground: #ffffff;
   --success: #22c55e;
   --error: #ef4444;
   --chart-1: #059669;
@@ -113,9 +126,18 @@
   --border: #3a1c27;
   --input: #3a1c27;
   --ring: #e8703a;
+  --brand-yellow: #e8703a;
+  --brand-yellow-foreground: #17090f;
+  --link: #f2a93b;
   --brand-coral: #e8703a;
   --brand-coral-foreground: #17090f;
   --brand-gold: #f2a93b;
+  --brand-primary-gradient-from: #006b3c;
+  --brand-primary-gradient-via: #0d7a43;
+  --brand-primary-gradient-to: #1f9d55;
+  --search-accent: #ffb700;
+  --search-button: #0a7a3f;
+  --search-button-foreground: #ffffff;
   --success: #22c55e;
   --error: #ef4444;
   --chart-1: #e8703a;

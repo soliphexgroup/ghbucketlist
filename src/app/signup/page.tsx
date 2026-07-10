@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Container } from "@/components/container";
 import { SignupForm } from "@/components/auth/signup-form";
 
@@ -16,7 +17,9 @@ export default function SignupPage() {
         </p>
 
         <div className="mt-6">
-          <SignupForm />
+          <Suspense fallback={null}>
+            <SignupForm />
+          </Suspense>
         </div>
       </div>
     </Container>

@@ -1,4 +1,5 @@
 import { serviceProviders } from "@/data/service-providers";
+import { serviceCategoryLabels } from "@/data/service-categories";
 import type { ServiceCategory, ServiceProvider } from "@/lib/service-types";
 
 export type ServiceFilters = {
@@ -18,6 +19,9 @@ export function listProviders(filters: ServiceFilters = {}): ServiceProvider[] {
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.serviceArea.toLowerCase().includes(q) ||
+        p.bio.toLowerCase().includes(q) ||
+        serviceCategoryLabels[p.category].toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
         p.skills.some((s) => s.toLowerCase().includes(q))
     );
   }

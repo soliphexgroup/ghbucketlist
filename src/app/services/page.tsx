@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { ServiceBrowser } from "@/components/services/service-browser";
+import { VerticalHero } from "@/components/vertical-hero";
+import { ServicesLanding } from "@/components/services/services-landing";
 
 export const metadata: Metadata = {
   title: "Handyman Services",
@@ -7,5 +9,16 @@ export const metadata: Metadata = {
 };
 
 export default function ServicesPage() {
-  return <ServiceBrowser />;
+  return (
+    <>
+      <VerticalHero
+        activeTab="handyman"
+        headline="Find trusted help, fast"
+        subheading="Carpenters, electricians, plumbers, cleaners, and welders — verified local pros across Accra."
+      />
+      <Suspense fallback={null}>
+        <ServicesLanding />
+      </Suspense>
+    </>
+  );
 }

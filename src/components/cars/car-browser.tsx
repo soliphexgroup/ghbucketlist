@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
 import { Container } from "@/components/container";
 import { CarCard } from "@/components/cars/car-card";
@@ -18,7 +19,7 @@ import { listCars, carPriceBounds, type CarFilters } from "@/lib/car-repository"
 import type { Car, CarCategory } from "@/lib/car-types";
 
 export type CarFilterState = Required<
-  Pick<CarFilters, "categories" | "maxPrice" | "features" | "driverAvailableOnly" | "instantBookOnly" | "sort">
+  Pick<CarFilters, "q" | "categories" | "maxPrice" | "features" | "driverAvailableOnly" | "instantBookOnly" | "sort">
 > & { seats: number; transmission?: Car["transmission"] };
 
 const sortOptions: { value: NonNullable<CarFilters["sort"]>; label: string }[] = [
@@ -28,8 +29,11 @@ const sortOptions: { value: NonNullable<CarFilters["sort"]>; label: string }[] =
   { value: "rating", label: "Highest rated" },
 ];
 
+const carCategories: CarCategory[] = ["economy", "suv", "luxury", "van"];
+
 function defaultFilters(): CarFilterState {
   return {
+    q: "",
     categories: [] as CarCategory[],
     maxPrice: carPriceBounds().max,
     features: [],
@@ -41,13 +45,24 @@ function defaultFilters(): CarFilterState {
   };
 }
 
-export function CarBrowser() {
-  const [filters, setFilters] = useState<CarFilterState>(defaultFilters);
+function CarBrowserInner({
+  initialCategory,
+  initialQ,
+}: {
+  initialCategory: CarCategory | null;
+  initialQ: string;
+}) {
+  const [filters, setFilters] = useState<CarFilterState>(() => ({
+    ...defaultFilters(),
+    categories: initialCategory ? [initialCategory] : [],
+    q: initialQ,
+  }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const cars = useMemo(
     () =>
       listCars({
+        q: filters.q,
         categories: filters.categories,
         maxPrice: filters.maxPrice,
         seats: filters.seats > 1 ? filters.seats : undefined,
@@ -143,5 +158,22 @@ export function CarBrowser() {
         </div>
       </div>
     </Container>
+  );
+}
+
+export function CarBrowser() {
+  const params = useSearchParams();
+  const categoryParam = params.get("category");
+  const initialCategory = (carCategories as string[]).includes(categoryParam ?? "")
+    ? (categoryParam as CarCategory)
+    : null;
+  const initialQ = params.get("q") ?? "";
+
+  return (
+    <CarBrowserInner
+      key={`${initialCategory ?? "all"}-${initialQ}`}
+      initialCategory={initialCategory}
+      initialQ={initialQ}
+    />
   );
 }

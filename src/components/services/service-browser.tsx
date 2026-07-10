@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
 import { Container } from "@/components/container";
 import { ProviderCard } from "@/components/services/provider-card";
@@ -15,10 +16,11 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { listProviders, type ServiceFilters } from "@/lib/service-repository";
+import { serviceCategories } from "@/data/service-categories";
 import type { ServiceCategory } from "@/lib/service-types";
 
 export type ServiceFilterState = Required<
-  Pick<ServiceFilters, "categories" | "verifiedOnly" | "sort">
+  Pick<ServiceFilters, "q" | "categories" | "verifiedOnly" | "sort">
 > & { minRating?: number };
 
 const sortOptions: { value: NonNullable<ServiceFilters["sort"]>; label: string }[] = [
@@ -31,6 +33,7 @@ const sortOptions: { value: NonNullable<ServiceFilters["sort"]>; label: string }
 
 function defaultFilters(): ServiceFilterState {
   return {
+    q: "",
     categories: [] as ServiceCategory[],
     verifiedOnly: false,
     sort: "recommended",
@@ -38,13 +41,24 @@ function defaultFilters(): ServiceFilterState {
   };
 }
 
-export function ServiceBrowser() {
-  const [filters, setFilters] = useState<ServiceFilterState>(defaultFilters);
+function ServiceBrowserInner({
+  initialCategory,
+  initialQ,
+}: {
+  initialCategory: ServiceCategory | null;
+  initialQ: string;
+}) {
+  const [filters, setFilters] = useState<ServiceFilterState>(() => ({
+    ...defaultFilters(),
+    categories: initialCategory ? [initialCategory] : [],
+    q: initialQ,
+  }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const providers = useMemo(
     () =>
       listProviders({
+        q: filters.q,
         categories: filters.categories,
         verifiedOnly: filters.verifiedOnly,
         minRating: filters.minRating,
@@ -136,5 +150,22 @@ export function ServiceBrowser() {
         </div>
       </div>
     </Container>
+  );
+}
+
+export function ServiceBrowser() {
+  const params = useSearchParams();
+  const categoryParam = params.get("category");
+  const initialCategory = (serviceCategories as string[]).includes(categoryParam ?? "")
+    ? (categoryParam as ServiceCategory)
+    : null;
+  const initialQ = params.get("q") ?? "";
+
+  return (
+    <ServiceBrowserInner
+      key={`${initialCategory ?? "all"}-${initialQ}`}
+      initialCategory={initialCategory}
+      initialQ={initialQ}
+    />
   );
 }

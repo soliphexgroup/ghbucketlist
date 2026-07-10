@@ -40,7 +40,15 @@ function initialFilters(params: URLSearchParams): FilterState {
   };
 }
 
-export function ActivitiesBrowser() {
+export function ActivitiesBrowser({
+  basePath = "/activities",
+  title = "Activities",
+  description = "Find the perfect activity for your interests",
+}: {
+  basePath?: string;
+  title?: string;
+  description?: string;
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const bounds = priceRangeBounds();
@@ -63,12 +71,12 @@ export function ActivitiesBrowser() {
     if (merged.minRating) params.set("minRating", String(merged.minRating));
     if (merged.sort !== "recommended") params.set("sort", merged.sort);
     const query = params.toString();
-    router.replace(query ? `/activities?${query}` : "/activities", { scroll: false });
+    router.replace(query ? `${basePath}?${query}` : basePath, { scroll: false });
   }
 
   function clearFilters() {
     setFilters({ q: "", categories: [], maxPrice: bounds.max, sort: "recommended" });
-    router.replace("/activities", { scroll: false });
+    router.replace(basePath, { scroll: false });
   }
 
   return (
@@ -76,10 +84,10 @@ export function ActivitiesBrowser() {
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
         <div>
           <h1 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
-            Activities
+            {title}
           </h1>
           <p className="mt-1 text-muted-foreground">
-            Find the perfect activity for your interests
+            {description}
           </p>
         </div>
 
