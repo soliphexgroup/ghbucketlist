@@ -7,31 +7,43 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { BedDouble, Heart, MapPin, Search, Utensils, Wrench, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { ServiceTabId } from "@/lib/service-tabs";
 
 type Shortcut = {
+  id: ServiceTabId;
   label: string;
   icon: LucideIcon;
   href: string;
-  featured?: boolean;
   badge?: { text: string; tone: "popular" | "new" };
 };
 
 const shortcuts: Shortcut[] = [
-  { label: "Stays", icon: BedDouble, href: "/stay", featured: true, badge: { text: "Popular", tone: "popular" } },
-  { label: "Things to do", icon: Heart, href: "/activities" },
-  { label: "Car Rentals", icon: MapPin, href: "/cars" },
-  { label: "Handyman Services", icon: Wrench, href: "/services" },
-  { label: "Restaurants Guide", icon: Utensils, href: "#", badge: { text: "New", tone: "new" } },
+  { id: "stays", label: "Stays", icon: BedDouble, href: "/stay", badge: { text: "Popular", tone: "popular" } },
+  { id: "things-to-do", label: "Things to do", icon: Heart, href: "/activities" },
+  { id: "car-rentals", label: "Car Rentals", icon: MapPin, href: "/cars" },
+  { id: "handyman", label: "Handyman Services", icon: Wrench, href: "/services" },
+  { id: "restaurants", label: "Restaurants Guide", icon: Utensils, href: "/restaurants", badge: { text: "New", tone: "new" } },
 ];
 
-export function MobileHero() {
+export function MobileHero({
+  activeTab,
+  headline,
+  subheading,
+}: {
+  activeTab: ServiceTabId;
+  headline: string;
+  subheading: string;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+
+  // The active category's listing is where the search pill sends people.
+  const searchBase = shortcuts.find((s) => s.id === activeTab)?.href ?? "/stay";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const q = query.trim();
-    router.push(`/stay${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+    router.push(`${searchBase}${q ? `?q=${encodeURIComponent(q)}` : ""}`);
   }
 
   return (
@@ -56,7 +68,7 @@ export function MobileHero() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="font-heading text-[2.75rem] leading-[1.05] font-extrabold tracking-tight text-balance"
         >
-          Find your next stay
+          {headline}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 12 }}
@@ -64,7 +76,7 @@ export function MobileHero() {
           transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
           className="mt-4 max-w-[22rem] text-lg leading-snug text-white/90"
         >
-          Book stays, date experiences, activities, rentals and trusted local services.
+          {subheading}
         </motion.p>
 
         {/* Simple single-field search pill */}
@@ -105,17 +117,19 @@ export function MobileHero() {
         >
           {shortcuts.map((s) => {
             const Icon = s.icon;
+            const isActive = s.id === activeTab;
             return (
               <Link
-                key={s.label}
+                key={s.id}
                 href={s.href}
+                aria-current={isActive ? "page" : undefined}
                 className="group flex flex-col items-center gap-2 rounded-xl px-0.5 py-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
               >
                 <div className="relative">
                   <div
                     className={cn(
                       "flex size-14 items-center justify-center rounded-full transition-colors duration-200",
-                      s.featured
+                      isActive
                         ? "bg-white/15 ring-2 ring-[var(--brand-coral)]"
                         : "bg-white/10 group-hover:bg-white/20"
                     )}

@@ -9,7 +9,11 @@ import { CtaBanner } from "@/components/home/cta-banner";
 export default function Home() {
   return (
     <>
-      <MobileHero />
+      <MobileHero
+        activeTab="stays"
+        headline="Find your next stay"
+        subheading="Book stays, date experiences, activities, rentals and trusted local services."
+      />
       <div className="hidden lg:block">
         <VerticalHero
           activeTab="stays"

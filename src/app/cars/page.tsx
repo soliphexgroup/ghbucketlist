@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { VerticalHero } from "@/components/vertical-hero";
+import { MobileHero } from "@/components/home/mobile-hero";
 import { CarsLanding } from "@/components/cars/cars-landing";
 
 export const metadata: Metadata = {
@@ -11,11 +12,18 @@ export const metadata: Metadata = {
 export default function CarsPage() {
   return (
     <>
-      <VerticalHero
+      <MobileHero
         activeTab="car-rentals"
         headline="Find your perfect rental car"
         subheading="Self-drive or with a driver — compare rates on cars across Accra and beyond."
       />
+      <div className="hidden lg:block">
+        <VerticalHero
+          activeTab="car-rentals"
+          headline="Find your perfect rental car"
+          subheading="Self-drive or with a driver — compare rates on cars across Accra and beyond."
+        />
+      </div>
       <Suspense fallback={null}>
         <CarsLanding />
       </Suspense>

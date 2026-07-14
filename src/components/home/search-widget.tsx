@@ -338,9 +338,6 @@ export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
     pets: false,
   });
 
-  const [experienceDate, setExperienceDate] = useState<Date | undefined>();
-  const [couples, setCouples] = useState(1);
-
   const [activityLocation, setActivityLocation] = useState("");
   const [activityDate, setActivityDate] = useState<Date | undefined>();
   const [participants, setParticipants] = useState(1);
@@ -366,13 +363,6 @@ export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
         if (stayGuests.rooms > 0) params.set("rooms", String(stayGuests.rooms));
         if (stayGuests.pets) params.set("pets", "1");
         router.push(`/stay${params.toString() ? `?${params.toString()}` : ""}`);
-        return;
-      }
-      case "date-experiences": {
-        if (location.trim()) params.set("q", location.trim());
-        if (experienceDate) params.set("date", experienceDate.toISOString().slice(0, 10));
-        params.set("couples", String(couples));
-        router.push(`/date-experiences${params.toString() ? `?${params.toString()}` : ""}`);
         return;
       }
       case "things-to-do": {
@@ -409,21 +399,6 @@ export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
           <LocationField value={location} onChange={setLocation} placeholder="Where do you want to go?" />
           <DateRangeField checkIn={checkIn} checkOut={checkOut} onSelect={({ from, to }) => { setCheckIn(from); setCheckOut(to); }} />
           <GuestsRoomsField value={stayGuests} onChange={setStayGuests} />
-        </>
-      )}
-
-      {activeTab === "date-experiences" && (
-        <>
-          <FieldShell icon={MapPin}>
-            <Input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Where do you want to go?"
-              className="h-full border-0 p-0 shadow-none focus-visible:ring-0"
-            />
-          </FieldShell>
-          <DateField label="Date" date={experienceDate} onSelect={setExperienceDate} />
-          <CounterField label="Couples" value={couples} onChange={setCouples} max={6} />
         </>
       )}
 
