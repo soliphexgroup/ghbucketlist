@@ -33,19 +33,19 @@ export function BrowseByPropertyType() {
           Browse by property type
         </h2>
 
-        <div className="mt-8 grid grid-cols-4 gap-2 sm:gap-4">
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {categories.map((item) => (
-            <Link key={item.label} href={item.href} className="group flex flex-col gap-2 sm:gap-3">
+            <Link key={item.label} href={item.href} className="group flex flex-col gap-3">
               <div className="relative aspect-[5/4] w-full overflow-hidden rounded-lg sm:rounded-2xl">
                 <Image
                   src={item.image}
                   alt={item.label}
                   fill
-                  sizes="(min-width: 640px) 15vw, 22vw"
+                  sizes="(min-width: 640px) 15vw, 45vw"
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
-              <span className="line-clamp-1 font-heading text-xs font-semibold text-foreground sm:text-base">
+              <span className="line-clamp-1 font-heading text-base font-semibold text-foreground">
                 {item.label}
               </span>
             </Link>
