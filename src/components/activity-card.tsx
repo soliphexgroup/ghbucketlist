@@ -38,7 +38,7 @@ export function ActivityCard({
           src={experience.images[0]}
           alt={experience.title}
           fill
-          sizes="(min-width: 1024px) 320px, (min-width: 640px) 45vw, 90vw"
+          sizes="(min-width: 1024px) 320px, 45vw"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
@@ -51,21 +51,21 @@ export function ActivityCard({
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:gap-2 sm:p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-2 font-heading text-base font-semibold leading-snug text-foreground">
+          <h3 className="line-clamp-2 font-heading text-sm font-semibold leading-snug text-foreground sm:text-base">
             {experience.title}
           </h3>
         </div>
 
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground sm:text-sm">
           <MapPin className="size-3.5 shrink-0" />
           <span className="truncate">
             {experience.neighbourhood} · {host?.name}
           </span>
         </div>
 
-        <p className="line-clamp-2 text-sm text-muted-foreground">
+        <p className="line-clamp-2 text-xs text-muted-foreground sm:text-sm">
           {experience.shortDescription}
         </p>
 

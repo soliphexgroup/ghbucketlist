@@ -28,7 +28,7 @@ export function CarCard({ car, className }: { car: Car; className?: string }) {
           src={car.images[0]}
           alt={`${car.make} ${car.model}`}
           fill
-          sizes="(min-width: 1024px) 320px, (min-width: 640px) 45vw, 90vw"
+          sizes="(min-width: 1024px) 320px, 45vw"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <span className="absolute top-3 left-3 inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm">
@@ -43,17 +43,17 @@ export function CarCard({ car, className }: { car: Car; className?: string }) {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="line-clamp-1 font-heading text-base font-semibold text-foreground">
+      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:gap-2 sm:p-4">
+        <h3 className="line-clamp-1 font-heading text-sm font-semibold text-foreground sm:text-base">
           {car.make} {car.model} <span className="font-normal text-muted-foreground">{car.year}</span>
         </h3>
-        <p className="text-sm text-muted-foreground">{car.pickupLocation}</p>
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <p className="truncate text-xs text-muted-foreground sm:text-sm">{car.pickupLocation}</p>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground sm:text-sm">
           <Users className="size-3.5 shrink-0" />
-          {car.seats} seats · {car.transmission === "automatic" ? "Automatic" : "Manual"}
+          <span className="truncate">{car.seats} seats · {car.transmission === "automatic" ? "Automatic" : "Manual"}</span>
         </div>
 
-        <div className="mt-auto flex items-center justify-between pt-2">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-2">
           <StarRating rating={car.rating} reviewCount={car.reviewCount} />
           <span className="font-heading text-base font-semibold text-foreground">
             {formatGHS(car.pricePerDay)}
