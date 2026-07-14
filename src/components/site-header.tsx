@@ -94,8 +94,9 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 bg-gradient-to-br from-[var(--brand-primary-gradient-from)] via-[var(--brand-primary-gradient-via)] to-[var(--brand-primary-gradient-to)] text-white">
       <Container className="flex h-16 max-w-[64rem] items-center justify-between gap-4 lg:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="font-heading text-2xl font-bold tracking-tight text-white">
-            GH Bucketlist
+          <span className="font-heading text-2xl font-bold tracking-tight">
+            <span className="text-white">GH</span>
+            <span className="text-[var(--brand-coral)]">Bucketlist</span>
           </span>
         </Link>
 

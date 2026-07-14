@@ -1,4 +1,5 @@
 import { VerticalHero } from "@/components/vertical-hero";
+import { MobileHero } from "@/components/home/mobile-hero";
 import { WhyGHBucketlist } from "@/components/home/why-ghbucketlist";
 import { BrowseByPropertyType } from "@/components/stay/browse-by-property-type";
 import { TrendingDestinations } from "@/components/home/trending-destinations";
@@ -8,11 +9,14 @@ import { CtaBanner } from "@/components/home/cta-banner";
 export default function Home() {
   return (
     <>
-      <VerticalHero
-        activeTab="stays"
-        headline="Find your next stay"
-        subheading="Search low prices on hotels, homes and much more..."
-      />
+      <MobileHero />
+      <div className="hidden lg:block">
+        <VerticalHero
+          activeTab="stays"
+          headline="Find your next stay"
+          subheading="Search low prices on hotels, homes and much more..."
+        />
+      </div>
       <WhyGHBucketlist />
       <BrowseByPropertyType />
       <TrendingDestinations />
