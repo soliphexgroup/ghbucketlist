@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { BrowseByPropertyType } from "@/components/stay/browse-by-property-type";
-import { StayBrowser } from "@/components/stay/stay-browser";
+import { StaySearchAndResults } from "@/components/stay/stay-search-and-results";
 
 export const metadata: Metadata = {
   title: "Places to Stay",
@@ -10,11 +9,8 @@ export const metadata: Metadata = {
 
 export default function StayPage() {
   return (
-    <>
-      <BrowseByPropertyType />
-      <Suspense fallback={null}>
-        <StayBrowser />
-      </Suspense>
-    </>
+    <Suspense fallback={null}>
+      <StaySearchAndResults />
+    </Suspense>
   );
 }

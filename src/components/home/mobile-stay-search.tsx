@@ -15,15 +15,32 @@ import {
 import { listPropertyNeighbourhoods } from "@/lib/stay-repository";
 import { cn } from "@/lib/utils";
 
-export function MobileStaySearch() {
+export type StaySearchInitial = {
+  q?: string;
+  checkIn?: Date;
+  checkOut?: Date;
+  guests?: GuestCounts;
+};
+
+export function MobileStaySearch({
+  initial,
+  carryParams,
+}: {
+  /** Pre-fills the box from an existing search, so it reflects the results on screen. */
+  initial?: StaySearchInitial;
+  /** Drill-down context (property type / sort) to preserve across a search. */
+  carryParams?: Record<string, string | null>;
+} = {}) {
   const router = useRouter();
   const neighbourhoods = listPropertyNeighbourhoods();
 
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(initial?.q ?? "");
   const [locationOpen, setLocationOpen] = useState(false);
-  const [checkIn, setCheckIn] = useState<Date | undefined>(addDays(new Date(), 7));
-  const [checkOut, setCheckOut] = useState<Date | undefined>(addDays(new Date(), 9));
-  const [guests, setGuests] = useState<GuestCounts>({ adults: 2, children: 0, rooms: 1, pets: false });
+  const [checkIn, setCheckIn] = useState<Date | undefined>(initial?.checkIn ?? addDays(new Date(), 7));
+  const [checkOut, setCheckOut] = useState<Date | undefined>(initial?.checkOut ?? addDays(new Date(), 9));
+  const [guests, setGuests] = useState<GuestCounts>(
+    initial?.guests ?? { adults: 2, children: 0, rooms: 1, pets: false }
+  );
   const [guestsOpen, setGuestsOpen] = useState(false);
 
   function handleCheckInSelect(next: Date | undefined) {
@@ -38,10 +55,15 @@ export function MobileStaySearch() {
     if (location.trim()) params.set("q", location.trim());
     if (checkIn) params.set("checkin", checkIn.toISOString().slice(0, 10));
     if (checkOut) params.set("checkout", checkOut.toISOString().slice(0, 10));
-    const totalGuests = guests.adults + guests.children;
-    if (totalGuests > 0) params.set("guests", String(totalGuests));
+    // Kept separate (rather than one total) so the booking widget can restore them.
+    if (guests.adults > 0) params.set("adults", String(guests.adults));
+    if (guests.children > 0) params.set("children", String(guests.children));
     if (guests.rooms > 0) params.set("rooms", String(guests.rooms));
     if (guests.pets) params.set("pets", "1");
+    // Keep the drill-down context (e.g. type=hotel) so searching stays within it.
+    for (const [key, value] of Object.entries(carryParams ?? {})) {
+      if (value) params.set(key, value);
+    }
     router.push(`/stay${params.toString() ? `?${params.toString()}` : ""}`);
   }
 

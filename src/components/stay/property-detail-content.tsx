@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Bath, BedDouble, ChevronRight, MapPin, Users } from "lucide-react";
@@ -173,7 +174,9 @@ export function PropertyDetailContent({
         </div>
 
         <div>
-          <StayBookingWidget property={property} />
+          <Suspense fallback={null}>
+            <StayBookingWidget property={property} />
+          </Suspense>
         </div>
       </div>
     </Container>

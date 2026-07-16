@@ -22,6 +22,8 @@ export type StoredStayBooking = {
   nights: number;
   guestsAdults: number;
   guestsChildren: number;
+  /** Optional: bookings saved before rooms were selectable don't carry it. */
+  rooms?: number;
   nightlyRate: number;
   cleaningFee: number;
   total: number;

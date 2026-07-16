@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CalendarIcon, Minus, Plus, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -12,6 +13,8 @@ import { StayBookingDialog, type StayBookingDetails } from "@/components/stay/st
 import { formatGHS } from "@/lib/format";
 import type { Property } from "@/lib/stay-types";
 
+const MAX_ROOMS = 8;
+
 function addDays(date: Date, days: number) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
@@ -22,17 +25,55 @@ function nightsBetween(from: Date, to: Date) {
   return Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+/** Parse a `YYYY-MM-DD` param as a local date (not UTC, which can shift the day). */
+function parseDate(value: string | null) {
+  if (!value) return undefined;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!m) return undefined;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
 export function StayBookingWidget({ property }: { property: Property }) {
-  const defaultCheckIn = addDays(new Date(), 7);
-  const defaultCheckOut = addDays(defaultCheckIn, property.minNights);
-  const [range, setRange] = useState<{ from: Date; to: Date }>({ from: defaultCheckIn, to: defaultCheckOut });
-  const [adults, setAdults] = useState(2);
-  const [children, setChildren] = useState(0);
+  const params = useSearchParams();
+
+  // Restore what was searched, falling back to sensible defaults. The property's own
+  // limits win: guests are capped at maxGuests and the stay can't be under minNights.
+  const [range, setRange] = useState<{ from: Date; to: Date }>(() => {
+    const from = parseDate(params.get("checkin")) ?? addDays(new Date(), 7);
+    const searchedTo = parseDate(params.get("checkout"));
+    const earliestTo = addDays(from, property.minNights);
+    const to = searchedTo && searchedTo > from && nightsBetween(from, searchedTo) >= property.minNights
+      ? searchedTo
+      : earliestTo;
+    return { from, to };
+  });
+
+  const [adults, setAdults] = useState(() => {
+    const searched = Number(params.get("adults")) || 0;
+    return clamp(searched > 0 ? searched : 2, 1, property.maxGuests);
+  });
+
+  const [children, setChildren] = useState(() => {
+    const searchedAdults = Number(params.get("adults")) || 0;
+    const seatsTaken = clamp(searchedAdults > 0 ? searchedAdults : 2, 1, property.maxGuests);
+    const searched = Number(params.get("children")) || 0;
+    return clamp(searched, 0, property.maxGuests - seatsTaken);
+  });
+
+  const [rooms, setRooms] = useState(() => {
+    const searched = Number(params.get("rooms")) || 0;
+    return clamp(searched > 0 ? searched : 1, 1, MAX_ROOMS);
+  });
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pending, setPending] = useState<StayBookingDetails | null>(null);
 
   const nights = nightsBetween(range.from, range.to);
-  const subtotal = property.pricePerNight * nights;
+  const subtotal = property.pricePerNight * nights * rooms;
   const serviceFee = subtotal * 0.05;
   const total = subtotal + property.cleaningFee + serviceFee;
   const totalGuests = adults + children;
@@ -46,6 +87,7 @@ export function StayBookingWidget({ property }: { property: Property }) {
       nights,
       adults,
       children,
+      rooms,
       subtotal,
       cleaningFee: property.cleaningFee,
       serviceFee,
@@ -88,7 +130,9 @@ export function StayBookingWidget({ property }: { property: Property }) {
         </Popover>
 
         <div>
-          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Guests</Label>
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Guests &amp; rooms
+          </Label>
           <div className="mt-2 flex flex-col gap-2 rounded-lg border border-border p-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-foreground">Adults</span>
@@ -97,6 +141,10 @@ export function StayBookingWidget({ property }: { property: Property }) {
             <div className="flex items-center justify-between">
               <span className="text-sm text-foreground">Children</span>
               <Stepper value={children} onChange={setChildren} min={0} max={property.maxGuests - adults} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-foreground">Rooms</span>
+              <Stepper value={rooms} onChange={setRooms} min={1} max={MAX_ROOMS} />
             </div>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">Max {property.maxGuests} guests</p>
@@ -107,7 +155,8 @@ export function StayBookingWidget({ property }: { property: Property }) {
         <div className="flex flex-col gap-2 text-sm">
           <div className="flex justify-between text-muted-foreground">
             <span>
-              {formatGHS(property.pricePerNight)} × {nights} nights
+              {formatGHS(property.pricePerNight)} × {nights} night{nights > 1 ? "s" : ""}
+              {rooms > 1 && ` × ${rooms} rooms`}
             </span>
             <span>{formatGHS(subtotal)}</span>
           </div>

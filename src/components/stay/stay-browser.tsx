@@ -48,16 +48,22 @@ function StayBrowserInner({
   initialType,
   initialSort,
   initialQ,
+  initialGuests,
+  bookingQuery,
 }: {
   initialType: PropertyType | null;
   initialSort: StayFilterState["sort"] | null;
   initialQ: string;
+  initialGuests: number;
+  /** The searched dates/guests, carried onto each card so the booking widget can restore them. */
+  bookingQuery: string;
 }) {
   const [filters, setFilters] = useState<StayFilterState>(() => ({
     ...defaultFilters(),
     propertyTypes: initialType ? [initialType] : [],
     sort: initialSort ?? "recommended",
     q: initialQ,
+    guests: initialGuests,
   }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -157,7 +163,7 @@ function StayBrowserInner({
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
               {properties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+                <PropertyCard key={property.id} property={property} bookingQuery={bookingQuery} />
               ))}
             </div>
           )}
@@ -177,12 +183,27 @@ export function StayBrowser() {
     ? (sortParam as StayFilterState["sort"])
     : null;
   const initialQ = params.get("q") ?? "";
+  const adults = Number(params.get("adults")) || 0;
+  const children = Number(params.get("children")) || 0;
+  const totalGuests = adults + children;
+  const initialGuests = totalGuests > 0 ? totalGuests : 1;
+
+  // Only the booking-relevant criteria travel to the detail page.
+  const bookingParams = new URLSearchParams();
+  for (const key of ["checkin", "checkout", "adults", "children", "rooms", "pets"]) {
+    const value = params.get(key);
+    if (value) bookingParams.set(key, value);
+  }
+  const bookingQuery = bookingParams.toString();
+
   return (
     <StayBrowserInner
-      key={`${initialType ?? "all"}-${initialSort ?? "default"}-${initialQ}`}
+      key={`${initialType ?? "all"}-${initialSort ?? "default"}-${initialQ}-${initialGuests}`}
       initialType={initialType}
       initialSort={initialSort}
       initialQ={initialQ}
+      initialGuests={initialGuests}
+      bookingQuery={bookingQuery}
     />
   );
 }

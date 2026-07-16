@@ -14,11 +14,21 @@ const propertyTypeLabels: Record<Property["propertyType"], string> = {
   vacation: "Vacation Home",
 };
 
-export function PropertyCard({ property, className }: { property: Property; className?: string }) {
+export function PropertyCard({
+  property,
+  className,
+  bookingQuery,
+}: {
+  property: Property;
+  className?: string;
+  /** Searched dates/guests to carry through, so the booking widget opens pre-filled. */
+  bookingQuery?: string;
+}) {
   const isStaticProperty = Boolean(getPropertyBySlug(property.slug));
-  const href = isStaticProperty
+  const base = isStaticProperty
     ? `/stay/${property.slug}`
     : `/stay/preview?slug=${encodeURIComponent(property.slug)}`;
+  const href = bookingQuery ? `${base}${base.includes("?") ? "&" : "?"}${bookingQuery}` : base;
 
   return (
     <Link

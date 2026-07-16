@@ -29,6 +29,7 @@ export type StayBookingDetails = {
   nights: number;
   adults: number;
   children: number;
+  rooms: number;
   subtotal: number;
   cleaningFee: number;
   serviceFee: number;
@@ -85,6 +86,7 @@ export function StayBookingDialog({
       nights: bookingDetails.nights,
       guestsAdults: bookingDetails.adults,
       guestsChildren: bookingDetails.children,
+      rooms: bookingDetails.rooms,
       nightlyRate: bookingDetails.property.pricePerNight,
       cleaningFee: bookingDetails.cleaningFee,
       total: bookingDetails.total,
@@ -152,7 +154,8 @@ export function StayBookingDialog({
                 {checkInLabel} → {checkOutLabel} · {details.nights} night{details.nights > 1 ? "s" : ""}
               </p>
               <p className="text-sm text-muted-foreground">
-                {details.adults + details.children} guest{details.adults + details.children > 1 ? "s" : ""}
+                {details.adults + details.children} guest{details.adults + details.children > 1 ? "s" : ""} ·{" "}
+                {details.rooms} room{details.rooms > 1 ? "s" : ""}
               </p>
             </div>
 
@@ -161,7 +164,9 @@ export function StayBookingDialog({
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
-                  {formatGHS(details.property.pricePerNight)} × {details.nights} nights
+                  {formatGHS(details.property.pricePerNight)} × {details.nights} night
+                  {details.nights > 1 ? "s" : ""}
+                  {details.rooms > 1 && ` × ${details.rooms} rooms`}
                 </span>
                 <span className="font-medium text-foreground">{formatGHS(details.subtotal)}</span>
               </div>

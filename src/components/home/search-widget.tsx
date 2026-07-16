@@ -358,8 +358,9 @@ export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
         if (location.trim()) params.set("q", location.trim());
         if (checkIn) params.set("checkin", checkIn.toISOString().slice(0, 10));
         if (checkOut) params.set("checkout", checkOut.toISOString().slice(0, 10));
-        const totalGuests = stayGuests.adults + stayGuests.children;
-        if (totalGuests > 0) params.set("guests", String(totalGuests));
+        // Kept separate (rather than one total) so the booking widget can restore them.
+        if (stayGuests.adults > 0) params.set("adults", String(stayGuests.adults));
+        if (stayGuests.children > 0) params.set("children", String(stayGuests.children));
         if (stayGuests.rooms > 0) params.set("rooms", String(stayGuests.rooms));
         if (stayGuests.pets) params.set("pets", "1");
         router.push(`/stay${params.toString() ? `?${params.toString()}` : ""}`);

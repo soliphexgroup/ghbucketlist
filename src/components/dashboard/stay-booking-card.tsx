@@ -71,7 +71,8 @@ export function StayBookingCard({ booking }: { booking: StoredStayBooking }) {
 
         <p className="text-sm text-muted-foreground">
           {booking.nights} night{booking.nights > 1 ? "s" : ""} · {booking.guestsAdults + booking.guestsChildren} guest
-          {booking.guestsAdults + booking.guestsChildren > 1 ? "s" : ""} · {formatGHS(booking.total)}
+          {booking.guestsAdults + booking.guestsChildren > 1 ? "s" : ""}
+          {(booking.rooms ?? 1) > 1 && ` · ${booking.rooms} rooms`} · {formatGHS(booking.total)}
         </p>
 
         {canCancel && (
