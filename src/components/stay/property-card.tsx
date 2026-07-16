@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BedDouble, Zap } from "lucide-react";
 import type { Property } from "@/lib/stay-types";
-import { StarRating } from "@/components/star-rating";
+import { ReviewScoreBadge } from "@/components/stay/review-score-badge";
 import { WishlistButton } from "@/components/wishlist-button";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -69,7 +69,7 @@ export function PropertyCard({
         </div>
 
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-2">
-          <StarRating rating={property.rating} reviewCount={property.reviewCount} />
+          <ReviewScoreBadge rating={property.rating} reviewCount={property.reviewCount} compact />
           <span className="font-heading text-base font-semibold text-foreground">
             {formatGHS(property.pricePerNight)}
             <span className="text-xs font-normal text-muted-foreground"> /night</span>

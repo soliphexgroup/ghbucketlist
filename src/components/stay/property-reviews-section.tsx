@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Star } from "lucide-react";
+import { formatScore, scoreLabel, toScore10 } from "@/lib/review-score";
 import type { CategoryRatings, PropertyReview } from "@/lib/stay-types";
 
 const categoryLabels: { key: keyof CategoryRatings; label: string }[] = [
@@ -21,20 +21,20 @@ export function PropertyReviewsSection({
   categoryRatings: CategoryRatings;
   reviews: PropertyReview[];
 }) {
+  const score = toScore10(rating);
+
   return (
     <section>
-      <h2 className="font-heading text-xl font-semibold text-foreground">Reviews</h2>
+      <h2 className="font-heading text-xl font-semibold text-foreground">Guest reviews</h2>
 
       <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-start">
-        <div className="flex items-center gap-3">
-          <span className="font-heading text-4xl font-bold text-foreground">{rating.toFixed(1)}</span>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="rounded-lg rounded-bl-none bg-primary px-3 py-2 font-heading text-2xl font-bold text-primary-foreground">
+            {formatScore(score)}
+          </span>
           <div>
-            <div className="flex gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className={i < Math.round(rating) ? "size-4 fill-brand-gold text-brand-gold" : "size-4 text-border"} />
-              ))}
-            </div>
-            <p className="mt-0.5 text-sm text-muted-foreground">{reviewCount} reviews</p>
+            <p className="font-heading text-base font-semibold text-foreground">{scoreLabel(score)}</p>
+            <p className="text-sm text-muted-foreground">{reviewCount} reviews</p>
           </div>
         </div>
 
@@ -44,9 +44,14 @@ export function PropertyReviewsSection({
               <span className="text-muted-foreground">{label}</span>
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-brand-gold" style={{ width: `${(categoryRatings[key] / 5) * 100}%` }} />
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${(categoryRatings[key] / 5) * 100}%` }}
+                  />
                 </div>
-                <span className="w-6 text-right text-foreground">{categoryRatings[key].toFixed(1)}</span>
+                <span className="w-6 text-right text-foreground">
+                  {formatScore(toScore10(categoryRatings[key]))}
+                </span>
               </div>
             </div>
           ))}
@@ -56,18 +61,22 @@ export function PropertyReviewsSection({
       <div className="mt-8 flex flex-col gap-6">
         {reviews.map((review) => (
           <div key={review.id} className="flex gap-3 border-b border-border pb-6 last:border-0">
-            <Image src={review.userAvatar} alt={review.userName} width={40} height={40} className="size-10 shrink-0 rounded-full object-cover" />
+            <Image
+              src={review.userAvatar}
+              alt={review.userName}
+              width={40}
+              height={40}
+              className="size-10 shrink-0 rounded-full object-cover"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <p className="text-sm font-semibold text-foreground">{review.userName}</p>
                 <span className="text-xs text-muted-foreground">
                   {new Date(review.date).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}
                 </span>
-              </div>
-              <div className="mt-1 flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={i < review.rating ? "size-3.5 fill-brand-gold text-brand-gold" : "size-3.5 text-border"} />
-                ))}
+                <span className="rounded rounded-bl-none bg-primary px-1.5 py-0.5 font-heading text-xs font-bold text-primary-foreground">
+                  {formatScore(toScore10(review.rating))}
+                </span>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">{review.text}</p>
             </div>

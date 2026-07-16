@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Bath, BedDouble, ChevronRight, MapPin, Users } from "lucide-react";
 import { Container } from "@/components/container";
 import { Separator } from "@/components/ui/separator";
-import { StarRating } from "@/components/star-rating";
+import { ReviewScoreBadge } from "@/components/stay/review-score-badge";
 import { Gallery } from "@/components/activities/detail/gallery";
 import { VenueMap } from "@/components/activities/detail/venue-map";
 import { AmenitiesGrid } from "@/components/stay/amenities-grid";
@@ -49,18 +49,22 @@ export function PropertyDetailContent({
 
       <Gallery images={property.images} title={property.title} />
 
-      <div className="mt-8 flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-secondary-foreground">
+      <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <span className="inline-flex w-fit items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-secondary-foreground">
             {propertyTypeLabels[property.propertyType]}
           </span>
-          <StarRating rating={property.rating} reviewCount={property.reviewCount} />
+          <h1 className="font-heading text-3xl font-bold text-foreground sm:text-4xl">{property.title}</h1>
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="size-4 shrink-0" />
+            {property.neighbourhood}, {property.city}
+          </p>
         </div>
-        <h1 className="font-heading text-3xl font-bold text-foreground sm:text-4xl">{property.title}</h1>
-        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <MapPin className="size-4" />
-          {property.neighbourhood}, {property.city}
-        </p>
+        <ReviewScoreBadge
+          rating={property.rating}
+          reviewCount={property.reviewCount}
+          className="shrink-0"
+        />
       </div>
 
       {hasRoomTable && (
@@ -112,7 +116,7 @@ export function PropertyDetailContent({
           <Separator />
 
           <section>
-            <h2 className="font-heading text-xl font-semibold text-foreground">What this place offers</h2>
+            <h2 className="font-heading text-xl font-semibold text-foreground">Facilities</h2>
             <div className="mt-4">
               <AmenitiesGrid amenities={property.amenities} />
             </div>
