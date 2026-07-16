@@ -25,8 +25,31 @@ export type ExperienceFilters = {
   duration?: "under1" | "1to2" | "2to4" | "half" | "full";
   neighbourhood?: string;
   minRating?: number;
+  /** ISO `YYYY-MM-DD`. Matched against the experience's schedule by weekday. */
+  date?: string;
+  /** Group size — the experience has to be able to take them all. */
+  participants?: number;
   sort?: "recommended" | "price-asc" | "price-desc" | "newest" | "reviewed";
 };
+
+// `scheduleDays` holds full English weekday names, so index them directly rather
+// than going through a locale that might spell them differently.
+const WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+/** "2026-07-17" → "Friday". Parsed as a local date; `new Date(iso)` would read it as UTC. */
+function weekdayFromISODate(iso: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return undefined;
+  return WEEKDAY_NAMES[new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay()];
+}
 
 function matchesDuration(minutes: number, bucket?: ExperienceFilters["duration"]) {
   if (!bucket) return true;
@@ -79,6 +102,17 @@ export function listExperiences(filters: ExperienceFilters = {}, extra: Experien
 
   if (filters.minRating) {
     results = results.filter((e) => e.rating >= filters.minRating!);
+  }
+
+  if (filters.date) {
+    const weekday = weekdayFromISODate(filters.date);
+    if (weekday) results = results.filter((e) => e.scheduleDays.includes(weekday));
+  }
+
+  if (filters.participants && filters.participants > 0) {
+    // Only the upper limit filters: `minAttendees` is what a session needs to run,
+    // not a floor on who's allowed to search, so a solo visitor still sees it.
+    results = results.filter((e) => e.maxCapacity >= filters.participants!);
   }
 
   const sort = filters.sort ?? "recommended";

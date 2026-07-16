@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SlidersHorizontal } from "lucide-react";
+import { CalendarIcon, SlidersHorizontal, Users, X } from "lucide-react";
 import { Container } from "@/components/container";
 import { ActivityCard } from "@/components/activity-card";
 import { FiltersSidebar, type FilterState } from "@/components/activities/filters-sidebar";
@@ -19,6 +19,36 @@ import { listExperiences, priceRangeBounds } from "@/lib/repository";
 import { useHostCreatedExperiences } from "@/lib/host-experiences-store";
 import type { ExperienceFilters } from "@/lib/repository";
 
+/** "2026-07-17" → "Fri 17 Jul" */
+function formatDateChip(iso: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return iso;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+    .toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })
+    .replace(",", "");
+}
+
+function FilterChip({ icon: Icon, label, onClear }: {
+  icon: typeof CalendarIcon;
+  label: string;
+  onClear: () => void;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+      <Icon className="size-3.5 shrink-0" />
+      {label}
+      <button
+        type="button"
+        onClick={onClear}
+        aria-label={`Clear ${label}`}
+        className="ml-0.5 rounded-full text-secondary-foreground/70 hover:text-secondary-foreground"
+      >
+        <X className="size-3" />
+      </button>
+    </span>
+  );
+}
+
 const sortOptions: { value: NonNullable<ExperienceFilters["sort"]>; label: string }[] = [
   { value: "recommended", label: "Recommended" },
   { value: "price-asc", label: "Price (low to high)" },
@@ -29,6 +59,7 @@ const sortOptions: { value: NonNullable<ExperienceFilters["sort"]>; label: strin
 
 function initialFilters(params: URLSearchParams): FilterState {
   const bounds = priceRangeBounds();
+  const participants = Number(params.get("participants"));
   return {
     q: params.get("q") ?? "",
     categories: params.get("category") ? [params.get("category")!] : [],
@@ -36,6 +67,8 @@ function initialFilters(params: URLSearchParams): FilterState {
     duration: (params.get("duration") as FilterState["duration"]) ?? undefined,
     neighbourhood: params.get("neighbourhood") ?? undefined,
     minRating: params.get("minRating") ? Number(params.get("minRating")) : undefined,
+    date: params.get("date") ?? undefined,
+    participants: Number.isFinite(participants) && participants > 0 ? participants : undefined,
     sort: (params.get("sort") as FilterState["sort"]) ?? "recommended",
   };
 }
@@ -69,6 +102,9 @@ export function ActivitiesBrowser({
     if (merged.duration) params.set("duration", merged.duration);
     if (merged.neighbourhood) params.set("neighbourhood", merged.neighbourhood);
     if (merged.minRating) params.set("minRating", String(merged.minRating));
+    // Carried through so changing a sidebar filter doesn't discard the hero search.
+    if (merged.date) params.set("date", merged.date);
+    if (merged.participants) params.set("participants", String(merged.participants));
     if (merged.sort !== "recommended") params.set("sort", merged.sort);
     const query = params.toString();
     router.replace(query ? `${basePath}?${query}` : basePath, { scroll: false });
@@ -89,6 +125,25 @@ export function ActivitiesBrowser({
           <p className="mt-1 text-muted-foreground">
             {description}
           </p>
+
+          {(filters.date || filters.participants) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {filters.date && (
+                <FilterChip
+                  icon={CalendarIcon}
+                  label={formatDateChip(filters.date)}
+                  onClear={() => updateFilters({ date: undefined })}
+                />
+              )}
+              {filters.participants && (
+                <FilterChip
+                  icon={Users}
+                  label={`${filters.participants} participant${filters.participants > 1 ? "s" : ""}`}
+                  onClear={() => updateFilters({ participants: undefined })}
+                />
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
