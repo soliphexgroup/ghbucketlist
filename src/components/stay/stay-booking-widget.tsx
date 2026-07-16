@@ -11,30 +11,13 @@ import { Separator } from "@/components/ui/separator";
 import { WishlistButton } from "@/components/wishlist-button";
 import { StayBookingDialog, type StayBookingDetails } from "@/components/stay/stay-booking-dialog";
 import { formatGHS } from "@/lib/format";
+import { addDays, nightsBetween, parseDateParam, resolveStayRange, startOfToday } from "@/lib/stay-dates";
 import type { Property } from "@/lib/stay-types";
 
 const MAX_ROOMS = 8;
 
-function addDays(date: Date, days: number) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function nightsBetween(from: Date, to: Date) {
-  return Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
-}
-
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
-}
-
-/** Parse a `YYYY-MM-DD` param as a local date (not UTC, which can shift the day). */
-function parseDate(value: string | null) {
-  if (!value) return undefined;
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!m) return undefined;
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
 }
 
 export function StayBookingWidget({ property }: { property: Property }) {
@@ -42,15 +25,13 @@ export function StayBookingWidget({ property }: { property: Property }) {
 
   // Restore what was searched, falling back to sensible defaults. The property's own
   // limits win: guests are capped at maxGuests and the stay can't be under minNights.
-  const [range, setRange] = useState<{ from: Date; to: Date }>(() => {
-    const from = parseDate(params.get("checkin")) ?? addDays(new Date(), 7);
-    const searchedTo = parseDate(params.get("checkout"));
-    const earliestTo = addDays(from, property.minNights);
-    const to = searchedTo && searchedTo > from && nightsBetween(from, searchedTo) >= property.minNights
-      ? searchedTo
-      : earliestTo;
-    return { from, to };
-  });
+  const [range, setRange] = useState<{ from: Date; to: Date }>(() =>
+    resolveStayRange({
+      checkIn: parseDateParam(params.get("checkin")),
+      checkOut: parseDateParam(params.get("checkout")),
+      minNights: property.minNights,
+    })
+  );
 
   const [adults, setAdults] = useState(() => {
     const searched = Number(params.get("adults")) || 0;
@@ -123,7 +104,7 @@ export function StayBookingWidget({ property }: { property: Property }) {
                 if (next?.from && next?.to) setRange({ from: next.from, to: next.to });
                 else if (next?.from) setRange({ from: next.from, to: addDays(next.from, property.minNights) });
               }}
-              disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+              disabled={(d) => d < startOfToday()}
               autoFocus
             />
           </PopoverContent>

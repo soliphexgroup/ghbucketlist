@@ -20,7 +20,7 @@ import { addStayBooking } from "@/lib/stay-bookings-store";
 import { getPropertyHost } from "@/lib/stay-repository";
 import { usePaystackCheckout } from "@/hooks/use-paystack-checkout";
 import { paystackReference } from "@/lib/paystack";
-import type { Property } from "@/lib/stay-types";
+import type { Property, RoomOffer } from "@/lib/stay-types";
 
 export type StayBookingDetails = {
   property: Property;
@@ -30,6 +30,8 @@ export type StayBookingDetails = {
   adults: number;
   children: number;
   rooms: number;
+  /** Hotels only: which room types were picked, and how many of each. */
+  selectedRooms?: { offer: RoomOffer; qty: number }[];
   subtotal: number;
   cleaningFee: number;
   serviceFee: number;
@@ -87,6 +89,11 @@ export function StayBookingDialog({
       guestsAdults: bookingDetails.adults,
       guestsChildren: bookingDetails.children,
       rooms: bookingDetails.rooms,
+      roomSelections: bookingDetails.selectedRooms?.map(({ offer, qty }) => ({
+        name: offer.name,
+        qty,
+        pricePerNight: offer.pricePerNight,
+      })),
       nightlyRate: bookingDetails.property.pricePerNight,
       cleaningFee: bookingDetails.cleaningFee,
       total: bookingDetails.total,
@@ -162,14 +169,29 @@ export function StayBookingDialog({
             <Separator />
 
             <div className="flex flex-col gap-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {formatGHS(details.property.pricePerNight)} × {details.nights} night
-                  {details.nights > 1 ? "s" : ""}
-                  {details.rooms > 1 && ` × ${details.rooms} rooms`}
-                </span>
-                <span className="font-medium text-foreground">{formatGHS(details.subtotal)}</span>
-              </div>
+              {details.selectedRooms && details.selectedRooms.length > 0 ? (
+                // Each room type has its own rate, so they can't collapse into one line.
+                details.selectedRooms.map(({ offer, qty }) => (
+                  <div key={offer.id} className="flex justify-between gap-3">
+                    <span className="text-muted-foreground">
+                      {qty} × {offer.name} · {formatGHS(offer.pricePerNight)} × {details.nights} night
+                      {details.nights > 1 ? "s" : ""}
+                    </span>
+                    <span className="font-medium text-foreground">
+                      {formatGHS(offer.pricePerNight * details.nights * qty)}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {formatGHS(details.property.pricePerNight)} × {details.nights} night
+                    {details.nights > 1 ? "s" : ""}
+                    {details.rooms > 1 && ` × ${details.rooms} rooms`}
+                  </span>
+                  <span className="font-medium text-foreground">{formatGHS(details.subtotal)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Cleaning fee</span>
                 <span className="font-medium text-foreground">{formatGHS(details.cleaningFee)}</span>

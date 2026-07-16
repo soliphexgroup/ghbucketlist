@@ -10,6 +10,8 @@ import { VenueMap } from "@/components/activities/detail/venue-map";
 import { AmenitiesGrid } from "@/components/stay/amenities-grid";
 import { PropertyReviewsSection } from "@/components/stay/property-reviews-section";
 import { StayBookingWidget } from "@/components/stay/stay-booking-widget";
+import { RoomOfferTable } from "@/components/stay/room-offer-table";
+import { cn } from "@/lib/utils";
 import type { Property } from "@/lib/stay-types";
 import type { PropertyReview } from "@/lib/stay-types";
 import type { Host } from "@/lib/types";
@@ -31,6 +33,9 @@ export function PropertyDetailContent({
   reviews: PropertyReview[];
 }) {
   const mapQuery = `${property.neighbourhood}, ${property.city}`;
+  // Hotels sell individual room types, so they get the availability table instead of
+  // the whole-unit booking card.
+  const hasRoomTable = Boolean(property.roomTypes?.length);
 
   return (
     <Container className="py-6 sm:py-8">
@@ -58,7 +63,18 @@ export function PropertyDetailContent({
         </p>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px]">
+      {hasRoomTable && (
+        <section id="availability" className="mt-8">
+          <h2 className="font-heading text-xl font-semibold text-foreground">Availability</h2>
+          <div className="mt-4">
+            <Suspense fallback={null}>
+              <RoomOfferTable property={property} />
+            </Suspense>
+          </div>
+        </section>
+      )}
+
+      <div className={cn("mt-8 grid grid-cols-1 gap-10", !hasRoomTable && "lg:grid-cols-[1fr_380px]")}>
         <div className="flex flex-col gap-10">
           {host && (
             <div className="flex items-center gap-3">
@@ -173,11 +189,13 @@ export function PropertyDetailContent({
           />
         </div>
 
-        <div>
-          <Suspense fallback={null}>
-            <StayBookingWidget property={property} />
-          </Suspense>
-        </div>
+        {!hasRoomTable && (
+          <div>
+            <Suspense fallback={null}>
+              <StayBookingWidget property={property} />
+            </Suspense>
+          </div>
+        )}
       </div>
     </Container>
   );

@@ -24,6 +24,9 @@ export type StoredStayBooking = {
   guestsChildren: number;
   /** Optional: bookings saved before rooms were selectable don't carry it. */
   rooms?: number;
+  /** Hotels only: the room types booked. Whole-unit stays have no selection to record. */
+  roomSelections?: { name: string; qty: number; pricePerNight: number }[];
+  /** The property's "from" price. For hotels the real rates live on roomSelections. */
   nightlyRate: number;
   cleaningFee: number;
   total: number;
