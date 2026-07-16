@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { VerticalHero } from "@/components/vertical-hero";
 import { MobileHero } from "@/components/home/mobile-hero";
+import { MobileSearchBar } from "@/components/home/mobile-search-bar";
 import { ThingsToDoLanding } from "@/components/activities/things-to-do-landing";
 
 export const metadata: Metadata = {
@@ -12,11 +13,16 @@ export const metadata: Metadata = {
 export default function ActivitiesPage() {
   return (
     <>
-      <MobileHero
-        activeTab="things-to-do"
-        headline="Find things to do"
-        subheading="Day trips, tours, attractions, and activities — discover things to do across Accra and beyond."
-      />
+      <Suspense fallback={null}>
+        <MobileHero
+          activeTab="things-to-do"
+          headline="Find things to do"
+          subheading="Day trips, tours, attractions, and activities — discover things to do across Accra and beyond."
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <MobileSearchBar activeTab="things-to-do" />
+      </Suspense>
       <div className="hidden lg:block">
         <VerticalHero
           activeTab="things-to-do"

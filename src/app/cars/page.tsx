@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { VerticalHero } from "@/components/vertical-hero";
 import { MobileHero } from "@/components/home/mobile-hero";
+import { MobileSearchBar } from "@/components/home/mobile-search-bar";
 import { CarsLanding } from "@/components/cars/cars-landing";
 
 export const metadata: Metadata = {
@@ -12,11 +13,16 @@ export const metadata: Metadata = {
 export default function CarsPage() {
   return (
     <>
-      <MobileHero
-        activeTab="car-rentals"
-        headline="Find your perfect rental car"
-        subheading="Self-drive or with a driver — compare rates on cars across Accra and beyond."
-      />
+      <Suspense fallback={null}>
+        <MobileHero
+          activeTab="car-rentals"
+          headline="Find your perfect rental car"
+          subheading="Self-drive or with a driver — compare rates on cars across Accra and beyond."
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <MobileSearchBar activeTab="car-rentals" />
+      </Suspense>
       <div className="hidden lg:block">
         <VerticalHero
           activeTab="car-rentals"

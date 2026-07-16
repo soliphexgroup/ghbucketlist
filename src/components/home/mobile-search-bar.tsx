@@ -94,6 +94,10 @@ export function MobileSearchBar({
   const { primary, secondary } = summarise(activeTab, params);
   const stay = activeTab === "stays" ? readStaySearch(params) : null;
 
+  // On a listing with nothing searched yet the hero's full box is on screen, so the
+  // bar would just be a second search UI. A detail page always shows it.
+  if (mode === "listing" && params.toString().length === 0) return null;
+
   function handleSearch(next: URLSearchParams) {
     setOpen(false);
     const query = next.toString();

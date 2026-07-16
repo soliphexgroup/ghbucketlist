@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { BedDouble, Heart, MapPin, Utensils, Wrench, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,10 @@ export function MobileHero({
   headline: string;
   subheading: string;
 }) {
+  // Once a search is running the page shows the sticky search bar instead, so the
+  // hero drops its box rather than stacking two search UIs on one screen.
+  const searchActive = useSearchParams().toString().length > 0;
+
   return (
     <section className="relative overflow-hidden lg:hidden">
       {/* Tropical backdrop under a green brand tint */}
@@ -70,17 +75,19 @@ export function MobileHero({
         </motion.p>
 
         {/* Each vertical gets a search box with its own fields. */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="mt-8"
-        >
-          {activeTab === "stays" && <MobileStaySearch />}
-          {activeTab === "things-to-do" && <MobileActivitySearch />}
-          {activeTab === "car-rentals" && <MobileCarSearch />}
-          {activeTab === "handyman" && <MobileServiceSearch />}
-        </motion.div>
+        {!searchActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+            className="mt-8"
+          >
+            {activeTab === "stays" && <MobileStaySearch />}
+            {activeTab === "things-to-do" && <MobileActivitySearch />}
+            {activeTab === "car-rentals" && <MobileCarSearch />}
+            {activeTab === "handyman" && <MobileServiceSearch />}
+          </motion.div>
+        )}
 
         {/* Category shortcuts */}
         <motion.nav
