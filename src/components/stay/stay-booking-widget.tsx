@@ -100,6 +100,8 @@ export function StayBookingWidget({ property }: { property: Property }) {
             <Calendar
               mode="range"
               selected={range}
+              // Otherwise it opens on the current month, not the stay's.
+              defaultMonth={range.from}
               onSelect={(next) => {
                 if (next?.from && next?.to) setRange({ from: next.from, to: next.to });
                 else if (next?.from) setRange({ from: next.from, to: addDays(next.from, property.minNights) });

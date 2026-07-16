@@ -118,6 +118,8 @@ function DateField({
         <Calendar
           mode="single"
           selected={date}
+          // Otherwise it opens on the current month, not the selected date's.
+          defaultMonth={date}
           onSelect={onSelect}
           disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
           autoFocus
@@ -156,6 +158,8 @@ function DateRangeField({
         <Calendar
           mode="range"
           selected={checkIn && checkOut ? { from: checkIn, to: checkOut } : undefined}
+          // Otherwise it opens on the current month, not the stay's.
+          defaultMonth={checkIn}
           onSelect={(next) => {
             if (next?.from && next?.to) onSelect({ from: next.from, to: next.to });
             else if (next?.from) onSelect({ from: next.from, to: addDays(next.from, 2) });

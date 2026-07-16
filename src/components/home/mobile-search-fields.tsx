@@ -110,6 +110,9 @@ export function MobileDateField({
         <Calendar
           mode="single"
           selected={date}
+          // Without this the calendar opens on the current month, even when the
+          // selected date is months away.
+          defaultMonth={date}
           onSelect={(next) => {
             onSelect(next);
             setOpen(false);
