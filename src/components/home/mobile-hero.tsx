@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { BedDouble, Heart, MapPin, Search, Utensils, Wrench, type LucideIcon } from "lucide-react";
+import { BedDouble, Heart, MapPin, Utensils, Wrench, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MobileStaySearch } from "@/components/home/mobile-stay-search";
+import { MobileCarSearch } from "@/components/home/mobile-car-search";
+import { MobileServiceSearch } from "@/components/home/mobile-service-search";
+import { MobileActivitySearch } from "@/components/home/mobile-activity-search";
 import type { ServiceTabId } from "@/lib/service-tabs";
 
 type Shortcut = {
@@ -35,18 +36,6 @@ export function MobileHero({
   headline: string;
   subheading: string;
 }) {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-
-  // The active category's listing is where the search pill sends people.
-  const searchBase = shortcuts.find((s) => s.id === activeTab)?.href ?? "/stay";
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const q = query.trim();
-    router.push(`${searchBase}${q ? `?q=${encodeURIComponent(q)}` : ""}`);
-  }
-
   return (
     <section className="relative overflow-hidden lg:hidden">
       {/* Tropical backdrop under a green brand tint */}
@@ -80,37 +69,17 @@ export function MobileHero({
           {subheading}
         </motion.p>
 
-        {/* Stays gets the full stacked search box; the other verticals keep the simple pill. */}
+        {/* Each vertical gets a search box with its own fields. */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
           className="mt-8"
         >
-          {activeTab === "stays" ? (
-            <MobileStaySearch />
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div className="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-2xl">
-                <Search className="size-5 shrink-0 text-muted-foreground" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Where do you want to explore?"
-                  aria-label="Where do you want to explore?"
-                  className="min-w-0 flex-1 border-0 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
-                />
-                <div className="h-6 w-px shrink-0 bg-border" />
-                <button
-                  type="submit"
-                  aria-label="Search"
-                  className="shrink-0 text-foreground transition-opacity hover:opacity-70"
-                >
-                  <Search className="size-5" />
-                </button>
-              </div>
-            </form>
-          )}
+          {activeTab === "stays" && <MobileStaySearch />}
+          {activeTab === "things-to-do" && <MobileActivitySearch />}
+          {activeTab === "car-rentals" && <MobileCarSearch />}
+          {activeTab === "handyman" && <MobileServiceSearch />}
         </motion.div>
 
         {/* Category shortcuts */}

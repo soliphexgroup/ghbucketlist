@@ -3,72 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Search } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { GuestsRoomsEditor, type GuestCounts } from "@/components/home/search-widget";
+import {
+  MobileDateField,
+  MobileSearchShell,
+  MobileSearchSubmit,
+  addDays,
+  startOfToday,
+} from "@/components/home/mobile-search-fields";
 import { listPropertyNeighbourhoods } from "@/lib/stay-repository";
 import { cn } from "@/lib/utils";
-
-function addDays(date: Date, days: number) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function startOfToday() {
-  return new Date(new Date().setHours(0, 0, 0, 0));
-}
-
-/** "Fri 10 Jul 2026" — en-GB renders "Fri, 10 Jul 2026", so drop the comma. */
-function formatLong(date: Date) {
-  return date
-    .toLocaleDateString("en-GB", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-    .replace(",", "");
-}
-
-function DateField({
-  label,
-  date,
-  onSelect,
-  disabled,
-}: {
-  label: string;
-  date: Date | undefined;
-  onSelect: (date: Date | undefined) => void;
-  disabled: (date: Date) => boolean;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button type="button" className="flex flex-col gap-1 rounded-md bg-white px-4 py-3 text-left">
-          <span className="text-sm text-muted-foreground">{label}</span>
-          <span className="truncate text-base font-bold text-foreground">
-            {date ? formatLong(date) : "Select date"}
-          </span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={(next) => {
-            onSelect(next);
-            setOpen(false);
-          }}
-          disabled={disabled}
-          autoFocus
-        />
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 export function MobileStaySearch() {
   const router = useRouter();
@@ -101,10 +46,7 @@ export function MobileStaySearch() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-1.5 rounded-xl bg-search-accent p-1.5 shadow-2xl"
-    >
+    <MobileSearchShell onSubmit={handleSubmit}>
       {/* Location */}
       <Popover open={locationOpen} onOpenChange={setLocationOpen}>
         <PopoverTrigger asChild>
@@ -149,13 +91,13 @@ export function MobileStaySearch() {
 
       {/* Check-in / Check-out */}
       <div className="grid grid-cols-2 gap-1.5">
-        <DateField
+        <MobileDateField
           label="Check-in date"
           date={checkIn}
           onSelect={handleCheckInSelect}
           disabled={(d) => d < startOfToday()}
         />
-        <DateField
+        <MobileDateField
           label="Check-out date"
           date={checkOut}
           onSelect={setCheckOut}
@@ -198,13 +140,7 @@ export function MobileStaySearch() {
         </PopoverContent>
       </Popover>
 
-      {/* Search */}
-      <button
-        type="submit"
-        className="w-full rounded-md bg-search-button py-4 text-base font-bold text-search-button-foreground transition-colors duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-      >
-        Search
-      </button>
-    </form>
+      <MobileSearchSubmit />
+    </MobileSearchShell>
   );
 }
