@@ -12,7 +12,12 @@ import {
   startOfToday,
 } from "@/components/home/mobile-search-fields";
 
-export function MobileActivitySearch() {
+export function MobileActivitySearch({
+  onSearch,
+}: {
+  /** Takes over from the default "go to the listing" — used where a search edits the page it's on. */
+  onSearch?: (params: URLSearchParams) => void;
+} = {}) {
   const router = useRouter();
 
   const [location, setLocation] = useState("");
@@ -25,6 +30,10 @@ export function MobileActivitySearch() {
     if (location.trim()) params.set("q", location.trim());
     if (date) params.set("date", date.toISOString().slice(0, 10));
     params.set("participants", String(participants));
+    if (onSearch) {
+      onSearch(params);
+      return;
+    }
     router.push(`/activities${params.toString() ? `?${params.toString()}` : ""}`);
   }
 

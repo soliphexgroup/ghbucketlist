@@ -12,7 +12,12 @@ import {
   startOfToday,
 } from "@/components/home/mobile-search-fields";
 
-export function MobileCarSearch() {
+export function MobileCarSearch({
+  onSearch,
+}: {
+  /** Takes over from the default "go to the listing" — used where a search edits the page it's on. */
+  onSearch?: (params: URLSearchParams) => void;
+} = {}) {
   const router = useRouter();
 
   const [location, setLocation] = useState("");
@@ -31,6 +36,10 @@ export function MobileCarSearch() {
     if (location.trim()) params.set("q", location.trim());
     if (pickupDate) params.set("pickup", pickupDate.toISOString().slice(0, 10));
     if (returnDate) params.set("return", returnDate.toISOString().slice(0, 10));
+    if (onSearch) {
+      onSearch(params);
+      return;
+    }
     router.push(`/cars${params.toString() ? `?${params.toString()}` : ""}`);
   }
 

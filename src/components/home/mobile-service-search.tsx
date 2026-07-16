@@ -11,7 +11,12 @@ import {
   startOfToday,
 } from "@/components/home/mobile-search-fields";
 
-export function MobileServiceSearch() {
+export function MobileServiceSearch({
+  onSearch,
+}: {
+  /** Takes over from the default "go to the listing" — used where a search edits the page it's on. */
+  onSearch?: (params: URLSearchParams) => void;
+} = {}) {
   const router = useRouter();
 
   const [serviceType, setServiceType] = useState("");
@@ -24,6 +29,10 @@ export function MobileServiceSearch() {
     const q = [serviceType.trim(), serviceLocation.trim()].filter(Boolean).join(" ");
     if (q) params.set("q", q);
     if (serviceDate) params.set("date", serviceDate.toISOString().slice(0, 10));
+    if (onSearch) {
+      onSearch(params);
+      return;
+    }
     router.push(`/services${params.toString() ? `?${params.toString()}` : ""}`);
   }
 

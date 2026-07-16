@@ -12,6 +12,7 @@ import {
   addDays,
   startOfToday,
 } from "@/components/home/mobile-search-fields";
+import { parseDateParam } from "@/lib/stay-dates";
 import { listPropertyNeighbourhoods } from "@/lib/stay-repository";
 import { cn } from "@/lib/utils";
 
@@ -22,14 +23,41 @@ export type StaySearchInitial = {
   guests?: GuestCounts;
 };
 
+/**
+ * Reads a stay search back out of the URL, so any surface that reopens the box
+ * (the listing, the sticky bar) shows what's actually on screen.
+ */
+export function readStaySearch(params: URLSearchParams) {
+  const adults = Number(params.get("adults")) || 0;
+  const children = Number(params.get("children")) || 0;
+  const rooms = Number(params.get("rooms")) || 0;
+  const hasGuestCounts = params.has("adults") || params.has("children") || params.has("rooms");
+
+  return {
+    initial: {
+      q: params.get("q") ?? "",
+      checkIn: parseDateParam(params.get("checkin")),
+      checkOut: parseDateParam(params.get("checkout")),
+      guests: hasGuestCounts
+        ? { adults, children, rooms, pets: params.get("pets") === "1" }
+        : undefined,
+    } satisfies StaySearchInitial,
+    // Every property-type tile lands here with a type (or sort, for Getaways).
+    carryParams: { type: params.get("type"), sort: params.get("sort") },
+  };
+}
+
 export function MobileStaySearch({
   initial,
   carryParams,
+  onSearch,
 }: {
   /** Pre-fills the box from an existing search, so it reflects the results on screen. */
   initial?: StaySearchInitial;
   /** Drill-down context (property type / sort) to preserve across a search. */
   carryParams?: Record<string, string | null>;
+  /** Takes over from the default "go to the listing" — used where a search edits the page it's on. */
+  onSearch?: (params: URLSearchParams) => void;
 } = {}) {
   const router = useRouter();
   const neighbourhoods = listPropertyNeighbourhoods();
@@ -63,6 +91,10 @@ export function MobileStaySearch({
     // Keep the drill-down context (e.g. type=hotel) so searching stays within it.
     for (const [key, value] of Object.entries(carryParams ?? {})) {
       if (value) params.set(key, value);
+    }
+    if (onSearch) {
+      onSearch(params);
+      return;
     }
     router.push(`/stay${params.toString() ? `?${params.toString()}` : ""}`);
   }
