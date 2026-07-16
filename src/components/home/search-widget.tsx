@@ -207,7 +207,7 @@ function CounterField({
   );
 }
 
-type GuestCounts = { adults: number; children: number; rooms: number; pets: boolean };
+export type GuestCounts = { adults: number; children: number; rooms: number; pets: boolean };
 
 function GuestCounterRow({
   label,
@@ -247,7 +247,7 @@ function GuestCounterRow({
   );
 }
 
-function GuestsRoomsEditor({
+export function GuestsRoomsEditor({
   initial,
   onDone,
 }: {

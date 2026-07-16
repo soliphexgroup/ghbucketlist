@@ -1,0 +1,210 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Check, Search } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { GuestsRoomsEditor, type GuestCounts } from "@/components/home/search-widget";
+import { listPropertyNeighbourhoods } from "@/lib/stay-repository";
+import { cn } from "@/lib/utils";
+
+function addDays(date: Date, days: number) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function startOfToday() {
+  return new Date(new Date().setHours(0, 0, 0, 0));
+}
+
+/** "Fri 10 Jul 2026" — en-GB renders "Fri, 10 Jul 2026", so drop the comma. */
+function formatLong(date: Date) {
+  return date
+    .toLocaleDateString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+    .replace(",", "");
+}
+
+function DateField({
+  label,
+  date,
+  onSelect,
+  disabled,
+}: {
+  label: string;
+  date: Date | undefined;
+  onSelect: (date: Date | undefined) => void;
+  disabled: (date: Date) => boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button type="button" className="flex flex-col gap-1 rounded-md bg-white px-4 py-3 text-left">
+          <span className="text-sm text-muted-foreground">{label}</span>
+          <span className="truncate text-base font-bold text-foreground">
+            {date ? formatLong(date) : "Select date"}
+          </span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={(next) => {
+            onSelect(next);
+            setOpen(false);
+          }}
+          disabled={disabled}
+          autoFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function MobileStaySearch() {
+  const router = useRouter();
+  const neighbourhoods = listPropertyNeighbourhoods();
+
+  const [location, setLocation] = useState("");
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [checkIn, setCheckIn] = useState<Date | undefined>(addDays(new Date(), 7));
+  const [checkOut, setCheckOut] = useState<Date | undefined>(addDays(new Date(), 9));
+  const [guests, setGuests] = useState<GuestCounts>({ adults: 2, children: 0, rooms: 1, pets: false });
+  const [guestsOpen, setGuestsOpen] = useState(false);
+
+  function handleCheckInSelect(next: Date | undefined) {
+    setCheckIn(next);
+    // Keep the stay valid: check-out must stay at least one night after check-in.
+    if (next && checkOut && checkOut <= next) setCheckOut(addDays(next, 1));
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (location.trim()) params.set("q", location.trim());
+    if (checkIn) params.set("checkin", checkIn.toISOString().slice(0, 10));
+    if (checkOut) params.set("checkout", checkOut.toISOString().slice(0, 10));
+    const totalGuests = guests.adults + guests.children;
+    if (totalGuests > 0) params.set("guests", String(totalGuests));
+    if (guests.rooms > 0) params.set("rooms", String(guests.rooms));
+    if (guests.pets) params.set("pets", "1");
+    router.push(`/stay${params.toString() ? `?${params.toString()}` : ""}`);
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-1.5 rounded-xl bg-search-accent p-1.5 shadow-2xl"
+    >
+      {/* Location */}
+      <Popover open={locationOpen} onOpenChange={setLocationOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center gap-3 rounded-md bg-white px-4 py-4 text-left"
+          >
+            <Search className="size-5 shrink-0 text-muted-foreground" />
+            <span className="truncate text-base font-bold text-foreground">
+              {location || "Around current location"}
+            </span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 p-2" align="start">
+          <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+            Neighbourhoods with places to stay
+          </p>
+          <div className="flex max-h-72 flex-col overflow-y-auto">
+            {neighbourhoods.map((n) => {
+              const isSelected = n === location;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => {
+                    setLocation(n);
+                    setLocationOpen(false);
+                  }}
+                  className={cn(
+                    "flex items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-muted",
+                    isSelected ? "bg-accent font-medium text-primary" : "text-foreground"
+                  )}
+                >
+                  {n}
+                  {isSelected && <Check className="size-4 shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Check-in / Check-out */}
+      <div className="grid grid-cols-2 gap-1.5">
+        <DateField
+          label="Check-in date"
+          date={checkIn}
+          onSelect={handleCheckInSelect}
+          disabled={(d) => d < startOfToday()}
+        />
+        <DateField
+          label="Check-out date"
+          date={checkOut}
+          onSelect={setCheckOut}
+          disabled={(d) => d <= (checkIn ?? startOfToday())}
+        />
+      </div>
+
+      {/* Adults / Children / Rooms */}
+      <Popover open={guestsOpen} onOpenChange={setGuestsOpen}>
+        <PopoverTrigger asChild>
+          <button type="button" className="grid w-full grid-cols-3 rounded-md bg-white text-left">
+            {(
+              [
+                { label: "Adults", value: guests.adults },
+                { label: "Children", value: guests.children },
+                { label: "Rooms", value: guests.rooms },
+              ] as const
+            ).map((field, i) => (
+              <span
+                key={field.label}
+                className={cn("flex flex-col gap-1 px-4 py-3", i > 0 && "border-l border-border")}
+              >
+                <span className="text-sm text-muted-foreground">{field.label}</span>
+                <span className="text-base font-bold text-foreground">{field.value}</span>
+              </span>
+            ))}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 p-5" align="start">
+          {guestsOpen && (
+            <GuestsRoomsEditor
+              key={`${guests.adults}-${guests.children}-${guests.rooms}-${guests.pets}`}
+              initial={guests}
+              onDone={(next) => {
+                setGuests(next);
+                setGuestsOpen(false);
+              }}
+            />
+          )}
+        </PopoverContent>
+      </Popover>
+
+      {/* Search */}
+      <button
+        type="submit"
+        className="w-full rounded-md bg-search-button py-4 text-base font-bold text-search-button-foreground transition-colors duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+      >
+        Search
+      </button>
+    </form>
+  );
+}

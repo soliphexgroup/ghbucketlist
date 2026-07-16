@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { BedDouble, Heart, MapPin, Search, Utensils, Wrench, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MobileStaySearch } from "@/components/home/mobile-stay-search";
 import type { ServiceTabId } from "@/lib/service-tabs";
 
 type Shortcut = {
@@ -79,33 +80,38 @@ export function MobileHero({
           {subheading}
         </motion.p>
 
-        {/* Simple single-field search pill */}
-        <motion.form
-          onSubmit={handleSubmit}
+        {/* Stays gets the full stacked search box; the other verticals keep the simple pill. */}
+        <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
           className="mt-8"
         >
-          <div className="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-2xl">
-            <Search className="size-5 shrink-0 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Where do you want to explore?"
-              aria-label="Where do you want to explore?"
-              className="min-w-0 flex-1 border-0 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
-            />
-            <div className="h-6 w-px shrink-0 bg-border" />
-            <button
-              type="submit"
-              aria-label="Search"
-              className="shrink-0 text-foreground transition-opacity hover:opacity-70"
-            >
-              <Search className="size-5" />
-            </button>
-          </div>
-        </motion.form>
+          {activeTab === "stays" ? (
+            <MobileStaySearch />
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div className="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-2xl">
+                <Search className="size-5 shrink-0 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Where do you want to explore?"
+                  aria-label="Where do you want to explore?"
+                  className="min-w-0 flex-1 border-0 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
+                />
+                <div className="h-6 w-px shrink-0 bg-border" />
+                <button
+                  type="submit"
+                  aria-label="Search"
+                  className="shrink-0 text-foreground transition-opacity hover:opacity-70"
+                >
+                  <Search className="size-5" />
+                </button>
+              </div>
+            </form>
+          )}
+        </motion.div>
 
         {/* Category shortcuts */}
         <motion.nav
