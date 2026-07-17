@@ -14,6 +14,12 @@ export type ServiceProvider = {
   hourlyRate: number;
   verified: boolean;
   responseTimeMinutes: number;
+  /**
+   * Full English weekday names the provider takes jobs on, e.g. ["Monday", "Tuesday"].
+   * Matched against a searched date's weekday. Note this is which days they work, not
+   * a calendar — nothing records whether they're already booked on a given date.
+   */
+  workingDays: string[];
   completedJobs: number;
   skills: string[];
   rating: number;

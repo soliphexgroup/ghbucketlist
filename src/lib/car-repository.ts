@@ -13,6 +13,12 @@ export type CarFilters = {
   driverAvailableOnly?: boolean;
   instantBookOnly?: boolean;
   minRating?: number;
+  /**
+   * Length of the requested rental, from the pickup and return dates. Cars that won't
+   * do a rental that short or that long drop out. This is not availability — nothing
+   * records which cars are already booked — only whether the term is one they accept.
+   */
+  rentalDays?: number;
   sort?: "recommended" | "price-asc" | "price-desc" | "rating";
 };
 
@@ -62,6 +68,14 @@ export function listCars(filters: CarFilters = {}): Car[] {
 
   if (filters.minRating) {
     results = results.filter((c) => c.rating >= filters.minRating!);
+  }
+
+  if (filters.rentalDays && filters.rentalDays > 0) {
+    results = results.filter(
+      (c) =>
+        c.minRentalDays <= filters.rentalDays! &&
+        (c.maxRentalDays === undefined || c.maxRentalDays >= filters.rentalDays!)
+    );
   }
 
   const sort = filters.sort ?? "recommended";

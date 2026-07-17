@@ -12,7 +12,7 @@ import {
   addDays,
   startOfToday,
 } from "@/components/home/mobile-search-fields";
-import { parseDateParam } from "@/lib/stay-dates";
+import { parseDateParam } from "@/lib/dates";
 import { listPropertyNeighbourhoods } from "@/lib/stay-repository";
 import { cn } from "@/lib/utils";
 

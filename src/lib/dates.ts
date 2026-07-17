@@ -23,6 +23,29 @@ export function parseDateParam(value: string | null) {
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
 }
 
+// Schedules are stored as full English weekday names, so index them directly rather
+// than going through a locale that might spell them differently.
+const WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+/** "2026-07-17" → "Friday", matching the names used in schedule/working-day data. */
+export function weekdayFromISODate(iso: string) {
+  const date = parseDateParam(iso);
+  return date ? WEEKDAY_NAMES[date.getDay()] : undefined;
+}
+
+/** Whole days between two dates, at least 1 — a rental or stay always spans one. */
+export function daysBetween(from: Date, to: Date) {
+  return nightsBetween(from, to);
+}
+
 /**
  * The dates a booking surface should open with: the searched range when it's valid,
  * otherwise a default stay that respects the property's minimum nights.

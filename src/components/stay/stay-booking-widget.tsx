@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { WishlistButton } from "@/components/wishlist-button";
 import { StayBookingDialog, type StayBookingDetails } from "@/components/stay/stay-booking-dialog";
 import { formatGHS } from "@/lib/format";
-import { addDays, nightsBetween, parseDateParam, resolveStayRange, startOfToday } from "@/lib/stay-dates";
+import { addDays, nightsBetween, parseDateParam, resolveStayRange, startOfToday } from "@/lib/dates";
 import type { Property } from "@/lib/stay-types";
 
 const MAX_ROOMS = 8;

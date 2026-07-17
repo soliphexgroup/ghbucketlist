@@ -8,7 +8,7 @@ import { MobileStaySearch, readStaySearch } from "@/components/home/mobile-stay-
 import { MobileActivitySearch } from "@/components/home/mobile-activity-search";
 import { MobileCarSearch } from "@/components/home/mobile-car-search";
 import { MobileServiceSearch } from "@/components/home/mobile-service-search";
-import { parseDateParam } from "@/lib/stay-dates";
+import { parseDateParam } from "@/lib/dates";
 import type { ServiceTabId } from "@/lib/service-tabs";
 
 const listingPathByTab: Record<ServiceTabId, string> = {

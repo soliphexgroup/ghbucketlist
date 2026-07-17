@@ -44,9 +44,12 @@ function defaultFilters(): ServiceFilterState {
 function ServiceBrowserInner({
   initialCategory,
   initialQ,
+  date,
 }: {
   initialCategory: ServiceCategory | null;
   initialQ: string;
+  /** The searched date, if any. Search context rather than a sidebar filter. */
+  date?: string;
 }) {
   const [filters, setFilters] = useState<ServiceFilterState>(() => ({
     ...defaultFilters(),
@@ -62,9 +65,10 @@ function ServiceBrowserInner({
         categories: filters.categories,
         verifiedOnly: filters.verifiedOnly,
         minRating: filters.minRating,
+        date,
         sort: filters.sort,
       }),
-    [filters]
+    [filters, date]
   );
 
   function updateFilters(next: Partial<ServiceFilterState>) {
@@ -160,12 +164,14 @@ export function ServiceBrowser() {
     ? (categoryParam as ServiceCategory)
     : null;
   const initialQ = params.get("q") ?? "";
+  const date = params.get("date") ?? undefined;
 
   return (
     <ServiceBrowserInner
       key={`${initialCategory ?? "all"}-${initialQ}`}
       initialCategory={initialCategory}
       initialQ={initialQ}
+      date={date}
     />
   );
 }

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { StayBookingDialog, type StayBookingDetails } from "@/components/stay/stay-booking-dialog";
 import { formatGHS } from "@/lib/format";
-import { nightsBetween, parseDateParam, resolveStayRange } from "@/lib/stay-dates";
+import { nightsBetween, parseDateParam, resolveStayRange } from "@/lib/dates";
 import type { Property, RoomPerk } from "@/lib/stay-types";
 import { cn } from "@/lib/utils";
 

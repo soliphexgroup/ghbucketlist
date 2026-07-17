@@ -1,5 +1,6 @@
 import { serviceProviders } from "@/data/service-providers";
 import { serviceCategoryLabels } from "@/data/service-categories";
+import { weekdayFromISODate } from "@/lib/dates";
 import type { ServiceCategory, ServiceProvider } from "@/lib/service-types";
 
 export type ServiceFilters = {
@@ -7,6 +8,11 @@ export type ServiceFilters = {
   categories?: ServiceCategory[];
   verifiedOnly?: boolean;
   minRating?: number;
+  /**
+   * ISO `YYYY-MM-DD`. Keeps providers who work that weekday. This is their working
+   * days, not a calendar — nothing records whether they're already booked that day.
+   */
+  date?: string;
   sort?: "recommended" | "rate-asc" | "rate-desc" | "rating" | "response-time";
 };
 
@@ -36,6 +42,11 @@ export function listProviders(filters: ServiceFilters = {}): ServiceProvider[] {
 
   if (filters.minRating) {
     results = results.filter((p) => p.rating >= filters.minRating!);
+  }
+
+  if (filters.date) {
+    const weekday = weekdayFromISODate(filters.date);
+    if (weekday) results = results.filter((p) => p.workingDays.includes(weekday));
   }
 
   const sort = filters.sort ?? "recommended";

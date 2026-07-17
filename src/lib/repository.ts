@@ -6,6 +6,7 @@ import { experiences, getPriceFrom } from "@/data/experiences";
 import { hosts } from "@/data/hosts";
 import { reviews } from "@/data/reviews";
 import { testimonials } from "@/data/testimonials";
+import { weekdayFromISODate } from "@/lib/dates";
 import { blogPosts } from "@/data/blog";
 import type { Experience } from "@/lib/types";
 
@@ -32,24 +33,6 @@ export type ExperienceFilters = {
   sort?: "recommended" | "price-asc" | "price-desc" | "newest" | "reviewed";
 };
 
-// `scheduleDays` holds full English weekday names, so index them directly rather
-// than going through a locale that might spell them differently.
-const WEEKDAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
-/** "2026-07-17" → "Friday". Parsed as a local date; `new Date(iso)` would read it as UTC. */
-function weekdayFromISODate(iso: string) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (!m) return undefined;
-  return WEEKDAY_NAMES[new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay()];
-}
 
 function matchesDuration(minutes: number, bucket?: ExperienceFilters["duration"]) {
   if (!bucket) return true;

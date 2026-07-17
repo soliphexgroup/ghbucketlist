@@ -16,6 +16,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { listCars, carPriceBounds, type CarFilters } from "@/lib/car-repository";
+import { daysBetween, parseDateParam } from "@/lib/dates";
 import type { Car, CarCategory } from "@/lib/car-types";
 
 export type CarFilterState = Required<
@@ -48,7 +49,10 @@ function defaultFilters(): CarFilterState {
 function CarBrowserInner({
   initialCategory,
   initialQ,
+  rentalDays,
 }: {
+  /** Length of the searched rental, if any. Search context rather than a sidebar filter. */
+  rentalDays?: number;
   initialCategory: CarCategory | null;
   initialQ: string;
 }) {
@@ -70,9 +74,10 @@ function CarBrowserInner({
         features: filters.features,
         driverAvailableOnly: filters.driverAvailableOnly,
         instantBookOnly: filters.instantBookOnly,
+        rentalDays,
         sort: filters.sort,
       }),
-    [filters]
+    [filters, rentalDays]
   );
 
   function updateFilters(next: Partial<CarFilterState>) {
@@ -169,11 +174,18 @@ export function CarBrowser() {
     : null;
   const initialQ = params.get("q") ?? "";
 
+  // The searched pickup/return only tells us how long the rental is — nothing records
+  // which cars are already booked — so it filters on the terms a car accepts, not availability.
+  const pickup = parseDateParam(params.get("pickup"));
+  const returnDate = parseDateParam(params.get("return"));
+  const rentalDays = pickup && returnDate && returnDate > pickup ? daysBetween(pickup, returnDate) : undefined;
+
   return (
     <CarBrowserInner
       key={`${initialCategory ?? "all"}-${initialQ}`}
       initialCategory={initialCategory}
       initialQ={initialQ}
+      rentalDays={rentalDays}
     />
   );
 }
