@@ -52,16 +52,8 @@ function summarise(activeTab: ServiceTabId, params: URLSearchParams) {
         ]),
       };
     }
-    case "things-to-do": {
-      const participants = Number(params.get("participants")) || 0;
-      return {
-        primary: q || "Anywhere in Ghana",
-        secondary: joinParts([
-          range,
-          participants > 0 && `${participants} participant${participants > 1 ? "s" : ""}`,
-        ]),
-      };
-    }
+    case "things-to-do":
+      return { primary: q || "Anywhere in Ghana", secondary: joinParts([range]) };
     case "car-rentals":
       return { primary: q || "Any pickup location", secondary: joinParts([range]) };
     case "handyman":

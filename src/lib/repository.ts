@@ -28,8 +28,6 @@ export type ExperienceFilters = {
   minRating?: number;
   /** ISO `YYYY-MM-DD`. Matched against the experience's schedule by weekday. */
   date?: string;
-  /** Group size — the experience has to be able to take them all. */
-  participants?: number;
   sort?: "recommended" | "price-asc" | "price-desc" | "newest" | "reviewed";
 };
 
@@ -90,12 +88,6 @@ export function listExperiences(filters: ExperienceFilters = {}, extra: Experien
   if (filters.date) {
     const weekday = weekdayFromISODate(filters.date);
     if (weekday) results = results.filter((e) => e.scheduleDays.includes(weekday));
-  }
-
-  if (filters.participants && filters.participants > 0) {
-    // Only the upper limit filters: `minAttendees` is what a session needs to run,
-    // not a floor on who's allowed to search, so a solo visitor still sees it.
-    results = results.filter((e) => e.maxCapacity >= filters.participants!);
   }
 
   const sort = filters.sort ?? "recommended";

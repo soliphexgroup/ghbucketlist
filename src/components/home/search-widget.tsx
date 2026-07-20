@@ -172,45 +172,6 @@ function DateRangeField({
   );
 }
 
-function CounterField({
-  label,
-  value,
-  onChange,
-  min = 1,
-  max = 16,
-}: {
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-  min?: number;
-  max?: number;
-}) {
-  return (
-    <div className="flex h-12 flex-1 items-center justify-between gap-2 px-4">
-      <span className="text-sm text-foreground">{label}</span>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onChange(Math.max(min, value - 1))}
-          aria-label={`Decrease ${label}`}
-          className="flex size-6 items-center justify-center rounded-full border border-border hover:bg-muted"
-        >
-          <Minus className="size-3" />
-        </button>
-        <span className="w-4 text-center text-sm font-medium text-foreground">{value}</span>
-        <button
-          type="button"
-          onClick={() => onChange(Math.min(max, value + 1))}
-          aria-label={`Increase ${label}`}
-          className="flex size-6 items-center justify-center rounded-full border border-border hover:bg-muted"
-        >
-          <Plus className="size-3" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export type GuestCounts = { adults: number; children: number; rooms: number; pets: boolean };
 
 function GuestCounterRow({
@@ -344,7 +305,6 @@ export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
 
   const [activityLocation, setActivityLocation] = useState("");
   const [activityDate, setActivityDate] = useState<Date | undefined>();
-  const [participants, setParticipants] = useState(1);
 
   const [pickupDate, setPickupDate] = useState<Date | undefined>(addDays(new Date(), 1));
   const [returnDate, setReturnDate] = useState<Date | undefined>(addDays(new Date(), 3));
@@ -373,8 +333,10 @@ export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
       case "things-to-do": {
         if (activityLocation.trim()) params.set("q", activityLocation.trim());
         if (activityDate) params.set("date", activityDate.toISOString().slice(0, 10));
-        params.set("participants", String(participants));
-        router.push(`/activities${params.toString() ? `?${params.toString()}` : ""}`);
+        // Searching with nothing filled in still means "show me results", so say so
+        // explicitly rather than landing back on the category tiles.
+        if ([...params.keys()].length === 0) params.set("searched", "1");
+        router.push(`/activities?${params.toString()}`);
         return;
       }
       case "car-rentals": {
@@ -418,7 +380,6 @@ export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
             />
           </FieldShell>
           <DateField label="Date" date={activityDate} onSelect={setActivityDate} />
-          <CounterField label="Participants" value={participants} onChange={setParticipants} max={20} />
         </>
       )}
 

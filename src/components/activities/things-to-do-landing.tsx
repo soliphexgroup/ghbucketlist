@@ -6,14 +6,14 @@ import { ActivitiesBrowser } from "@/components/activities/activities-browser";
 
 /**
  * Any of these means the visitor has searched or filtered, so they want results
- * rather than the category tiles. The hero's search box always sends at least
- * `participants`, so searching without a location still lands on the browser.
+ * rather than the category tiles. `searched` is the explicit marker the search box
+ * sends when nothing was filled in, which would otherwise look like no search at all.
  */
 const RESULT_PARAMS = [
   "category",
   "q",
   "date",
-  "participants",
+  "searched",
   "duration",
   "neighbourhood",
   "minRating",

@@ -21,7 +21,7 @@ import type { ExperienceFilters } from "@/lib/repository";
 export type FilterState = Required<
   Pick<ExperienceFilters, "q" | "categories" | "maxPrice" | "sort">
 > &
-  Pick<ExperienceFilters, "duration" | "neighbourhood" | "minRating" | "date" | "participants">;
+  Pick<ExperienceFilters, "duration" | "neighbourhood" | "minRating" | "date">;
 
 const durationOptions: { value: NonNullable<FilterState["duration"]>; label: string }[] = [
   { value: "under1", label: "Under 1 hour" },

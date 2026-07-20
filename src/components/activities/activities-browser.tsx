@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CalendarIcon, SlidersHorizontal, Users, X } from "lucide-react";
+import { CalendarIcon, SlidersHorizontal, X } from "lucide-react";
 import { Container } from "@/components/container";
 import { ActivityCard } from "@/components/activity-card";
 import { FiltersSidebar, type FilterState } from "@/components/activities/filters-sidebar";
@@ -59,7 +59,6 @@ const sortOptions: { value: NonNullable<ExperienceFilters["sort"]>; label: strin
 
 function initialFilters(params: URLSearchParams): FilterState {
   const bounds = priceRangeBounds();
-  const participants = Number(params.get("participants"));
   return {
     q: params.get("q") ?? "",
     categories: params.get("category") ? [params.get("category")!] : [],
@@ -68,7 +67,6 @@ function initialFilters(params: URLSearchParams): FilterState {
     neighbourhood: params.get("neighbourhood") ?? undefined,
     minRating: params.get("minRating") ? Number(params.get("minRating")) : undefined,
     date: params.get("date") ?? undefined,
-    participants: Number.isFinite(participants) && participants > 0 ? participants : undefined,
     sort: (params.get("sort") as FilterState["sort"]) ?? "recommended",
   };
 }
@@ -104,7 +102,6 @@ export function ActivitiesBrowser({
     if (merged.minRating) params.set("minRating", String(merged.minRating));
     // Carried through so changing a sidebar filter doesn't discard the hero search.
     if (merged.date) params.set("date", merged.date);
-    if (merged.participants) params.set("participants", String(merged.participants));
     if (merged.sort !== "recommended") params.set("sort", merged.sort);
     const query = params.toString();
     router.replace(query ? `${basePath}?${query}` : basePath, { scroll: false });
@@ -126,22 +123,13 @@ export function ActivitiesBrowser({
             {description}
           </p>
 
-          {(filters.date || filters.participants) && (
+          {filters.date && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              {filters.date && (
-                <FilterChip
-                  icon={CalendarIcon}
-                  label={formatDateChip(filters.date)}
-                  onClear={() => updateFilters({ date: undefined })}
-                />
-              )}
-              {filters.participants && (
-                <FilterChip
-                  icon={Users}
-                  label={`${filters.participants} participant${filters.participants > 1 ? "s" : ""}`}
-                  onClear={() => updateFilters({ participants: undefined })}
-                />
-              )}
+              <FilterChip
+                icon={CalendarIcon}
+                label={formatDateChip(filters.date)}
+                onClear={() => updateFilters({ date: undefined })}
+              />
             </div>
           )}
         </div>
