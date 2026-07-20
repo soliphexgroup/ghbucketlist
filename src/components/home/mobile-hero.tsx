@@ -56,46 +56,15 @@ export function MobileHero({
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--brand-primary-gradient-from)]/95 via-[var(--brand-primary-gradient-via)]/90 to-[var(--brand-primary-gradient-to)]/85" />
       </div>
 
-      <div className="relative px-5 pt-10 pb-9 text-white">
-        <motion.h1
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="font-heading text-[2.75rem] leading-[1.05] font-extrabold tracking-tight text-balance"
-        >
-          {headline}
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-          className="mt-4 max-w-[22rem] text-lg leading-snug text-white/90"
-        >
-          {subheading}
-        </motion.p>
-
-        {/* Each vertical gets a search box with its own fields. */}
-        {!searchActive && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-            className="mt-8"
-          >
-            {activeTab === "stays" && <MobileStaySearch />}
-            {activeTab === "things-to-do" && <MobileActivitySearch />}
-            {activeTab === "car-rentals" && <MobileCarSearch />}
-            {activeTab === "handyman" && <MobileServiceSearch />}
-          </motion.div>
-        )}
-
-        {/* Category shortcuts */}
+      <div className="relative px-5 pt-6 pb-9 text-white">
+        {/* Category shortcuts — first thing under the header, so the delays below
+            cascade top-down from here. */}
         <motion.nav
           aria-label="Browse categories"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
-          className="mt-8 grid grid-cols-5 gap-1.5"
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="grid grid-cols-5 gap-1.5"
         >
           {shortcuts.map((s) => {
             const Icon = s.icon;
@@ -136,6 +105,38 @@ export function MobileHero({
             );
           })}
         </motion.nav>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+          className="mt-8 font-heading text-[2.75rem] leading-[1.05] font-extrabold tracking-tight text-balance"
+        >
+          {headline}
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+          className="mt-4 max-w-[22rem] text-lg leading-snug text-white/90"
+        >
+          {subheading}
+        </motion.p>
+
+        {/* Each vertical gets a search box with its own fields. */}
+        {!searchActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
+            className="mt-8"
+          >
+            {activeTab === "stays" && <MobileStaySearch />}
+            {activeTab === "things-to-do" && <MobileActivitySearch />}
+            {activeTab === "car-rentals" && <MobileCarSearch />}
+            {activeTab === "handyman" && <MobileServiceSearch />}
+          </motion.div>
+        )}
       </div>
     </section>
   );
