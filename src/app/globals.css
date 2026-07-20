@@ -86,7 +86,8 @@
   --brand-primary-gradient-from: #006b3c;
   --brand-primary-gradient-via: #0d7a43;
   --brand-primary-gradient-to: #1f9d55;
-  --search-accent: #ffb700;
+  /* Deliberately the same coral as the "Bucketlist" half of the wordmark. */
+  --search-accent: var(--brand-coral);
   --search-button: #0a7a3f;
   --search-button-foreground: #ffffff;
   --success: #22c55e;
@@ -135,7 +136,8 @@
   --brand-primary-gradient-from: #006b3c;
   --brand-primary-gradient-via: #0d7a43;
   --brand-primary-gradient-to: #1f9d55;
-  --search-accent: #ffb700;
+  /* Deliberately the same coral as the "Bucketlist" half of the wordmark. */
+  --search-accent: var(--brand-coral);
   --search-button: #0a7a3f;
   --search-button-foreground: #ffffff;
   --success: #22c55e;
