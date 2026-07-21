@@ -1,5 +1,7 @@
 import { properties } from "@/data/properties";
 import { hosts } from "@/data/hosts";
+import { hasAvailability } from "@/lib/stay-availability";
+import type { StoredStayBooking } from "@/lib/stay-bookings-store";
 import type { Property, PropertyType } from "@/lib/stay-types";
 
 export type StayFilters = {
@@ -12,10 +14,18 @@ export type StayFilters = {
   amenities?: string[];
   instantBookOnly?: boolean;
   minRating?: number;
+  /** ISO `YYYY-MM-DD`. When both are set, only properties free for the range are kept. */
+  checkIn?: string;
+  checkOut?: string;
   sort?: "recommended" | "price-asc" | "price-desc" | "rating";
 };
 
-export function listProperties(filters: StayFilters = {}, extra: Property[] = []): Property[] {
+export function listProperties(
+  filters: StayFilters = {},
+  extra: Property[] = [],
+  /** The viewer's own bookings, so a just-booked stay drops out of results too. */
+  bookings: StoredStayBooking[] = []
+): Property[] {
   const overrideIds = new Set(extra.map((p) => p.id));
   const base = properties.filter((p) => !overrideIds.has(p.id));
   let results = [...extra, ...base];
@@ -59,6 +69,10 @@ export function listProperties(filters: StayFilters = {}, extra: Property[] = []
 
   if (filters.minRating) {
     results = results.filter((p) => p.rating >= filters.minRating!);
+  }
+
+  if (filters.checkIn && filters.checkOut) {
+    results = results.filter((p) => hasAvailability(p, filters.checkIn!, filters.checkOut!, bookings));
   }
 
   const sort = filters.sort ?? "recommended";

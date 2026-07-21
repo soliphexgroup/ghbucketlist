@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { listProperties, propertyPriceBounds, type StayFilters } from "@/lib/stay-repository";
 import { useHostCreatedProperties } from "@/lib/host-properties-store";
+import { useStayBookings } from "@/lib/stay-bookings-store";
 import type { PropertyType } from "@/lib/stay-types";
 
 export type StayFilterState = Required<
@@ -49,12 +50,17 @@ function StayBrowserInner({
   initialSort,
   initialQ,
   initialGuests,
+  checkIn,
+  checkOut,
   bookingQuery,
 }: {
   initialType: PropertyType | null;
   initialSort: StayFilterState["sort"] | null;
   initialQ: string;
   initialGuests: number;
+  /** ISO search dates — when both are set, results are filtered to what's available. */
+  checkIn?: string;
+  checkOut?: string;
   /** The searched dates/guests, carried onto each card so the booking widget can restore them. */
   bookingQuery: string;
 }) {
@@ -68,6 +74,7 @@ function StayBrowserInner({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const hostCreated = useHostCreatedProperties();
+  const bookings = useStayBookings();
   const properties = useMemo(
     () =>
       listProperties(
@@ -80,11 +87,14 @@ function StayBrowserInner({
           instantBookOnly: filters.instantBookOnly,
           minRating: filters.minRating,
           guests: filters.guests > 1 ? filters.guests : undefined,
+          checkIn,
+          checkOut,
           sort: filters.sort,
         },
-        hostCreated
+        hostCreated,
+        bookings
       ),
-    [filters, hostCreated]
+    [filters, hostCreated, bookings, checkIn, checkOut]
   );
 
   function updateFilters(next: Partial<StayFilterState>) {
@@ -196,6 +206,12 @@ export function StayBrowser() {
   }
   const bookingQuery = bookingParams.toString();
 
+  // Availability filtering needs both ends of the stay; a lone date isn't a range.
+  const checkInParam = params.get("checkin") ?? undefined;
+  const checkOutParam = params.get("checkout") ?? undefined;
+  const checkIn = checkInParam && checkOutParam ? checkInParam : undefined;
+  const checkOut = checkInParam && checkOutParam ? checkOutParam : undefined;
+
   return (
     <StayBrowserInner
       key={`${initialType ?? "all"}-${initialSort ?? "default"}-${initialQ}-${initialGuests}`}
@@ -203,6 +219,8 @@ export function StayBrowser() {
       initialSort={initialSort}
       initialQ={initialQ}
       initialGuests={initialGuests}
+      checkIn={checkIn}
+      checkOut={checkOut}
       bookingQuery={bookingQuery}
     />
   );
