@@ -54,12 +54,14 @@ export function MobileCarSearch({
 
       <div className="grid grid-cols-2 gap-1.5">
         <MobileDateField
+          compact
           label="Pickup date"
           date={pickupDate}
           onSelect={handlePickupSelect}
           disabled={(d) => d < startOfToday()}
         />
         <MobileDateField
+          compact
           label="Return date"
           date={returnDate}
           onSelect={setReturnDate}
