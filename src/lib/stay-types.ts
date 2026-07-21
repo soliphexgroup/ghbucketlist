@@ -12,6 +12,9 @@ export type PropertyRoom = {
 
 export type RoomPerk = "breakfast" | "free_cancellation" | "pay_at_property";
 
+/** An ISO `YYYY-MM-DD` date range, checkout-exclusive (the `end` night isn't occupied). */
+export type DateRange = { start: string; end: string };
+
 /**
  * A bookable room type, as sold by hotels. Distinct from PropertyRoom: an apartment's
  * bedrooms aren't sold separately, so only hotels carry these.
@@ -24,8 +27,14 @@ export type RoomOffer = {
   maxGuests: number;
   pricePerNight: number;
   perks: RoomPerk[];
-  /** Drives the "Only N left" urgency note. */
-  roomsLeft: number;
+  /** Total physical rooms of this type. How many remain depends on the dates searched. */
+  inventory: number;
+  /**
+   * Seeded fiction (not live data): each entry is one room of this type already booked
+   * for that range. Rooms left for a search = inventory − overlapping entries − the
+   * viewer's own overlapping bookings.
+   */
+  bookedRanges?: DateRange[];
 };
 
 export type CategoryRatings = {
@@ -56,6 +65,11 @@ export type Property = {
   rooms: PropertyRoom[];
   /** Bookable room types — hotels only. Absent means the whole unit is booked at once. */
   roomTypes?: RoomOffer[];
+  /**
+   * Whole-unit stays only (no roomTypes): seeded date ranges the unit is already booked.
+   * Fiction, not live data — combined with the viewer's own bookings to decide availability.
+   */
+  unavailableRanges?: DateRange[];
   /** The "from" price: for hotels this matches the cheapest room type. */
   pricePerNight: number;
   weekendPrice?: number;

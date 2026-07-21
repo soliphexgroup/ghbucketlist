@@ -14,6 +14,8 @@ import {
 import { StayBookingDialog, type StayBookingDetails } from "@/components/stay/stay-booking-dialog";
 import { formatGHS } from "@/lib/format";
 import { nightsBetween, parseDateParam, resolveStayRange } from "@/lib/dates";
+import { roomsLeftForRange, toISODate } from "@/lib/stay-availability";
+import { useStayBookings } from "@/lib/stay-bookings-store";
 import type { Property, RoomPerk } from "@/lib/stay-types";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +37,16 @@ function PerkList({ perks }: { perks: RoomPerk[] }) {
       ))}
     </ul>
   );
+}
+
+function RoomsLeftNote({ left, className }: { left: number; className?: string }) {
+  if (left === 0) {
+    return <p className={cn("text-xs font-semibold text-muted-foreground", className)}>Sold out for these dates</p>;
+  }
+  if (left <= 2) {
+    return <p className={cn("text-xs font-semibold text-destructive", className)}>Only {left} left</p>;
+  }
+  return null;
 }
 
 function GuestIcons({ count }: { count: number }) {
@@ -86,12 +98,21 @@ export function RoomOfferTable({ property }: { property: Property }) {
   const adults = Number(params.get("adults")) || 2;
   const children = Number(params.get("children")) || 0;
 
+  // Rooms left depends on the searched dates and the viewer's own bookings.
+  const bookings = useStayBookings();
+  const checkInISO = toISODate(checkIn);
+  const checkOutISO = toISODate(checkOut);
+  const leftById = new Map(
+    offers.map((offer) => [offer.id, roomsLeftForRange(property, offer, checkInISO, checkOutISO, bookings)])
+  );
+
   const [qtyById, setQtyById] = useState<Record<string, number>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pending, setPending] = useState<StayBookingDetails | null>(null);
 
   const selectedRooms = offers
-    .map((offer) => ({ offer, qty: qtyById[offer.id] ?? 0 }))
+    // Never let a stale selection exceed what's now left for the dates.
+    .map((offer) => ({ offer, qty: Math.min(qtyById[offer.id] ?? 0, leftById.get(offer.id) ?? 0) }))
     .filter((s) => s.qty > 0);
   const totalRooms = selectedRooms.reduce((n, s) => n + s.qty, 0);
   const subtotal = selectedRooms.reduce((sum, s) => sum + s.offer.pricePerNight * nights * s.qty, 0);
@@ -164,15 +185,11 @@ export function RoomOfferTable({ property }: { property: Property }) {
                 </td>
                 <td className="p-3">
                   <QtySelect
-                    value={qtyById[offer.id] ?? 0}
-                    max={offer.roomsLeft}
+                    value={Math.min(qtyById[offer.id] ?? 0, leftById.get(offer.id) ?? 0)}
+                    max={leftById.get(offer.id) ?? 0}
                     onChange={(v) => setQty(offer.id, v)}
                   />
-                  {offer.roomsLeft <= 2 && (
-                    <p className="mt-1.5 text-xs font-semibold text-destructive">
-                      Only {offer.roomsLeft} left
-                    </p>
-                  )}
+                  <RoomsLeftNote left={leftById.get(offer.id) ?? 0} />
                 </td>
               </tr>
             ))}
@@ -204,13 +221,11 @@ export function RoomOfferTable({ property }: { property: Property }) {
                 <p className="text-xs text-muted-foreground">
                   {formatGHS(offer.pricePerNight)} per night · {nightsLabel}
                 </p>
-                {offer.roomsLeft <= 2 && (
-                  <p className="mt-1 text-xs font-semibold text-destructive">Only {offer.roomsLeft} left</p>
-                )}
+                <RoomsLeftNote left={leftById.get(offer.id) ?? 0} className="mt-1" />
               </div>
               <QtySelect
-                value={qtyById[offer.id] ?? 0}
-                max={offer.roomsLeft}
+                value={Math.min(qtyById[offer.id] ?? 0, leftById.get(offer.id) ?? 0)}
+                max={leftById.get(offer.id) ?? 0}
                 onChange={(v) => setQty(offer.id, v)}
               />
             </div>

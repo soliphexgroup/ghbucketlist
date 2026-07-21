@@ -12,6 +12,8 @@ import { WishlistButton } from "@/components/wishlist-button";
 import { StayBookingDialog, type StayBookingDetails } from "@/components/stay/stay-booking-dialog";
 import { formatGHS } from "@/lib/format";
 import { addDays, nightsBetween, parseDateParam, resolveStayRange, startOfToday } from "@/lib/dates";
+import { isNightBlocked, isUnitAvailable, toISODate, unitBlockedRanges } from "@/lib/stay-availability";
+import { useStayBookings } from "@/lib/stay-bookings-store";
 import type { Property } from "@/lib/stay-types";
 
 const MAX_ROOMS = 8;
@@ -53,6 +55,12 @@ export function StayBookingWidget({ property }: { property: Property }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pending, setPending] = useState<StayBookingDetails | null>(null);
 
+  // Availability: booked nights are disabled in the calendar, and a range that still
+  // clashes (e.g. spanning a blocked gap) blocks the reserve.
+  const bookings = useStayBookings();
+  const blockedRanges = unitBlockedRanges(property, bookings);
+  const available = isUnitAvailable(property, toISODate(range.from), toISODate(range.to), bookings);
+
   const nights = nightsBetween(range.from, range.to);
   const subtotal = property.pricePerNight * nights * rooms;
   const serviceFee = subtotal * 0.05;
@@ -61,6 +69,7 @@ export function StayBookingWidget({ property }: { property: Property }) {
   const isInstant = property.bookingType === "instant";
 
   function handleReserve() {
+    if (!available) return;
     setPending({
       property,
       checkIn: range.from,
@@ -106,7 +115,7 @@ export function StayBookingWidget({ property }: { property: Property }) {
                 if (next?.from && next?.to) setRange({ from: next.from, to: next.to });
                 else if (next?.from) setRange({ from: next.from, to: addDays(next.from, property.minNights) });
               }}
-              disabled={(d) => d < startOfToday()}
+              disabled={(d) => d < startOfToday() || isNightBlocked(d, blockedRanges)}
               autoFocus
             />
           </PopoverContent>
@@ -163,17 +172,19 @@ export function StayBookingWidget({ property }: { property: Property }) {
         <Button
           size="lg"
           onClick={handleReserve}
-          disabled={totalGuests > property.maxGuests}
+          disabled={totalGuests > property.maxGuests || !available}
           className="w-full"
         >
           {isInstant && <Zap className="size-4 fill-current" />}
-          {isInstant ? "Reserve" : "Request to Book"}
+          {!available ? "Not available for these dates" : isInstant ? "Reserve" : "Request to Book"}
         </Button>
 
         <p className="text-center text-xs text-muted-foreground">
-          {isInstant
-            ? "Payment confirms immediately, no host approval needed."
-            : "You won't be charged yet — the host has 24 hours to accept."}
+          {!available
+            ? "Those dates are booked. Pick another range to continue."
+            : isInstant
+              ? "Payment confirms immediately, no host approval needed."
+              : "You won't be charged yet — the host has 24 hours to accept."}
         </p>
       </div>
 

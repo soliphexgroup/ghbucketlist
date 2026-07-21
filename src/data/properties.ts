@@ -29,29 +29,32 @@ export const properties: Property[] = [
       {
         id: "riverside-classic",
         name: "Classic Double Room",
+        bookedRanges: [{ start: "2026-07-28", end: "2026-07-30" }, { start: "2026-08-14", end: "2026-08-17" }, { start: "2026-08-14", end: "2026-08-17" }, { start: "2026-08-14", end: "2026-08-17" }],
         bedSummary: "1 large double bed",
         maxGuests: 2,
         pricePerNight: 450,
         perks: ["free_cancellation"],
-        roomsLeft: 5,
+        inventory: 5,
       },
       {
         id: "riverside-deluxe",
         name: "Deluxe Skyline Room",
+        bookedRanges: [{ start: "2026-07-28", end: "2026-07-30" }, { start: "2026-08-14", end: "2026-08-17" }, { start: "2026-08-14", end: "2026-08-17" }],
         bedSummary: "1 king bed",
         maxGuests: 2,
         pricePerNight: 560,
         perks: ["breakfast", "free_cancellation"],
-        roomsLeft: 3,
+        inventory: 3,
       },
       {
         id: "riverside-family",
         name: "Family Suite",
+        bookedRanges: [{ start: "2026-08-14", end: "2026-08-17" }, { start: "2026-08-14", end: "2026-08-17" }],
         bedSummary: "1 king bed and 1 sofa bed",
         maxGuests: 4,
         pricePerNight: 780,
         perks: ["breakfast", "free_cancellation", "pay_at_property"],
-        roomsLeft: 2,
+        inventory: 2,
       },
     ],
     pricePerNight: 450,
@@ -74,6 +77,7 @@ export const properties: Property[] = [
   {
     id: "prop-osu-garden",
     slug: "osu-garden-apartment",
+    unavailableRanges: [{ start: "2026-08-05", end: "2026-08-10" }],
     title: "Osu Garden Apartment",
     description:
       "A bright two-bedroom apartment with a private courtyard garden, five minutes' walk from Oxford Street. Great base for exploring Osu's restaurants and nightlife on foot.",
@@ -110,6 +114,7 @@ export const properties: Property[] = [
   {
     id: "prop-east-legon-villa",
     slug: "east-legon-family-villa",
+    unavailableRanges: [{ start: "2026-07-25", end: "2026-07-28" }, { start: "2026-08-15", end: "2026-08-20" }],
     title: "East Legon Family Villa",
     description:
       "A spacious four-bedroom villa with a private pool and garden, ideal for family gatherings or group trips. Quiet residential street with 24-hour estate security.",
@@ -151,6 +156,7 @@ export const properties: Property[] = [
   {
     id: "prop-airport-suite",
     slug: "airport-residential-executive-suite",
+    unavailableRanges: [{ start: "2026-08-01", end: "2026-08-05" }],
     title: "Airport Residential Executive Suite",
     description:
       "A modern one-bedroom suite close to Kotoka International Airport and the Airport Residential dining strip — perfect for business travellers on short stays.",
@@ -184,6 +190,7 @@ export const properties: Property[] = [
   {
     id: "prop-jamestown-loft",
     slug: "jamestown-loft-sea-view",
+    unavailableRanges: [{ start: "2026-09-01", end: "2026-09-05" }],
     title: "Jamestown Loft with Sea View",
     description:
       "A characterful loft above a working art studio, with a private balcony looking out over the Jamestown lighthouse and coastline. Walk to galleries, the fishing harbour, and street food.",
@@ -217,6 +224,7 @@ export const properties: Property[] = [
   {
     id: "prop-aburi-retreat",
     slug: "aburi-hills-retreat",
+    unavailableRanges: [{ start: "2026-08-10", end: "2026-08-14" }],
     title: "Aburi Hills Retreat",
     description:
       "A three-bedroom hillside home surrounded by garden and forest, thirty minutes from Accra. Cooler air, birdsong, and views over the plains — a favourite for weekend wellness getaways.",
@@ -272,29 +280,32 @@ export const properties: Property[] = [
       {
         id: "labone-studio",
         name: "Studio King Room",
+        bookedRanges: [{ start: "2026-08-01", end: "2026-08-04" }],
         bedSummary: "1 king bed",
         maxGuests: 2,
         pricePerNight: 500,
         perks: ["free_cancellation"],
-        roomsLeft: 4,
+        inventory: 4,
       },
       {
         id: "labone-poolview",
         name: "Rooftop Pool View Room",
+        bookedRanges: [{ start: "2026-08-01", end: "2026-08-04" }],
         bedSummary: "1 king bed",
         maxGuests: 2,
         pricePerNight: 620,
         perks: ["breakfast", "free_cancellation"],
-        roomsLeft: 2,
+        inventory: 2,
       },
       {
         id: "labone-loft",
         name: "Twin Coworking Loft",
+        bookedRanges: [{ start: "2026-08-20", end: "2026-08-23" }, { start: "2026-08-20", end: "2026-08-23" }],
         bedSummary: "2 twin beds and 1 sofa bed",
         maxGuests: 3,
         pricePerNight: 700,
         perks: ["breakfast", "pay_at_property"],
-        roomsLeft: 3,
+        inventory: 3,
       },
     ],
     pricePerNight: 500,
@@ -316,6 +327,7 @@ export const properties: Property[] = [
   {
     id: "prop-cantonments-villa",
     slug: "cantonments-poolside-villa",
+    unavailableRanges: [{ start: "2026-07-28", end: "2026-07-31" }],
     title: "Cantonments Poolside Villa",
     description:
       "An expansive five-bedroom villa with a large pool terrace, perfect for events, family reunions, or group celebrations. Comes with an on-call housekeeper.",
@@ -358,6 +370,7 @@ export const properties: Property[] = [
   {
     id: "prop-tesano-studio",
     slug: "tesano-cozy-studio",
+    unavailableRanges: [{ start: "2026-08-22", end: "2026-08-25" }],
     title: "Tesano Cozy Studio",
     description:
       "A compact, well-designed studio in the residential Tesano neighbourhood — a comfortable and affordable base close to the airport and city centre.",
