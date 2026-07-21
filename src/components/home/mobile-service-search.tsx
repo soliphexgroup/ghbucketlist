@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Wrench } from "lucide-react";
+import { CalendarIcon, MapPin, Wrench } from "lucide-react";
 import {
   MobileDateField,
   MobileSearchShell,
@@ -53,6 +53,7 @@ export function MobileServiceSearch({
       />
 
       <MobileDateField
+        icon={CalendarIcon}
         label="Preferred date"
         date={serviceDate}
         onSelect={setServiceDate}
