@@ -146,12 +146,14 @@ export function MobileStaySearch({
       {/* Check-in / Check-out */}
       <div className="grid grid-cols-2 gap-1.5">
         <MobileDateField
+          compact
           label="Check-in date"
           date={checkIn}
           onSelect={handleCheckInSelect}
           disabled={(d) => d < startOfToday()}
         />
         <MobileDateField
+          compact
           label="Check-out date"
           date={checkOut}
           onSelect={setCheckOut}
@@ -172,10 +174,13 @@ export function MobileStaySearch({
             ).map((field, i) => (
               <span
                 key={field.label}
-                className={cn("flex flex-col gap-1 px-4 py-3", i > 0 && "border-l border-border")}
+                className={cn(
+                  "flex h-14 flex-col justify-center gap-0.5 px-4",
+                  i > 0 && "border-l border-border"
+                )}
               >
-                <span className="text-sm text-muted-foreground">{field.label}</span>
-                <span className="text-base font-bold text-foreground">{field.value}</span>
+                <span className="text-xs text-muted-foreground">{field.label}</span>
+                <span className="text-sm font-bold text-foreground">{field.value}</span>
               </span>
             ))}
           </button>

@@ -89,6 +89,7 @@ export function MobileDateField({
   onSelect,
   disabled,
   icon: Icon,
+  compact = false,
 }: {
   label: string;
   date: Date | undefined;
@@ -100,6 +101,11 @@ export function MobileDateField({
    * placeholder shown before a date is picked.
    */
   icon?: LucideIcon;
+  /**
+   * Keeps the two-line label/value layout but pins it to 56px (h-14) with smaller
+   * type, so it lines up with a single-line location field in the same box.
+   */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -117,6 +123,13 @@ export function MobileDateField({
               }
             >
               {date ? formatLong(date) : label}
+            </span>
+          </button>
+        ) : compact ? (
+          <button type="button" className="flex h-14 flex-col justify-center gap-0.5 rounded-md bg-white px-4 text-left">
+            <span className="text-xs text-muted-foreground">{label}</span>
+            <span className="truncate text-sm font-bold text-foreground">
+              {date ? formatLong(date) : "Select date"}
             </span>
           </button>
         ) : (
