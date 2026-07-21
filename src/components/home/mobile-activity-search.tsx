@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin } from "lucide-react";
+import { CalendarIcon, MapPin } from "lucide-react";
 import {
   MobileDateField,
   MobileSearchShell,
@@ -47,7 +47,8 @@ export function MobileActivitySearch({
       />
 
       <MobileDateField
-        label="Date"
+        icon={CalendarIcon}
+        label="Select date"
         date={date}
         onSelect={setDate}
         disabled={(d) => d < startOfToday()}

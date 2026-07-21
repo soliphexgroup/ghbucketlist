@@ -88,23 +88,45 @@ export function MobileDateField({
   date,
   onSelect,
   disabled,
+  icon: Icon,
 }: {
   label: string;
   date: Date | undefined;
   onSelect: (date: Date | undefined) => void;
   disabled?: (date: Date) => boolean;
+  /**
+   * When set, renders a single-line field (icon + value) matching MobileTextField's
+   * height instead of the stacked label-above-value layout. `label` becomes the
+   * placeholder shown before a date is picked.
+   */
+  icon?: LucideIcon;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" className="flex flex-col gap-1 rounded-md bg-white px-4 py-3 text-left">
-          <span className="text-sm text-muted-foreground">{label}</span>
-          <span className="truncate text-base font-bold text-foreground">
-            {date ? formatLong(date) : "Select date"}
-          </span>
-        </button>
+        {Icon ? (
+          <button type="button" className="flex w-full items-center gap-3 rounded-md bg-white px-4 py-4 text-left">
+            <Icon className="size-5 shrink-0 text-muted-foreground" />
+            <span
+              className={
+                date
+                  ? "min-w-0 flex-1 truncate text-base font-bold text-foreground"
+                  : "min-w-0 flex-1 truncate text-base text-muted-foreground"
+              }
+            >
+              {date ? formatLong(date) : label}
+            </span>
+          </button>
+        ) : (
+          <button type="button" className="flex flex-col gap-1 rounded-md bg-white px-4 py-3 text-left">
+            <span className="text-sm text-muted-foreground">{label}</span>
+            <span className="truncate text-base font-bold text-foreground">
+              {date ? formatLong(date) : "Select date"}
+            </span>
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
