@@ -22,11 +22,8 @@ export function StaySearchAndResults() {
 
   return (
     <>
-      {/* Once you've drilled into a type the tiles are just noise on a small screen. */}
-      <div className={drilledIn ? "hidden lg:block" : undefined}>
-        <BrowseByPropertyType />
-      </div>
-
+      {/* Search leads on mobile; on desktop both variants are lg:hidden, so the tiles
+          still come first there. */}
       {hasSearched ? (
         <MobileSearchBar activeTab="stays" />
       ) : (
@@ -34,6 +31,11 @@ export function StaySearchAndResults() {
           <MobileStaySearch carryParams={carryParams} initial={initial} />
         </Container>
       )}
+
+      {/* Once you've drilled into a type the tiles are just noise on a small screen. */}
+      <div className={drilledIn ? "hidden lg:block" : undefined}>
+        <BrowseByPropertyType />
+      </div>
 
       <div className={hasSearched ? undefined : "hidden lg:block"}>
         <StayBrowser />
