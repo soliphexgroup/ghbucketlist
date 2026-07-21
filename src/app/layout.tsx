@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
 import Script from "next/script";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SiteHeader } from "@/components/site-header";
@@ -7,13 +7,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
+// One family for the whole site (per the brand notes): Inter for body and headings,
+// with hierarchy carried by weight. --font-heading is aliased to --font-sans in globals.css.
 const inter = Inter({
   variable: "--font-sans",
-  subsets: ["latin"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-heading",
   subsets: ["latin"],
 });
 
@@ -34,7 +31,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      className={`${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthProvider>

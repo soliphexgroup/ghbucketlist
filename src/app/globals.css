@@ -8,7 +8,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-heading: var(--font-heading);
+  /* Headings share the body family (Inter) — hierarchy comes from weight, not a second face. */
+  --font-heading: var(--font-sans);
   --color-brand-yellow: var(--brand-yellow);
   --color-brand-yellow-foreground: var(--brand-yellow-foreground);
   --color-link: var(--link);
