@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -164,7 +165,9 @@ export default async function CarDetailPage({
         </div>
 
         <div>
-          <CarBookingWidget car={car} />
+          <Suspense fallback={null}>
+            <CarBookingWidget car={car} />
+          </Suspense>
         </div>
       </div>
     </Container>

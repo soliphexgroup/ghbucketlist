@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CalendarIcon, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -11,16 +12,25 @@ import { Switch } from "@/components/ui/switch";
 import { WishlistButton } from "@/components/wishlist-button";
 import { CarBookingDialog, type CarBookingDetails } from "@/components/cars/car-booking-dialog";
 import { formatGHS } from "@/lib/format";
-import { addDays, daysBetween, startOfToday } from "@/lib/dates";
+import { addDays, daysBetween, parseDateParam, resolveStayRange, startOfToday } from "@/lib/dates";
 import { isNightBlocked, toISODate } from "@/lib/availability";
 import { isCarAvailable, carBlockedRanges } from "@/lib/car-availability";
 import { useCarBookings } from "@/lib/car-bookings-store";
 import type { Car } from "@/lib/car-types";
 
 export function CarBookingWidget({ car }: { car: Car }) {
-  const defaultPickup = addDays(new Date(), 3);
-  const defaultReturn = addDays(defaultPickup, car.minRentalDays);
-  const [range, setRange] = useState<{ from: Date; to: Date }>({ from: defaultPickup, to: defaultReturn });
+  const params = useSearchParams();
+
+  // Restore the searched pickup/return, falling back to a valid default that respects
+  // the car's minimum rental length. (resolveStayRange is generic: minNights = min days.)
+  const [range, setRange] = useState<{ from: Date; to: Date }>(() =>
+    resolveStayRange({
+      checkIn: parseDateParam(params.get("pickup")),
+      checkOut: parseDateParam(params.get("return")),
+      minNights: car.minRentalDays,
+      fallbackLeadDays: 3,
+    })
+  );
   const [withDriver, setWithDriver] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pending, setPending] = useState<CarBookingDetails | null>(null);

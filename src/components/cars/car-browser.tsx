@@ -92,6 +92,10 @@ function CarBrowserInner({
     [filters, rentalDays, pickup, returnDate, bookings]
   );
 
+  // Carry the searched dates onto each card so the detail widget opens pre-filled.
+  const bookingQuery =
+    pickup && returnDate ? new URLSearchParams({ pickup, return: returnDate }).toString() : undefined;
+
   function updateFilters(next: Partial<CarFilterState>) {
     setFilters((prev) => ({ ...prev, ...next }));
   }
@@ -168,7 +172,7 @@ function CarBrowserInner({
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
               {cars.map((car) => (
-                <CarCard key={car.id} car={car} />
+                <CarCard key={car.id} car={car} bookingQuery={bookingQuery} />
               ))}
             </div>
           )}

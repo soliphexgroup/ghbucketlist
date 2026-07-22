@@ -14,10 +14,19 @@ const categoryLabels: Record<Car["category"], string> = {
   van: "Van",
 };
 
-export function CarCard({ car, className }: { car: Car; className?: string }) {
+export function CarCard({
+  car,
+  className,
+  bookingQuery,
+}: {
+  car: Car;
+  className?: string;
+  /** Searched pickup/return to carry through, so the booking widget opens pre-filled. */
+  bookingQuery?: string;
+}) {
   return (
     <Link
-      href={`/cars/${car.slug}`}
+      href={`/cars/${car.slug}${bookingQuery ? `?${bookingQuery}` : ""}`}
       className={cn(
         "group flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]",
         className
