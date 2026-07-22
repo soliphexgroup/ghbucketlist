@@ -11,6 +11,7 @@ export const cars: Car[] = [
   {
     id: "car-corolla-economy",
     slug: "toyota-corolla-2023",
+    unavailableRanges: [{ start: "2026-07-22", end: "2026-07-25" }],
     make: "Toyota",
     model: "Corolla",
     year: 2023,
@@ -64,6 +65,7 @@ export const cars: Car[] = [
   {
     id: "car-rav4-suv",
     slug: "toyota-rav4-2023",
+    unavailableRanges: [{ start: "2026-08-05", end: "2026-08-10" }],
     make: "Toyota",
     model: "RAV4",
     year: 2023,
@@ -144,6 +146,7 @@ export const cars: Car[] = [
   {
     id: "car-mercedes-eclass-luxury",
     slug: "mercedes-benz-e-class-2023",
+    unavailableRanges: [{ start: "2026-08-01", end: "2026-08-06" }, { start: "2026-08-20", end: "2026-08-24" }],
     make: "Mercedes-Benz",
     model: "E-Class",
     year: 2023,
@@ -171,6 +174,7 @@ export const cars: Car[] = [
   {
     id: "car-range-rover-luxury",
     slug: "range-rover-sport-2022",
+    unavailableRanges: [{ start: "2026-08-12", end: "2026-08-18" }],
     make: "Land Rover",
     model: "Range Rover Sport",
     year: 2022,
@@ -198,6 +202,7 @@ export const cars: Car[] = [
   {
     id: "car-hiace-van",
     slug: "toyota-hiace-2021",
+    unavailableRanges: [{ start: "2026-07-28", end: "2026-08-02" }],
     make: "Toyota",
     model: "Hiace",
     year: 2021,

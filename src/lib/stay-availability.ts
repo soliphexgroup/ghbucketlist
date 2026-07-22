@@ -1,34 +1,16 @@
-import type { Property, RoomOffer, DateRange } from "@/lib/stay-types";
+import { rangesOverlap, toISODate, isNightBlocked, type DateRange } from "@/lib/availability";
+import type { Property, RoomOffer } from "@/lib/stay-types";
 import type { StoredStayBooking } from "@/lib/stay-bookings-store";
 
 // Availability seam for stays. Two inputs feed it: seeded fiction on the listings
 // (unavailableRanges / bookedRanges) standing in for "already booked by others", and the
 // viewer's own bookings from the store (real, but per-browser). Everything reads through
 // here so a real backend can later replace the internals without touching the UI.
+// Generic range maths lives in lib/availability; these re-exports keep existing imports working.
+export { rangesOverlap, toISODate, isNightBlocked };
 
 /** Bookings that still hold a room. Cancelled/declined ones free their dates back up. */
 const HOLDS_DATES: StoredStayBooking["status"][] = ["confirmed", "pending_request", "completed"];
-
-/**
- * Two checkout-exclusive ranges overlap iff each starts before the other ends. ISO
- * `YYYY-MM-DD` strings compare correctly with `<`, so no Date parsing is needed.
- */
-export function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string) {
-  return aStart < bEnd && bStart < aEnd;
-}
-
-/** A single night (its ISO date) falls inside a checkout-exclusive range. */
-function nightInRange(nightISO: string, range: DateRange) {
-  return range.start <= nightISO && nightISO < range.end;
-}
-
-/** `Date` → local `YYYY-MM-DD` (not UTC, which can shift the day). */
-export function toISODate(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
 
 function activeBookingsFor(propertyId: string, bookings: StoredStayBooking[]) {
   return bookings.filter((b) => b.propertyId === propertyId && HOLDS_DATES.includes(b.status));
@@ -105,10 +87,4 @@ export function unitBlockedRanges(property: Property, bookings: StoredStayBookin
       end: b.checkOutISO.slice(0, 10),
     })),
   ];
-}
-
-/** Whether a calendar day should be disabled for a whole-unit property. */
-export function isNightBlocked(date: Date, ranges: DateRange[]) {
-  const iso = toISODate(date);
-  return ranges.some((range) => nightInRange(iso, range));
 }

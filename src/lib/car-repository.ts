@@ -1,5 +1,7 @@
 import { cars } from "@/data/cars";
 import { hosts } from "@/data/hosts";
+import { isCarAvailable } from "@/lib/car-availability";
+import type { StoredCarBooking } from "@/lib/car-bookings-store";
 import type { Car, CarCategory } from "@/lib/car-types";
 
 export type CarFilters = {
@@ -19,10 +21,17 @@ export type CarFilters = {
    * records which cars are already booked — only whether the term is one they accept.
    */
   rentalDays?: number;
+  /** ISO `YYYY-MM-DD`. When both are set, only cars free for the range are kept. */
+  pickup?: string;
+  returnDate?: string;
   sort?: "recommended" | "price-asc" | "price-desc" | "rating";
 };
 
-export function listCars(filters: CarFilters = {}): Car[] {
+export function listCars(
+  filters: CarFilters = {},
+  /** The viewer's own car bookings, so a just-rented car drops out of results too. */
+  bookings: StoredCarBooking[] = []
+): Car[] {
   let results = [...cars];
 
   if (filters.q) {
@@ -76,6 +85,10 @@ export function listCars(filters: CarFilters = {}): Car[] {
         c.minRentalDays <= filters.rentalDays! &&
         (c.maxRentalDays === undefined || c.maxRentalDays >= filters.rentalDays!)
     );
+  }
+
+  if (filters.pickup && filters.returnDate) {
+    results = results.filter((c) => isCarAvailable(c, filters.pickup!, filters.returnDate!, bookings));
   }
 
   const sort = filters.sort ?? "recommended";

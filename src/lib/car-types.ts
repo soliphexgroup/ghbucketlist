@@ -1,3 +1,5 @@
+import type { DateRange } from "@/lib/availability";
+
 export type CarCategory = "economy" | "suv" | "luxury" | "van";
 export type TransmissionType = "automatic" | "manual";
 export type CarCancellationPolicy = "flexible" | "moderate" | "strict";
@@ -23,6 +25,11 @@ export type Car = {
   mileageLimitPerDay: number;
   minRentalDays: number;
   maxRentalDays?: number;
+  /**
+   * Seeded fiction (not live data): date ranges this exact vehicle is already rented,
+   * end-exclusive. Combined with the viewer's own bookings to decide availability.
+   */
+  unavailableRanges?: DateRange[];
   cancellationPolicy: CarCancellationPolicy;
   bookingType: "instant" | "request";
   rating: number;

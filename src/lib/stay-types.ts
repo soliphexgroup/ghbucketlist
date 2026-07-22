@@ -12,8 +12,8 @@ export type PropertyRoom = {
 
 export type RoomPerk = "breakfast" | "free_cancellation" | "pay_at_property";
 
-/** An ISO `YYYY-MM-DD` date range, checkout-exclusive (the `end` night isn't occupied). */
-export type DateRange = { start: string; end: string };
+import type { DateRange } from "@/lib/availability";
+export type { DateRange };
 
 /**
  * A bookable room type, as sold by hotels. Distinct from PropertyRoom: an apartment's

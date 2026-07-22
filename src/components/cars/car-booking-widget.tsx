@@ -11,17 +11,11 @@ import { Switch } from "@/components/ui/switch";
 import { WishlistButton } from "@/components/wishlist-button";
 import { CarBookingDialog, type CarBookingDetails } from "@/components/cars/car-booking-dialog";
 import { formatGHS } from "@/lib/format";
+import { addDays, daysBetween, startOfToday } from "@/lib/dates";
+import { isNightBlocked, toISODate } from "@/lib/availability";
+import { isCarAvailable, carBlockedRanges } from "@/lib/car-availability";
+import { useCarBookings } from "@/lib/car-bookings-store";
 import type { Car } from "@/lib/car-types";
-
-function addDays(date: Date, days: number) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function daysBetween(from: Date, to: Date) {
-  return Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
-}
 
 export function CarBookingWidget({ car }: { car: Car }) {
   const defaultPickup = addDays(new Date(), 3);
@@ -31,6 +25,11 @@ export function CarBookingWidget({ car }: { car: Car }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pending, setPending] = useState<CarBookingDetails | null>(null);
 
+  // Availability: rented days are disabled in the calendar, and a clashing range blocks the reserve.
+  const bookings = useCarBookings();
+  const blockedRanges = carBlockedRanges(car, bookings);
+  const available = isCarAvailable(car, toISODate(range.from), toISODate(range.to), bookings);
+
   const days = daysBetween(range.from, range.to);
   const dailyRate = withDriver ? car.withDriverPricePerDay : car.pricePerDay;
   const subtotal = dailyRate * days;
@@ -39,6 +38,7 @@ export function CarBookingWidget({ car }: { car: Car }) {
   const isInstant = car.bookingType === "instant";
 
   function handleReserve() {
+    if (!available) return;
     setPending({
       car,
       pickupDate: range.from,
@@ -80,7 +80,7 @@ export function CarBookingWidget({ car }: { car: Car }) {
                 if (next?.from && next?.to) setRange({ from: next.from, to: next.to });
                 else if (next?.from) setRange({ from: next.from, to: addDays(next.from, car.minRentalDays) });
               }}
-              disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+              disabled={(d) => d < startOfToday() || isNightBlocked(d, blockedRanges)}
               autoFocus
             />
           </PopoverContent>
@@ -123,16 +123,19 @@ export function CarBookingWidget({ car }: { car: Car }) {
         <Button
           size="lg"
           onClick={handleReserve}
+          disabled={!available}
           className="w-full"
         >
           {isInstant && <Zap className="size-4 fill-current" />}
-          {isInstant ? "Reserve" : "Request to Book"}
+          {!available ? "Not available for these dates" : isInstant ? "Reserve" : "Request to Book"}
         </Button>
 
         <p className="text-center text-xs text-muted-foreground">
-          {isInstant
-            ? "Payment confirms immediately, no vendor approval needed."
-            : "You won't be charged yet — the vendor has 24 hours to accept."}
+          {!available
+            ? "This car is booked for those dates. Pick another range to continue."
+            : isInstant
+              ? "Payment confirms immediately, no vendor approval needed."
+              : "You won't be charged yet — the vendor has 24 hours to accept."}
         </p>
       </div>
 

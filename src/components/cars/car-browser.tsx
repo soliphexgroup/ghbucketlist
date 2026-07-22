@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { listCars, carPriceBounds, type CarFilters } from "@/lib/car-repository";
 import { daysBetween, parseDateParam } from "@/lib/dates";
+import { useCarBookings } from "@/lib/car-bookings-store";
 import type { Car, CarCategory } from "@/lib/car-types";
 
 export type CarFilterState = Required<
@@ -50,9 +51,14 @@ function CarBrowserInner({
   initialCategory,
   initialQ,
   rentalDays,
+  pickup,
+  returnDate,
 }: {
   /** Length of the searched rental, if any. Search context rather than a sidebar filter. */
   rentalDays?: number;
+  /** ISO search dates — when both are set, results are filtered to what's available. */
+  pickup?: string;
+  returnDate?: string;
   initialCategory: CarCategory | null;
   initialQ: string;
 }) {
@@ -63,21 +69,27 @@ function CarBrowserInner({
   }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  const bookings = useCarBookings();
   const cars = useMemo(
     () =>
-      listCars({
-        q: filters.q,
-        categories: filters.categories,
-        maxPrice: filters.maxPrice,
-        seats: filters.seats > 1 ? filters.seats : undefined,
-        transmission: filters.transmission,
-        features: filters.features,
-        driverAvailableOnly: filters.driverAvailableOnly,
-        instantBookOnly: filters.instantBookOnly,
-        rentalDays,
-        sort: filters.sort,
-      }),
-    [filters, rentalDays]
+      listCars(
+        {
+          q: filters.q,
+          categories: filters.categories,
+          maxPrice: filters.maxPrice,
+          seats: filters.seats > 1 ? filters.seats : undefined,
+          transmission: filters.transmission,
+          features: filters.features,
+          driverAvailableOnly: filters.driverAvailableOnly,
+          instantBookOnly: filters.instantBookOnly,
+          rentalDays,
+          pickup,
+          returnDate,
+          sort: filters.sort,
+        },
+        bookings
+      ),
+    [filters, rentalDays, pickup, returnDate, bookings]
   );
 
   function updateFilters(next: Partial<CarFilterState>) {
@@ -174,11 +186,14 @@ export function CarBrowser() {
     : null;
   const initialQ = params.get("q") ?? "";
 
-  // The searched pickup/return only tells us how long the rental is — nothing records
-  // which cars are already booked — so it filters on the terms a car accepts, not availability.
+  // The searched pickup/return both narrows the list to cars free for the range and,
+  // via its length, drops cars that won't do a rental that short or long.
   const pickup = parseDateParam(params.get("pickup"));
   const returnDate = parseDateParam(params.get("return"));
-  const rentalDays = pickup && returnDate && returnDate > pickup ? daysBetween(pickup, returnDate) : undefined;
+  const validRange = Boolean(pickup && returnDate && returnDate > pickup);
+  const rentalDays = validRange ? daysBetween(pickup!, returnDate!) : undefined;
+  const pickupISO = validRange ? params.get("pickup")! : undefined;
+  const returnISO = validRange ? params.get("return")! : undefined;
 
   return (
     <CarBrowserInner
@@ -186,6 +201,8 @@ export function CarBrowser() {
       initialCategory={initialCategory}
       initialQ={initialQ}
       rentalDays={rentalDays}
+      pickup={pickupISO}
+      returnDate={returnISO}
     />
   );
 }
