@@ -20,6 +20,11 @@ export type ServiceProvider = {
    * a calendar — nothing records whether they're already booked on a given date.
    */
   workingDays: string[];
+  /**
+   * Seeded fiction (not live data): specific ISO dates this provider is fully booked,
+   * beyond their weekday schedule. A booked day, not a calendar of live jobs.
+   */
+  unavailableDates?: string[];
   completedJobs: number;
   skills: string[];
   rating: number;

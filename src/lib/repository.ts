@@ -88,6 +88,8 @@ export function listExperiences(filters: ExperienceFilters = {}, extra: Experien
   if (filters.date) {
     const weekday = weekdayFromISODate(filters.date);
     if (weekday) results = results.filter((e) => e.scheduleDays.includes(weekday));
+    // Drop sessions that run that weekday but are sold out on this specific date.
+    results = results.filter((e) => !(e.unavailableDates ?? []).includes(filters.date!));
   }
 
   const sort = filters.sort ?? "recommended";

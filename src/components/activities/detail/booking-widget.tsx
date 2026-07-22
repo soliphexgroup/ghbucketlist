@@ -15,6 +15,7 @@ import { WishlistButton } from "@/components/wishlist-button";
 import { ShareButtons } from "@/components/activities/detail/share-buttons";
 import { BookingDialog, type BookingDetails } from "@/components/activities/detail/booking-dialog";
 import { formatDuration, formatGHS } from "@/lib/format";
+import { isDateInList } from "@/lib/availability";
 import { useBookings } from "@/lib/bookings-store";
 import { useMyReviews } from "@/lib/reviews-store";
 import { computeGpBalance, gpToDiscount, maxRedeemableGp } from "@/lib/gp";
@@ -31,11 +32,11 @@ const DAY_NAME_TO_INDEX: Record<string, number> = {
   Saturday: 6,
 };
 
-function nextAvailableDate(scheduleDays: string[]) {
+function nextAvailableDate(scheduleDays: string[], unavailableDates: string[]) {
   const allowed = scheduleDays.map((d) => DAY_NAME_TO_INDEX[d]);
   const date = new Date();
-  for (let i = 0; i < 14; i++) {
-    if (allowed.includes(date.getDay())) return date;
+  for (let i = 0; i < 60; i++) {
+    if (allowed.includes(date.getDay()) && !isDateInList(date, unavailableDates)) return date;
     date.setDate(date.getDate() + 1);
   }
   return new Date();
@@ -46,7 +47,8 @@ export function BookingWidget({ experience }: { experience: Experience }) {
     () => experience.scheduleDays.map((d) => DAY_NAME_TO_INDEX[d]),
     [experience.scheduleDays]
   );
-  const [date, setDate] = useState<Date>(() => nextAvailableDate(experience.scheduleDays));
+  const unavailableDates = experience.unavailableDates ?? [];
+  const [date, setDate] = useState<Date>(() => nextAvailableDate(experience.scheduleDays, unavailableDates));
   const [ticketTypeId, setTicketTypeId] = useState(experience.ticketTypes[0]?.id);
   const [quantity, setQuantity] = useState(1);
   const [isGift, setIsGift] = useState(false);
@@ -128,7 +130,9 @@ export function BookingWidget({ experience }: { experience: Experience }) {
                 selected={date}
                 onSelect={(d) => d && setDate(d)}
                 disabled={(d) =>
-                  d < new Date(new Date().setHours(0, 0, 0, 0)) || !allowedDays.includes(d.getDay())
+                  d < new Date(new Date().setHours(0, 0, 0, 0)) ||
+                  !allowedDays.includes(d.getDay()) ||
+                  isDateInList(d, unavailableDates)
                 }
                 autoFocus
               />

@@ -47,6 +47,8 @@ export function listProviders(filters: ServiceFilters = {}): ServiceProvider[] {
   if (filters.date) {
     const weekday = weekdayFromISODate(filters.date);
     if (weekday) results = results.filter((p) => p.workingDays.includes(weekday));
+    // Drop providers who work that weekday but are already booked out on this date.
+    results = results.filter((p) => !(p.unavailableDates ?? []).includes(filters.date!));
   }
 
   const sort = filters.sort ?? "recommended";

@@ -45,6 +45,12 @@ export type Experience = {
   ticketTypes: TicketType[];
   scheduleDays: string[];
   scheduleTime: string;
+  /**
+   * Seeded fiction (not live data): specific ISO dates this experience's session is full,
+   * beyond the weekday schedule. Capacity isn't seat-counted, so a sold-out date is modelled
+   * as a whole-day block rather than a running tally.
+   */
+  unavailableDates?: string[];
   whatsIncluded: string[];
   gpPoints: number;
   rating: number;

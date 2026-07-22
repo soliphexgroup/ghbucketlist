@@ -11,6 +11,7 @@ export const experiences: Experience[] = [
   {
     id: "exp-pottery",
     slug: "handbuilding-wheel-throwing-pottery",
+    unavailableDates: ["2026-08-03", "2026-08-05"],
     title: "Handbuilding + Wheel Throwing Pottery Class",
     shortDescription:
       "Get your hands dirty and shape your own ceramic piece from scratch.",
@@ -43,6 +44,7 @@ export const experiences: Experience[] = [
   {
     id: "exp-street-food",
     slug: "accra-street-food-crawl",
+    unavailableDates: ["2026-08-01", "2026-08-07"],
     title: "Accra Street Food Crawl",
     shortDescription:
       "Taste your way through five legendary street food stops with a local chef.",
@@ -72,6 +74,7 @@ export const experiences: Experience[] = [
   {
     id: "exp-sunrise-yoga",
     slug: "sunrise-beach-yoga",
+    unavailableDates: ["2026-08-08"],
     title: "Sunrise Beach Yoga Flow",
     shortDescription: "Start your day with a guided flow on the sand at Labadi.",
     description:
@@ -100,6 +103,7 @@ export const experiences: Experience[] = [
   {
     id: "exp-aburi-hike",
     slug: "aburi-hills-sunrise-hike",
+    unavailableDates: ["2026-08-15"],
     title: "Aburi Hills Sunrise Hike",
     shortDescription: "A guided early-morning hike through the Aburi hills.",
     description:
@@ -128,6 +132,7 @@ export const experiences: Experience[] = [
   {
     id: "exp-jamestown-art",
     slug: "jamestown-gallery-walk",
+    unavailableDates: ["2026-08-01"],
     title: "Jamestown Gallery & Mural Walk",
     shortDescription: "Explore street art and independent galleries in Jamestown.",
     description:

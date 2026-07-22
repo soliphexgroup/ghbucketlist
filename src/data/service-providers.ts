@@ -10,6 +10,7 @@ function imgs(seed: string, count: number) {
 export const serviceProviders: ServiceProvider[] = [
   {
     id: "svc-kwame-carpenter",
+    unavailableDates: ["2026-08-03", "2026-08-05"],
     slug: "kwame-owusu-carpentry",
     name: "Kwame Owusu",
     category: "carpenter",
@@ -52,6 +53,7 @@ export const serviceProviders: ServiceProvider[] = [
   },
   {
     id: "svc-kojo-electrician",
+    unavailableDates: ["2026-08-05"],
     slug: "kojo-mensah-electrical",
     name: "Kojo Mensah",
     category: "electrician",
@@ -94,6 +96,7 @@ export const serviceProviders: ServiceProvider[] = [
   },
   {
     id: "svc-yaw-plumber",
+    unavailableDates: ["2026-08-16"],
     slug: "yaw-boateng-plumbing",
     name: "Yaw Boateng",
     category: "plumber",

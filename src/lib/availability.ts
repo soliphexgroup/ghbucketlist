@@ -31,3 +31,11 @@ export function isNightBlocked(date: Date, ranges: DateRange[]) {
   const iso = toISODate(date);
   return ranges.some((range) => nightInRange(iso, range));
 }
+
+/**
+ * Single-day availability: whether a `Date` is in a list of blocked ISO dates. Used by
+ * the day-based verticals (activities sessions, service providers) rather than ranges.
+ */
+export function isDateInList(date: Date, isoDates: string[]) {
+  return isoDates.includes(toISODate(date));
+}
