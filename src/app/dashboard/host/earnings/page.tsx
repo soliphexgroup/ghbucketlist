@@ -19,9 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCurrentHostId, useCurrentHost, useHostBookings, platformFee, netPayout } from "@/lib/host-repository";
+import { useCurrentHostId, useCurrentHost, useHostLedger, platformFee, netPayout } from "@/lib/host-repository";
 import { addPayout, usePayouts } from "@/lib/payouts-store";
-import { getExperienceById } from "@/data/experiences";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -34,15 +33,16 @@ const statusStyles = {
 export default function EarningsPage() {
   const host = useCurrentHost();
   const hostId = useCurrentHostId();
-  const bookings = useHostBookings();
+  const ledger = useHostLedger();
   const allPayouts = usePayouts();
   const payouts = allPayouts.filter((p) => p.hostId === hostId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("mobile-money");
 
-  const attended = bookings.filter((b) => b.status === "attended");
-  const grossEarned = attended.reduce((sum, b) => sum + b.total, 0);
+  // Earned revenue = completed experiences and checked-out stays.
+  const completed = ledger.filter((e) => e.status === "completed");
+  const grossEarned = completed.reduce((sum, e) => sum + e.gross, 0);
   const feeTotal = platformFee(grossEarned);
   const netEarned = grossEarned - feeTotal;
   const payoutsTotal = payouts
@@ -138,24 +138,21 @@ export default function EarningsPage() {
             </tr>
           </thead>
           <tbody>
-            {attended.map((b) => {
-              const exp = getExperienceById(b.experienceId);
-              return (
-                <tr key={b.id} className="border-t border-border">
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(b.dateISO).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                  </td>
-                  <td className="px-4 py-3 text-foreground">
-                    {b.guestName}
-                    <span className="block text-xs text-muted-foreground">{exp?.title}</span>
-                  </td>
-                  <td className="px-4 py-3 text-foreground">{formatGHS(b.total)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">-{formatGHS(platformFee(b.total))}</td>
-                  <td className="px-4 py-3 font-medium text-success">{formatGHS(netPayout(b.total))}</td>
-                </tr>
-              );
-            })}
-            {attended.length === 0 && (
+            {completed.map((e) => (
+              <tr key={e.id} className="border-t border-border">
+                <td className="px-4 py-3 text-muted-foreground">
+                  {new Date(e.dateISO).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </td>
+                <td className="px-4 py-3 text-foreground">
+                  {e.guestName}
+                  <span className="block text-xs text-muted-foreground">{e.listingTitle}</span>
+                </td>
+                <td className="px-4 py-3 text-foreground">{formatGHS(e.gross)}</td>
+                <td className="px-4 py-3 text-muted-foreground">-{formatGHS(platformFee(e.gross))}</td>
+                <td className="px-4 py-3 font-medium text-success">{formatGHS(netPayout(e.gross))}</td>
+              </tr>
+            ))}
+            {completed.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
                   No completed sessions yet.

@@ -1,14 +1,18 @@
+import { useState } from "react";
 import { hosts } from "@/data/hosts";
-import { experiences } from "@/data/experiences";
+import { experiences, getExperienceById } from "@/data/experiences";
 import { properties } from "@/data/properties";
 import { hostBookings } from "@/data/host-bookings";
+import { hostStayBookings } from "@/data/host-stay-bookings";
 import { useBookings } from "@/lib/bookings-store";
-import { useStayBookings } from "@/lib/stay-bookings-store";
+import { useStayBookings, type StoredStayBooking } from "@/lib/stay-bookings-store";
 import { useHostCreatedExperiences } from "@/lib/host-experiences-store";
 import { useHostCreatedProperties } from "@/lib/host-properties-store";
 import { useAuth } from "@/lib/auth-context";
-import type { HostBooking } from "@/lib/host-types";
+import type { HostBooking, HostLedgerEntry, HostLedgerStatus } from "@/lib/host-types";
 import type { Host } from "@/lib/types";
+
+const GUEST_FALLBACK_AVATAR = "https://i.pravatar.cc/100?img=68";
 
 /** Fallback used only when no one is signed in (dashboard routes require auth, so this is mostly defensive). */
 const DEMO_HOST_ID = "host-kwabena";
@@ -73,11 +77,75 @@ export function useHostProperties() {
   return [...created, ...staticOnes];
 }
 
-/** Combines static demo stay bookings with any live bookings made for the host's own properties. */
-export function useHostStayBookings() {
+/** Combines seeded demo stay bookings with any live bookings made for the host's own properties. */
+export function useHostStayBookings(): StoredStayBooking[] {
   const liveBookings = useStayBookings();
-  const propertyIds = useHostProperties().map((p) => p.id);
-  return liveBookings.filter((b) => propertyIds.includes(b.propertyId));
+  const propertyIds = new Set(useHostProperties().map((p) => p.id));
+
+  const live = liveBookings.filter((b) => propertyIds.has(b.propertyId));
+  const liveRefs = new Set(live.map((b) => b.reference));
+  const seeded = hostStayBookings.filter(
+    (b) => propertyIds.has(b.propertyId) && !liveRefs.has(b.reference)
+  );
+
+  return [...seeded, ...live].sort(
+    (a, b) => new Date(b.checkInISO).getTime() - new Date(a.checkInISO).getTime()
+  );
+}
+
+/** Whether a stay counts as earned revenue: checked out (or explicitly completed), not cancelled. */
+function stayLedgerStatus(booking: StoredStayBooking, now: number): HostLedgerStatus {
+  if (booking.status === "cancelled" || booking.status === "declined") return "cancelled";
+  if (booking.status === "pending_request") return "pending";
+  if (booking.status === "completed" || new Date(booking.checkOutISO).getTime() < now) return "completed";
+  return "confirmed";
+}
+
+/**
+ * Experiences and stays, normalized into one list so the dashboard's totals, activity feeds
+ * and tables can treat them uniformly. Sorted most-recent first by the entry's date.
+ */
+export function useHostLedger(): HostLedgerEntry[] {
+  const experienceBookings = useHostBookings();
+  const stayBookings = useHostStayBookings();
+  // Computed once per mount so the render stays pure (a stay's "completed" depends on now).
+  const [now] = useState(() => Date.now());
+
+  const fromExperiences: HostLedgerEntry[] = experienceBookings.map((b) => ({
+    id: b.id,
+    kind: "experience",
+    listingId: b.experienceId,
+    listingTitle: getExperienceById(b.experienceId)?.title ?? "Experience",
+    guestName: b.guestName,
+    guestAvatar: b.guestAvatar,
+    dateISO: b.dateISO,
+    gross: b.total,
+    status:
+      b.status === "cancelled" || b.status === "refunded"
+        ? "cancelled"
+        : b.status === "attended"
+          ? "completed"
+          : "confirmed",
+    createdAtISO: b.createdAtISO,
+  }));
+
+  const fromStays: HostLedgerEntry[] = stayBookings.map((b) => ({
+    id: b.reference,
+    kind: "stay",
+    listingId: b.propertyId,
+    listingTitle: b.propertyTitle,
+    guestName: b.guestName ?? "You (this device)",
+    guestAvatar: b.guestAvatar ?? GUEST_FALLBACK_AVATAR,
+    dateISO: b.checkInISO,
+    endISO: b.checkOutISO,
+    gross: b.total,
+    status: stayLedgerStatus(b, now),
+    createdAtISO: b.createdAtISO,
+  }));
+
+  return [...fromExperiences, ...fromStays].sort(
+    (a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime()
+  );
 }
 
 /** Combines static demo bookings with any live bookings this browser made for the host's own experiences. */

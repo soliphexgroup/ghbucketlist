@@ -17,6 +17,13 @@ export type StoredStayBooking = {
   hostName: string;
   neighbourhood: string;
   city: string;
+  /**
+   * The guest, from the host's side. A guest's own live booking is their own, so these
+   * stay empty (shown as "You" on the host dashboard); seeded host-side demo bookings fill them.
+   */
+  guestName?: string;
+  guestEmail?: string;
+  guestAvatar?: string;
   checkInISO: string;
   checkOutISO: string;
   nights: number;

@@ -6,35 +6,46 @@ import { CalendarCheck, Compass, Plus, Star, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EarningsSparkline } from "@/components/dashboard/earnings-sparkline";
-import { useCurrentHost, useHostExperiences, useHostBookings } from "@/lib/host-repository";
+import {
+  useCurrentHost,
+  useHostExperiences,
+  useHostProperties,
+  useHostBookings,
+  useHostLedger,
+} from "@/lib/host-repository";
 import { getExperienceById } from "@/data/experiences";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
+  pending: "bg-secondary text-secondary-foreground",
   confirmed: "bg-success/10 text-success",
-  attended: "bg-secondary text-secondary-foreground",
+  completed: "bg-secondary text-secondary-foreground",
   cancelled: "bg-destructive/10 text-destructive",
-  refunded: "bg-destructive/10 text-destructive",
 };
 
 export default function HostOverviewPage() {
   const host = useCurrentHost();
   const experiences = useHostExperiences();
+  const properties = useHostProperties();
+  const ledger = useHostLedger();
   const bookings = useHostBookings();
   const now = new Date();
 
-  const activeBookings = bookings.filter((b) => b.status !== "cancelled" && b.status !== "refunded");
-  const grossAllTime = activeBookings.reduce((sum, b) => sum + b.total, 0);
+  // Money and counts span experiences and stays via the unified ledger.
+  const activeLedger = ledger.filter((e) => e.status !== "cancelled");
+  const grossAllTime = activeLedger.reduce((sum, e) => sum + e.gross, 0);
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const thisMonthBookings = activeBookings.filter((b) => new Date(b.dateISO) >= startOfMonth);
-  const grossThisMonth = thisMonthBookings.reduce((sum, b) => sum + b.total, 0);
+  const thisMonthBookings = activeLedger.filter((e) => new Date(e.dateISO) >= startOfMonth);
+  const grossThisMonth = thisMonthBookings.reduce((sum, e) => sum + e.gross, 0);
 
+  const listingCount = experiences.length + properties.length;
+  const ratedListings = [...experiences, ...properties];
   const avgRating =
-    experiences.reduce((sum, e) => sum + e.rating, 0) / (experiences.length || 1);
-  const totalReviews = experiences.reduce((sum, e) => sum + e.reviewCount, 0);
+    ratedListings.reduce((sum, l) => sum + l.rating, 0) / (ratedListings.length || 1);
+  const totalReviews = ratedListings.reduce((sum, l) => sum + l.reviewCount, 0);
 
-  const recentBookings = [...bookings]
+  const recentBookings = [...ledger]
     .sort((a, b) => new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime())
     .slice(0, 5);
 
@@ -62,13 +73,13 @@ export default function HostOverviewPage() {
     return d;
   });
   const sparklinePoints = days.map((day) =>
-    activeBookings
-      .filter((b) => {
-        const bd = new Date(b.dateISO);
+    activeLedger
+      .filter((e) => {
+        const bd = new Date(e.dateISO);
         bd.setHours(0, 0, 0, 0);
         return bd.getTime() === day.getTime();
       })
-      .reduce((sum, b) => sum + b.total, 0)
+      .reduce((sum, e) => sum + e.gross, 0)
   );
 
   return (
@@ -80,7 +91,7 @@ export default function HostOverviewPage() {
             <h1 className="font-heading text-xl font-bold text-foreground">
               Welcome back, {host.name.split(" ")[0]}
             </h1>
-            <p className="text-sm text-muted-foreground">Here&apos;s how your experiences are doing.</p>
+            <p className="text-sm text-muted-foreground">Here&apos;s how your listings are doing.</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -103,7 +114,7 @@ export default function HostOverviewPage() {
         <StatCard label="Bookings this month" value={thisMonthBookings.length} icon={CalendarCheck} />
         <StatCard label="Earnings this month" value={formatGHS(grossThisMonth)} icon={Wallet} />
         <StatCard label="All-time earnings" value={formatGHS(grossAllTime)} icon={Wallet} />
-        <StatCard label="Active listings" value={experiences.length} icon={Compass} />
+        <StatCard label="Active listings" value={listingCount} icon={Compass} />
         <StatCard label="Avg. rating" value={avgRating.toFixed(1)} icon={Star} sub={`${totalReviews} reviews`} />
       </div>
 
@@ -125,25 +136,27 @@ export default function HostOverviewPage() {
               <thead className="bg-secondary/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 font-medium">Guest</th>
-                  <th className="px-4 py-3 font-medium">Activity</th>
+                  <th className="px-4 py-3 font-medium">Listing</th>
                   <th className="px-4 py-3 font-medium">Amount</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {recentBookings.map((b) => {
-                  const exp = getExperienceById(b.experienceId);
-                  return (
-                    <tr key={b.id} className="border-t border-border">
-                      <td className="px-4 py-3 text-foreground">{b.guestName}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{exp?.title ?? "—"}</td>
-                      <td className="px-4 py-3 text-foreground">{formatGHS(b.total)}</td>
-                      <td className="px-4 py-3">
-                        <Badge className={cn("capitalize", statusStyles[b.status])}>{b.status}</Badge>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {recentBookings.map((e) => (
+                  <tr key={e.id} className="border-t border-border">
+                    <td className="px-4 py-3 text-foreground">{e.guestName}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {e.listingTitle}
+                      <span className="ml-2 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium capitalize text-secondary-foreground">
+                        {e.kind}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-foreground">{formatGHS(e.gross)}</td>
+                    <td className="px-4 py-3">
+                      <Badge className={cn("capitalize", statusStyles[e.status])}>{e.status}</Badge>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
