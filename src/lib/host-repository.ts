@@ -8,6 +8,7 @@ import { useBookings } from "@/lib/bookings-store";
 import { useStayBookings, type StoredStayBooking } from "@/lib/stay-bookings-store";
 import { useHostCreatedExperiences } from "@/lib/host-experiences-store";
 import { useHostCreatedProperties } from "@/lib/host-properties-store";
+import { useDemoHostPreview } from "@/lib/demo-host-preview";
 import { useAuth } from "@/lib/auth-context";
 import type { HostBooking, HostLedgerEntry, HostLedgerStatus } from "@/lib/host-types";
 import type { Host } from "@/lib/types";
@@ -20,13 +21,16 @@ const DEMO_HOST_ID = "host-kwabena";
 /** The signed-in host's id — real listings/bookings/payouts are all scoped to this. */
 export function useCurrentHostId() {
   const { user } = useAuth();
+  const preview = useDemoHostPreview();
+  if (preview) return DEMO_HOST_ID;
   return user?.id ?? DEMO_HOST_ID;
 }
 
 /** Display info (name/avatar/bio) for the signed-in host, for sidebar/header UI. */
 export function useCurrentHost(): Host {
   const { user, profile } = useAuth();
-  if (!user) return hosts.find((h) => h.id === DEMO_HOST_ID)!;
+  const preview = useDemoHostPreview();
+  if (preview || !user) return hosts.find((h) => h.id === DEMO_HOST_ID)!;
 
   const staticMatch = hosts.find((h) => h.id === user.id);
   if (staticMatch) return staticMatch;
