@@ -117,8 +117,10 @@ export function useHostLedger(): HostLedgerEntry[] {
     listingId: b.experienceId,
     listingTitle: getExperienceById(b.experienceId)?.title ?? "Experience",
     guestName: b.guestName,
+    guestEmail: b.guestEmail,
     guestAvatar: b.guestAvatar,
     dateISO: b.dateISO,
+    detail: `${b.quantity} × ${b.ticketTypeName}`,
     gross: b.total,
     status:
       b.status === "cancelled" || b.status === "refunded"
@@ -135,9 +137,11 @@ export function useHostLedger(): HostLedgerEntry[] {
     listingId: b.propertyId,
     listingTitle: b.propertyTitle,
     guestName: b.guestName ?? "You (this device)",
+    guestEmail: b.guestEmail ?? "",
     guestAvatar: b.guestAvatar ?? GUEST_FALLBACK_AVATAR,
     dateISO: b.checkInISO,
     endISO: b.checkOutISO,
+    detail: `${b.nights} night${b.nights === 1 ? "" : "s"} · ${b.rooms ?? 1} room${(b.rooms ?? 1) === 1 ? "" : "s"}`,
     gross: b.total,
     status: stayLedgerStatus(b, now),
     createdAtISO: b.createdAtISO,

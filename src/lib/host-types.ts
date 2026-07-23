@@ -11,11 +11,14 @@ export type HostLedgerEntry = {
   listingId: string;
   listingTitle: string;
   guestName: string;
+  guestEmail: string;
   guestAvatar: string;
   /** Experience session date, or a stay's check-in. */
   dateISO: string;
   /** A stay's check-out (absent for experiences). */
   endISO?: string;
+  /** Kind-specific line, e.g. "2 × General" or "3 nights · 1 room". */
+  detail: string;
   gross: number;
   status: HostLedgerStatus;
   createdAtISO: string;

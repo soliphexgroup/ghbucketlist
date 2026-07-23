@@ -12,21 +12,53 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useHostExperiences } from "@/lib/host-repository";
+import { useHostExperiences, useHostProperties } from "@/lib/host-repository";
 import { getReviewsForExperience } from "@/data/reviews";
-import { getExperienceById } from "@/data/experiences";
+import { getPropertyReviews } from "@/data/property-reviews";
 
 export default function HostReviewsPage() {
   const experiences = useHostExperiences();
-  const [experienceFilter, setExperienceFilter] = useState("all");
+  const properties = useHostProperties();
+  const [listingFilter, setListingFilter] = useState("all");
   const [ratingFilter, setRatingFilter] = useState("all");
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [draft, setDraft] = useState<Record<string, string>>({});
 
-  const allReviews = useMemo(
-    () => experiences.flatMap((e) => getReviewsForExperience(e.id).map((r) => ({ ...r, experienceId: e.id }))),
-    [experiences]
-  );
+  // Reviews across both listing kinds, normalized. Keyed by kind+id so experience and
+  // property review ids can't collide in the reply map or React keys.
+  const allReviews = useMemo(() => {
+    const fromExperiences = experiences.flatMap((e) =>
+      getReviewsForExperience(e.id).map((r) => ({
+        key: `exp-${r.id}`,
+        listingId: e.id,
+        listingTitle: e.title,
+        kind: "experience" as const,
+        userName: r.userName,
+        userAvatar: r.userAvatar,
+        rating: r.rating,
+        text: r.text,
+        date: r.date,
+      }))
+    );
+    const fromProperties = properties.flatMap((p) =>
+      getPropertyReviews(p.id).map((r) => ({
+        key: `prop-${r.id}`,
+        listingId: p.id,
+        listingTitle: p.title,
+        kind: "stay" as const,
+        userName: r.userName,
+        userAvatar: r.userAvatar,
+        rating: r.rating,
+        text: r.text,
+        date: r.date,
+      }))
+    );
+    return [...fromExperiences, ...fromProperties].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, [experiences, properties]);
+
+  const listings = [...experiences, ...properties];
 
   const breakdown = [5, 4, 3, 2, 1].map((star) => ({
     star,
@@ -34,7 +66,7 @@ export default function HostReviewsPage() {
   }));
 
   const filtered = allReviews
-    .filter((r) => (experienceFilter === "all" ? true : r.experienceId === experienceFilter))
+    .filter((r) => (listingFilter === "all" ? true : r.listingId === listingFilter))
     .filter((r) => (ratingFilter === "all" ? true : r.rating === Number(ratingFilter)));
 
   function submitReply(reviewId: string) {
@@ -47,7 +79,7 @@ export default function HostReviewsPage() {
   return (
     <div>
       <h1 className="font-heading text-2xl font-bold text-foreground">Reviews</h1>
-      <p className="mt-1 text-muted-foreground">Feedback across all of your experiences.</p>
+      <p className="mt-1 text-muted-foreground">Feedback across all of your listings.</p>
 
       <div className="mt-6 flex flex-col gap-1.5 rounded-2xl border border-border p-5 sm:max-w-sm">
         {breakdown.map(({ star, count }) => (
@@ -66,15 +98,15 @@ export default function HostReviewsPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <Select value={experienceFilter} onValueChange={setExperienceFilter}>
-          <SelectTrigger className="w-[220px]">
-            <SelectValue placeholder="All activities" />
+        <Select value={listingFilter} onValueChange={setListingFilter}>
+          <SelectTrigger className="w-[240px]">
+            <SelectValue placeholder="All listings" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All activities</SelectItem>
-            {experiences.map((e) => (
-              <SelectItem key={e.id} value={e.id}>
-                {e.title}
+            <SelectItem value="all">All listings</SelectItem>
+            {listings.map((l) => (
+              <SelectItem key={l.id} value={l.id}>
+                {l.title}
               </SelectItem>
             ))}
           </SelectContent>
@@ -96,10 +128,9 @@ export default function HostReviewsPage() {
 
       <div className="mt-6 flex flex-col gap-4">
         {filtered.map((review) => {
-          const exp = getExperienceById(review.experienceId);
-          const reply = replies[review.id];
+          const reply = replies[review.key];
           return (
-            <div key={review.id} className="rounded-2xl border border-border p-4">
+            <div key={review.key} className="rounded-2xl border border-border p-4">
               <div className="flex gap-3">
                 <Image
                   src={review.userAvatar}
@@ -112,7 +143,12 @@ export default function HostReviewsPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="text-sm font-semibold text-foreground">{review.userName}</p>
-                      <p className="text-xs text-muted-foreground">{exp?.title}</p>
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        {review.listingTitle}
+                        <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium capitalize text-secondary-foreground">
+                          {review.kind}
+                        </span>
+                      </p>
                     </div>
                     <span className="text-xs text-muted-foreground">
                       {new Date(review.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
@@ -136,13 +172,13 @@ export default function HostReviewsPage() {
                   ) : (
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                       <Textarea
-                        value={draft[review.id] ?? ""}
-                        onChange={(e) => setDraft((prev) => ({ ...prev, [review.id]: e.target.value }))}
+                        value={draft[review.key] ?? ""}
+                        onChange={(e) => setDraft((prev) => ({ ...prev, [review.key]: e.target.value }))}
                         placeholder="Reply to this review…"
                         rows={1}
                         className="flex-1"
                       />
-                      <Button size="sm" onClick={() => submitReply(review.id)} className="sm:self-start">
+                      <Button size="sm" onClick={() => submitReply(review.key)} className="sm:self-start">
                         Reply
                       </Button>
                     </div>
