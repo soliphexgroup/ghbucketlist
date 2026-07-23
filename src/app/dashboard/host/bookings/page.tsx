@@ -91,6 +91,7 @@ export default function HostBookingsPage() {
             <SelectItem value="all">All types</SelectItem>
             <SelectItem value="experience">Experiences</SelectItem>
             <SelectItem value="stay">Stays</SelectItem>
+            <SelectItem value="car">Cars</SelectItem>
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>

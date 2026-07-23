@@ -5,8 +5,10 @@ import { properties } from "@/data/properties";
 import { cars } from "@/data/cars";
 import { hostBookings } from "@/data/host-bookings";
 import { hostStayBookings } from "@/data/host-stay-bookings";
+import { hostCarBookings } from "@/data/host-car-bookings";
 import { useBookings } from "@/lib/bookings-store";
 import { useStayBookings, type StoredStayBooking } from "@/lib/stay-bookings-store";
+import { useCarBookings, type StoredCarBooking } from "@/lib/car-bookings-store";
 import { useHostCreatedExperiences } from "@/lib/host-experiences-store";
 import { useHostCreatedProperties } from "@/lib/host-properties-store";
 import { useHostCreatedCars } from "@/lib/host-cars-store";
@@ -122,6 +124,28 @@ function stayLedgerStatus(booking: StoredStayBooking, now: number): HostLedgerSt
   return "confirmed";
 }
 
+/** Combines seeded demo car bookings with any live bookings made for the host's own cars. */
+export function useHostCarBookings(): StoredCarBooking[] {
+  const liveBookings = useCarBookings();
+  const carIds = new Set(useHostCars().map((c) => c.id));
+
+  const live = liveBookings.filter((b) => carIds.has(b.carId));
+  const liveRefs = new Set(live.map((b) => b.reference));
+  const seeded = hostCarBookings.filter((b) => carIds.has(b.carId) && !liveRefs.has(b.reference));
+
+  return [...seeded, ...live].sort(
+    (a, b) => new Date(b.pickupDateISO).getTime() - new Date(a.pickupDateISO).getTime()
+  );
+}
+
+/** Whether a rental counts as earned revenue: returned (or explicitly completed), not cancelled. */
+function carLedgerStatus(booking: StoredCarBooking, now: number): HostLedgerStatus {
+  if (booking.status === "cancelled" || booking.status === "declined") return "cancelled";
+  if (booking.status === "pending_request") return "pending";
+  if (booking.status === "completed" || new Date(booking.returnDateISO).getTime() < now) return "completed";
+  return "confirmed";
+}
+
 /**
  * Experiences and stays, normalized into one list so the dashboard's totals, activity feeds
  * and tables can treat them uniformly. Sorted most-recent first by the entry's date.
@@ -129,7 +153,8 @@ function stayLedgerStatus(booking: StoredStayBooking, now: number): HostLedgerSt
 export function useHostLedger(): HostLedgerEntry[] {
   const experienceBookings = useHostBookings();
   const stayBookings = useHostStayBookings();
-  // Computed once per mount so the render stays pure (a stay's "completed" depends on now).
+  const carBookings = useHostCarBookings();
+  // Computed once per mount so the render stays pure (a "completed" depends on now).
   const [now] = useState(() => Date.now());
 
   const fromExperiences: HostLedgerEntry[] = experienceBookings.map((b) => ({
@@ -168,7 +193,23 @@ export function useHostLedger(): HostLedgerEntry[] {
     createdAtISO: b.createdAtISO,
   }));
 
-  return [...fromExperiences, ...fromStays].sort(
+  const fromCars: HostLedgerEntry[] = carBookings.map((b) => ({
+    id: b.reference,
+    kind: "car",
+    listingId: b.carId,
+    listingTitle: b.carTitle,
+    guestName: b.guestName ?? "You (this device)",
+    guestEmail: b.guestEmail ?? "",
+    guestAvatar: b.guestAvatar ?? GUEST_FALLBACK_AVATAR,
+    dateISO: b.pickupDateISO,
+    endISO: b.returnDateISO,
+    detail: `${b.days} day${b.days === 1 ? "" : "s"} · ${b.withDriver ? "with driver" : "self-drive"}`,
+    gross: b.total,
+    status: carLedgerStatus(b, now),
+    createdAtISO: b.createdAtISO,
+  }));
+
+  return [...fromExperiences, ...fromStays, ...fromCars].sort(
     (a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime()
   );
 }

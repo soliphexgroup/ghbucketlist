@@ -1,7 +1,7 @@
 export type HostBookingStatus = "confirmed" | "attended" | "cancelled" | "refunded";
 
 /** Normalized so the dashboard can total and list experiences and stays together. */
-export type HostLedgerKind = "experience" | "stay";
+export type HostLedgerKind = "experience" | "stay" | "car";
 export type HostLedgerStatus = "pending" | "confirmed" | "completed" | "cancelled";
 
 export type HostLedgerEntry = {

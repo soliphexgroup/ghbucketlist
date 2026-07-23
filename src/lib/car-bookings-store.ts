@@ -15,6 +15,13 @@ export type StoredCarBooking = {
   carTitle: string;
   carImage: string;
   vendorName: string;
+  /**
+   * The renter, from the host's side. A renter's own live booking leaves these empty
+   * (shown as "You" on the host dashboard); seeded host-side demo bookings fill them.
+   */
+  guestName?: string;
+  guestEmail?: string;
+  guestAvatar?: string;
   pickupLocation: string;
   city: string;
   pickupDateISO: string;

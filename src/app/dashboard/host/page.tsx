@@ -10,6 +10,7 @@ import {
   useCurrentHost,
   useHostExperiences,
   useHostProperties,
+  useHostCars,
   useHostBookings,
   useHostLedger,
 } from "@/lib/host-repository";
@@ -28,6 +29,7 @@ export default function HostOverviewPage() {
   const host = useCurrentHost();
   const experiences = useHostExperiences();
   const properties = useHostProperties();
+  const carListings = useHostCars();
   const ledger = useHostLedger();
   const bookings = useHostBookings();
   const now = new Date();
@@ -39,8 +41,8 @@ export default function HostOverviewPage() {
   const thisMonthBookings = activeLedger.filter((e) => new Date(e.dateISO) >= startOfMonth);
   const grossThisMonth = thisMonthBookings.reduce((sum, e) => sum + e.gross, 0);
 
-  const listingCount = experiences.length + properties.length;
-  const ratedListings = [...experiences, ...properties];
+  const listingCount = experiences.length + properties.length + carListings.length;
+  const ratedListings = [...experiences, ...properties, ...carListings];
   const avgRating =
     ratedListings.reduce((sum, l) => sum + l.rating, 0) / (ratedListings.length || 1);
   const totalReviews = ratedListings.reduce((sum, l) => sum + l.reviewCount, 0);
