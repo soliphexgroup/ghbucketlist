@@ -2,14 +2,17 @@ import { useState } from "react";
 import { hosts } from "@/data/hosts";
 import { experiences, getExperienceById } from "@/data/experiences";
 import { properties } from "@/data/properties";
+import { cars } from "@/data/cars";
 import { hostBookings } from "@/data/host-bookings";
 import { hostStayBookings } from "@/data/host-stay-bookings";
 import { useBookings } from "@/lib/bookings-store";
 import { useStayBookings, type StoredStayBooking } from "@/lib/stay-bookings-store";
 import { useHostCreatedExperiences } from "@/lib/host-experiences-store";
 import { useHostCreatedProperties } from "@/lib/host-properties-store";
+import { useHostCreatedCars } from "@/lib/host-cars-store";
 import { useDemoHostPreview } from "@/lib/demo-host-preview";
 import { useAuth } from "@/lib/auth-context";
+import type { Car } from "@/lib/car-types";
 import type { HostBooking, HostLedgerEntry, HostLedgerStatus } from "@/lib/host-types";
 import type { Host } from "@/lib/types";
 
@@ -78,6 +81,20 @@ export function useHostProperties() {
   const created = useHostCreatedProperties().filter((p) => p.hostId === hostId);
   const overrideIds = new Set(created.map((p) => p.id));
   const staticOnes = getHostProperties(hostId).filter((p) => !overrideIds.has(p.id));
+  return [...created, ...staticOnes];
+}
+
+/** A car's vendor is a host, so the host's own cars are those with vendorId === their id. */
+function getHostCars(hostId: string) {
+  return cars.filter((c) => c.vendorId === hostId);
+}
+
+/** Same static+override merge pattern, for Car listings. */
+export function useHostCars(): Car[] {
+  const hostId = useCurrentHostId();
+  const created = useHostCreatedCars().filter((c) => c.vendorId === hostId);
+  const overrideIds = new Set(created.map((c) => c.id));
+  const staticOnes = getHostCars(hostId).filter((c) => !overrideIds.has(c.id));
   return [...created, ...staticOnes];
 }
 

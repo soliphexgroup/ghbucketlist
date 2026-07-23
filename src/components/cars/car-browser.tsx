@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { listCars, carPriceBounds, type CarFilters } from "@/lib/car-repository";
 import { daysBetween, parseDateParam } from "@/lib/dates";
 import { useCarBookings } from "@/lib/car-bookings-store";
+import { useHostCreatedCars } from "@/lib/host-cars-store";
 import type { Car, CarCategory } from "@/lib/car-types";
 
 export type CarFilterState = Required<
@@ -70,6 +71,7 @@ function CarBrowserInner({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const bookings = useCarBookings();
+  const hostCreated = useHostCreatedCars();
   const cars = useMemo(
     () =>
       listCars(
@@ -87,9 +89,10 @@ function CarBrowserInner({
           returnDate,
           sort: filters.sort,
         },
-        bookings
+        bookings,
+        hostCreated
       ),
-    [filters, rentalDays, pickup, returnDate, bookings]
+    [filters, rentalDays, pickup, returnDate, bookings, hostCreated]
   );
 
   // Carry the searched dates onto each card so the detail widget opens pre-filled.

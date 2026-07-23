@@ -5,6 +5,7 @@ import type { Car } from "@/lib/car-types";
 import { StarRating } from "@/components/star-rating";
 import { WishlistButton } from "@/components/wishlist-button";
 import { formatGHS } from "@/lib/format";
+import { getCarBySlug } from "@/data/cars";
 import { cn } from "@/lib/utils";
 
 const categoryLabels: Record<Car["category"], string> = {
@@ -24,9 +25,14 @@ export function CarCard({
   /** Searched pickup/return to carry through, so the booking widget opens pre-filled. */
   bookingQuery?: string;
 }) {
+  const base = getCarBySlug(car.slug)
+    ? `/cars/${car.slug}`
+    : `/cars/preview?slug=${encodeURIComponent(car.slug)}`;
+  const href = bookingQuery ? `${base}${base.includes("?") ? "&" : "?"}${bookingQuery}` : base;
+
   return (
     <Link
-      href={`/cars/${car.slug}${bookingQuery ? `?${bookingQuery}` : ""}`}
+      href={href}
       className={cn(
         "group flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]",
         className

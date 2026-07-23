@@ -30,9 +30,12 @@ export type CarFilters = {
 export function listCars(
   filters: CarFilters = {},
   /** The viewer's own car bookings, so a just-rented car drops out of results too. */
-  bookings: StoredCarBooking[] = []
+  bookings: StoredCarBooking[] = [],
+  /** Host-created cars from this browser; an entry with a static id overrides it in place. */
+  extra: Car[] = []
 ): Car[] {
-  let results = [...cars];
+  const overrideIds = new Set(extra.map((c) => c.id));
+  let results = [...extra, ...cars.filter((c) => !overrideIds.has(c.id))];
 
   if (filters.q) {
     const q = filters.q.toLowerCase();
