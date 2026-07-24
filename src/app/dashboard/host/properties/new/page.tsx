@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ListingImageManager } from "@/components/dashboard/listing-image-manager";
 import { amenities } from "@/data/amenities";
 import { useCurrentHostId, useHostProperties } from "@/lib/host-repository";
 import { addHostCreatedProperty, upsertHostCreatedProperty } from "@/lib/host-properties-store";
@@ -90,6 +91,7 @@ function PropertyForm({ existing }: { existing?: Property }) {
   const [noParties, setNoParties] = useState(existing?.noParties ?? true);
   const [petsAllowed, setPetsAllowed] = useState(existing?.petsAllowed ?? false);
   const [customRules, setCustomRules] = useState(existing?.customRules ?? "");
+  const [images, setImages] = useState<string[]>(existing?.images ?? []);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   function toggleAmenity(key: string, checked: boolean) {
@@ -150,7 +152,12 @@ function PropertyForm({ existing }: { existing?: Property }) {
     };
 
     if (existing) {
-      const updated: Property = { ...existing, ...sharedFields };
+      // Stock images stand in only until the host adds their own.
+      const updated: Property = {
+        ...existing,
+        ...sharedFields,
+        images: images.length > 0 ? images : placeholderImages(existing.slug, 5),
+      };
       upsertHostCreatedProperty(updated);
       router.push("/dashboard/host/properties");
       return;
@@ -163,7 +170,7 @@ function PropertyForm({ existing }: { existing?: Property }) {
       id: `prop-host-${Date.now()}`,
       slug,
       hostId,
-      images: placeholderImages(slug, 5),
+      images: images.length > 0 ? images : placeholderImages(slug, 5),
       city: "Accra",
       rating: 0,
       reviewCount: 0,
@@ -209,6 +216,12 @@ function PropertyForm({ existing }: { existing?: Property }) {
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={5} placeholder="Describe the property…" className="mt-1.5" />
           </div>
+        </section>
+
+        <Separator />
+
+        <section>
+          <ListingImageManager value={images} onChange={setImages} />
         </section>
 
         <Separator />

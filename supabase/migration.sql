@@ -64,3 +64,46 @@ create trigger on_auth_user_created
 --
 --   update public.profiles set role = 'admin' where id =
 --     (select id from auth.users where email = 'admin@example.com');
+
+-- 4. Listing images bucket -----------------------------------------------
+-- Photos hosts upload for their experiences, properties and cars. Listing photos are
+-- shown publicly across the marketplace, so the bucket is public-read; writes are
+-- restricted to signed-in users, and each host can only touch their own folder.
+-- Files are stored as `listing-images/<host-id>/<filename>`.
+insert into storage.buckets (id, name, public)
+values ('listing-images', 'listing-images', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "Listing images are publicly readable" on storage.objects;
+create policy "Listing images are publicly readable"
+  on storage.objects for select
+  using (bucket_id = 'listing-images');
+
+-- The first path segment is the uploader's user id, so a host can only write in
+-- their own folder even though the bucket is shared.
+drop policy if exists "Hosts can upload their own listing images" on storage.objects;
+create policy "Hosts can upload their own listing images"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'listing-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Hosts can replace their own listing images" on storage.objects;
+create policy "Hosts can replace their own listing images"
+  on storage.objects for update
+  to authenticated
+  using (
+    bucket_id = 'listing-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Hosts can delete their own listing images" on storage.objects;
+create policy "Hosts can delete their own listing images"
+  on storage.objects for delete
+  to authenticated
+  using (
+    bucket_id = 'listing-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );

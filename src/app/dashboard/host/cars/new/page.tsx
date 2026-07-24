@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ListingImageManager } from "@/components/dashboard/listing-image-manager";
 import { carFeatures } from "@/data/car-features";
 import { useCurrentHostId, useHostCars } from "@/lib/host-repository";
 import { addHostCreatedCar, upsertHostCreatedCar } from "@/lib/host-cars-store";
@@ -75,6 +76,7 @@ function CarForm({ existing }: { existing?: Car }) {
   const [cancellationPolicy, setCancellationPolicy] = useState<CarCancellationPolicy>(
     existing?.cancellationPolicy ?? "flexible"
   );
+  const [images, setImages] = useState<string[]>(existing?.images ?? []);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   function toggleFeature(key: string, checked: boolean) {
@@ -114,7 +116,12 @@ function CarForm({ existing }: { existing?: Car }) {
     };
 
     if (existing) {
-      const updated: Car = { ...existing, ...sharedFields };
+      // Stock images stand in only until the host adds their own.
+      const updated: Car = {
+        ...existing,
+        ...sharedFields,
+        images: images.length > 0 ? images : placeholderImages(existing.slug, 5),
+      };
       upsertHostCreatedCar(updated);
       router.push("/dashboard/host/cars");
       return;
@@ -127,7 +134,7 @@ function CarForm({ existing }: { existing?: Car }) {
       id: `car-host-${Date.now()}`,
       slug,
       vendorId: hostId,
-      images: placeholderImages(slug, 5),
+      images: images.length > 0 ? images : placeholderImages(slug, 5),
       city: "Accra",
       rating: 0,
       reviewCount: 0,
@@ -185,6 +192,12 @@ function CarForm({ existing }: { existing?: Car }) {
               <Input id="pickup" value={pickupLocation} onChange={(e) => setPickupLocation(e.target.value)} placeholder="e.g. Airport Residential, Accra" className="mt-1.5" />
             </div>
           </div>
+        </section>
+
+        <Separator />
+
+        <section>
+          <ListingImageManager value={images} onChange={setImages} />
         </section>
 
         <Separator />

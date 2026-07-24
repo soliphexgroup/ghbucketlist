@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ListingImageManager } from "@/components/dashboard/listing-image-manager";
 import { categories } from "@/data/categories";
 import { useCurrentHostId, useHostExperiences } from "@/lib/host-repository";
 import { addHostCreatedExperience, upsertHostCreatedExperience } from "@/lib/host-experiences-store";
@@ -92,6 +93,7 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
   );
   const [gpPoints, setGpPoints] = useState(String(existing?.gpPoints ?? 10));
   const [visibility, setVisibility] = useState<"public" | "private">(existing?.visibility ?? "public");
+  const [images, setImages] = useState<string[]>(existing?.images ?? []);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   function toggleScheduleDay(day: string, checked: boolean) {
@@ -144,6 +146,8 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
     if (existing) {
       const updated: Experience = {
         ...existing,
+        // Stock images stand in only until the host adds their own.
+        images: images.length > 0 ? images : placeholderImages(existing.slug, 5),
         title: title.trim(),
         shortDescription: shortDescription.trim(),
         description: description.trim(),
@@ -178,7 +182,7 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
       description: description.trim(),
       categoryId,
       hostId,
-      images: placeholderImages(slug, 5),
+      images: images.length > 0 ? images : placeholderImages(slug, 5),
       venueName: venueName.trim(),
       neighbourhood: neighbourhood.trim(),
       city: "Accra",
@@ -262,6 +266,12 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
               className="mt-1.5"
             />
           </div>
+        </section>
+
+        <Separator />
+
+        <section>
+          <ListingImageManager value={images} onChange={setImages} />
         </section>
 
         <Separator />
