@@ -14,8 +14,8 @@ import {
 import { StayBookingDialog, type StayBookingDetails } from "@/components/stay/stay-booking-dialog";
 import { formatGHS } from "@/lib/format";
 import { nightsBetween, parseDateParam, resolveStayRange } from "@/lib/dates";
-import { roomsLeftForRange, toISODate } from "@/lib/stay-availability";
-import { useStayBookings } from "@/lib/stay-bookings-store";
+import { toISODate } from "@/lib/stay-availability";
+import { useListingBookedRanges, dbRoomsLeft } from "@/lib/db-availability";
 import type { Property, RoomPerk } from "@/lib/stay-types";
 import { cn } from "@/lib/utils";
 
@@ -98,12 +98,12 @@ export function RoomOfferTable({ property }: { property: Property }) {
   const adults = Number(params.get("adults")) || 2;
   const children = Number(params.get("children")) || 0;
 
-  // Rooms left depends on the searched dates and the viewer's own bookings.
-  const bookings = useStayBookings();
+  // Rooms left comes from real, shared availability in the database (booked + blocked ranges).
   const checkInISO = toISODate(checkIn);
   const checkOutISO = toISODate(checkOut);
+  const { ranges } = useListingBookedRanges(property.id);
   const leftById = new Map(
-    offers.map((offer) => [offer.id, roomsLeftForRange(property, offer, checkInISO, checkOutISO, bookings)])
+    offers.map((offer) => [offer.id, dbRoomsLeft(offer.id, offer.inventory, ranges, checkInISO, checkOutISO)])
   );
 
   const [qtyById, setQtyById] = useState<Record<string, number>>({});

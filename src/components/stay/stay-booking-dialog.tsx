@@ -20,6 +20,9 @@ import { addStayBooking } from "@/lib/stay-bookings-store";
 import { getPropertyHost } from "@/lib/stay-repository";
 import { usePaystackCheckout } from "@/hooks/use-paystack-checkout";
 import { paystackReference } from "@/lib/paystack";
+import { createDbBooking } from "@/lib/db-bookings";
+import { toISODate } from "@/lib/availability";
+import { useAuth } from "@/lib/auth-context";
 import type { Property, RoomOffer } from "@/lib/stay-types";
 
 export type StayBookingDetails = {
@@ -47,12 +50,15 @@ export function StayBookingDialog({
   onOpenChange: (open: boolean) => void;
   details: StayBookingDetails | null;
 }) {
-  const [stage, setStage] = useState<"summary" | "processing" | "confirmed" | "requested" | "failed">("summary");
+  const [stage, setStage] = useState<"summary" | "processing" | "confirmed" | "requested" | "failed" | "signin">(
+    "summary"
+  );
   const [message, setMessage] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [ref, setRef] = useState("");
   const checkout = usePaystackCheckout();
+  const { user } = useAuth();
 
   if (!details) return null;
 
@@ -103,18 +109,66 @@ export function StayBookingDialog({
     });
   }
 
+  // Write the booking to the database via the availability-checked RPC. A hotel reservation can
+  // span several room types; each is a separate unit, so we book them one by one.
+  async function bookInDb(reference: string, requestOnly: boolean) {
+    const d = details!;
+    const startISO = toISODate(d.checkIn);
+    const endISO = toISODate(d.checkOut);
+    const guests = d.adults + d.children;
+    const calls =
+      d.selectedRooms && d.selectedRooms.length > 0
+        ? d.selectedRooms.map(({ offer, qty }) => ({
+            unitKey: offer.id,
+            units: qty,
+            total: offer.pricePerNight * d.nights * qty,
+            details: { roomName: offer.name, requestOnly },
+          }))
+        : [{ unitKey: "", units: 1, total: d.total, details: { requestOnly } }];
+
+    for (let i = 0; i < calls.length; i++) {
+      const c = calls[i];
+      const res = await createDbBooking({
+        reference: calls.length > 1 ? `${reference}-${i + 1}` : reference,
+        kind: "stay",
+        listingId: d.property.id,
+        unitKey: c.unitKey,
+        start: startISO,
+        end: endISO,
+        units: c.units,
+        guests,
+        total: c.total,
+        guestName: payerEmail || undefined,
+        guestEmail: payerEmail || undefined,
+        details: c.details,
+      });
+      if (!res.ok) return res;
+    }
+    return { ok: true as const };
+  }
+
   async function submit() {
     const bookingDetails = details;
     if (!bookingDetails) return;
+
+    // Bookings are owned by the signed-in user (real, shared availability).
+    if (!user) {
+      setStage("signin");
+      return;
+    }
 
     if (!isInstant) {
       const ref2 = paystackReference();
       setRef(ref2);
       setStage("processing");
-      setTimeout(() => {
-        completeStayBooking(ref2, "pending_request");
-        setStage("requested");
-      }, 1200);
+      const res = await bookInDb(ref2, true);
+      if (!res.ok) {
+        setErrorMessage(res.message ?? "Those dates are no longer available.");
+        setStage("failed");
+        return;
+      }
+      completeStayBooking(ref2, "pending_request");
+      setStage("requested");
       return;
     }
 
@@ -136,6 +190,12 @@ export function StayBookingDialog({
       return;
     }
 
+    const saved = await bookInDb(result.reference, false);
+    if (!saved.ok) {
+      setErrorMessage(saved.message ?? "Those dates were just taken. You have not been charged for the stay.");
+      setStage("failed");
+      return;
+    }
     completeStayBooking(result.reference, "confirmed");
     setRef(result.reference);
     setStage("confirmed");
@@ -269,11 +329,25 @@ export function StayBookingDialog({
           </div>
         )}
 
+        {stage === "signin" && (
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            <div>
+              <p className="font-heading text-lg font-semibold text-foreground">Sign in to book</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Bookings are tied to your account so you can manage them and we can hold your dates.
+              </p>
+            </div>
+            <Button asChild className="w-full">
+              <Link href={`/login?next=/stay/${details.property.slug}`}>Sign in to continue</Link>
+            </Button>
+          </div>
+        )}
+
         {stage === "failed" && (
           <div className="flex flex-col items-center gap-4 py-4 text-center">
             <XCircle className="size-10 text-destructive" />
             <div>
-              <p className="font-heading text-lg font-semibold text-foreground">Payment failed</p>
+              <p className="font-heading text-lg font-semibold text-foreground">Booking couldn&apos;t be completed</p>
               <p className="mt-1 text-sm text-muted-foreground">{errorMessage}</p>
             </div>
             <Button className="w-full" onClick={() => setStage("summary")}>

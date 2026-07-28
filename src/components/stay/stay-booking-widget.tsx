@@ -12,8 +12,8 @@ import { WishlistButton } from "@/components/wishlist-button";
 import { StayBookingDialog, type StayBookingDetails } from "@/components/stay/stay-booking-dialog";
 import { formatGHS } from "@/lib/format";
 import { addDays, nightsBetween, parseDateParam, resolveStayRange, startOfToday } from "@/lib/dates";
-import { isNightBlocked, isUnitAvailable, toISODate, unitBlockedRanges } from "@/lib/stay-availability";
-import { useStayBookings } from "@/lib/stay-bookings-store";
+import { isNightBlocked, toISODate } from "@/lib/availability";
+import { useListingBookedRanges, dbUnitAvailable, dbUnitBlockedRanges } from "@/lib/db-availability";
 import type { Property } from "@/lib/stay-types";
 
 const MAX_ROOMS = 8;
@@ -55,11 +55,11 @@ export function StayBookingWidget({ property }: { property: Property }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pending, setPending] = useState<StayBookingDetails | null>(null);
 
-  // Availability: booked nights are disabled in the calendar, and a range that still
-  // clashes (e.g. spanning a blocked gap) blocks the reserve.
-  const bookings = useStayBookings();
-  const blockedRanges = unitBlockedRanges(property, bookings);
-  const available = isUnitAvailable(property, toISODate(range.from), toISODate(range.to), bookings);
+  // Availability comes from real, shared DB data: booked nights are disabled in the calendar,
+  // and a clashing range blocks the reserve.
+  const { ranges: bookedRanges } = useListingBookedRanges(property.id);
+  const blockedRanges = dbUnitBlockedRanges(bookedRanges);
+  const available = dbUnitAvailable(bookedRanges, toISODate(range.from), toISODate(range.to));
 
   const nights = nightsBetween(range.from, range.to);
   const subtotal = property.pricePerNight * nights * rooms;
