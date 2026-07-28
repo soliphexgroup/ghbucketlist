@@ -8,13 +8,13 @@ import { StayBookingCard } from "@/components/dashboard/stay-booking-card";
 import { CarBookingCard } from "@/components/dashboard/car-booking-card";
 import { ServiceRequestCard } from "@/components/dashboard/service-request-card";
 import { useBookings, isUpcoming, isPast } from "@/lib/bookings-store";
-import { useStayBookings } from "@/lib/stay-bookings-store";
+import { useDbStayBookings } from "@/lib/db-stay-bookings";
 import { useCarBookings } from "@/lib/car-bookings-store";
 import { useServiceRequests } from "@/lib/service-requests-store";
 
 export default function MyBookingsPage() {
   const bookings = useBookings().filter((b) => !b.isGift);
-  const stayBookings = useStayBookings();
+  const stayBookings = useDbStayBookings();
   const carBookings = useCarBookings();
   const serviceRequests = useServiceRequests();
   const now = new Date();
