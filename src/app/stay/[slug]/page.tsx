@@ -2,14 +2,10 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MobileSearchBar } from "@/components/home/mobile-search-bar";
-import { properties, getPropertyBySlug } from "@/data/properties";
 import { getPropertyReviews } from "@/data/property-reviews";
 import { getPropertyHost } from "@/lib/stay-repository";
+import { getStayListingBySlug } from "@/lib/supabase/listings-server";
 import { PropertyDetailWithOverride } from "@/components/stay/property-detail-with-override";
-
-export function generateStaticParams() {
-  return properties.map((p) => ({ slug: p.slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -17,7 +13,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const property = getPropertyBySlug(slug);
+  const property = await getStayListingBySlug(slug);
   if (!property) return {};
   return {
     title: property.title,
@@ -32,7 +28,7 @@ export default async function PropertyDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const property = getPropertyBySlug(slug);
+  const property = await getStayListingBySlug(slug);
   if (!property) notFound();
 
   const host = getPropertyHost(property);

@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/select";
 import { ListingImageManager } from "@/components/dashboard/listing-image-manager";
 import { amenities } from "@/data/amenities";
-import { useCurrentHostId, useHostProperties } from "@/lib/host-repository";
-import { addHostCreatedProperty, upsertHostCreatedProperty } from "@/lib/host-properties-store";
+import { useCurrentHostId } from "@/lib/host-repository";
+import { createStayListing, updateStayListing, useHostDbStayListings } from "@/lib/db-listings";
 import type { CancellationPolicy, Property, PropertyRoom, PropertyType, StayBookingType } from "@/lib/stay-types";
 
 function slugify(title: string) {
@@ -56,7 +56,7 @@ export default function AddPropertyPage() {
 function PropertyFormResolver() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
-  const hostProperties = useHostProperties();
+  const hostProperties = useHostDbStayListings(useCurrentHostId());
   const existing = editId ? hostProperties.find((p) => p.id === editId) : undefined;
 
   return <PropertyForm key={existing?.id ?? editId ?? "new"} existing={existing} />;
@@ -93,6 +93,8 @@ function PropertyForm({ existing }: { existing?: Property }) {
   const [customRules, setCustomRules] = useState(existing?.customRules ?? "");
   const [images, setImages] = useState<string[]>(existing?.images ?? []);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   function toggleAmenity(key: string, checked: boolean) {
     setSelectedAmenities((prev) => (checked ? [...prev, key] : prev.filter((a) => a !== key)));
@@ -119,10 +121,11 @@ function PropertyForm({ existing }: { existing?: Property }) {
     validRooms.length > 0 &&
     Number(pricePerNight) > 0;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setAttemptedSubmit(true);
-    if (!canSubmit) return;
+    setSaveError("");
+    if (!canSubmit || saving) return;
 
     const sharedFields = {
       title: title.trim(),
@@ -151,6 +154,8 @@ function PropertyForm({ existing }: { existing?: Property }) {
       customRules: customRules.trim() || undefined,
     };
 
+    setSaving(true);
+
     if (existing) {
       // Stock images stand in only until the host adds their own.
       const updated: Property = {
@@ -158,7 +163,12 @@ function PropertyForm({ existing }: { existing?: Property }) {
         ...sharedFields,
         images: images.length > 0 ? images : placeholderImages(existing.slug, 5),
       };
-      upsertHostCreatedProperty(updated);
+      const res = await updateStayListing(updated, hostId);
+      if (!res.ok) {
+        setSaveError(res.message);
+        setSaving(false);
+        return;
+      }
       router.push("/dashboard/host/properties");
       return;
     }
@@ -179,7 +189,12 @@ function PropertyForm({ existing }: { existing?: Property }) {
       ...sharedFields,
     };
 
-    addHostCreatedProperty(property);
+    const res = await createStayListing(property, hostId);
+    if (!res.ok) {
+      setSaveError(res.message);
+      setSaving(false);
+      return;
+    }
     router.push("/dashboard/host/properties");
   }
 
@@ -399,10 +414,11 @@ function PropertyForm({ existing }: { existing?: Property }) {
             Please fill in the title, description, location, at least one room, and a nightly price before publishing.
           </p>
         )}
+        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
 
         <div className="flex gap-3">
-          <Button type="submit" size="lg">
-            {isEditing ? "Save Changes" : "Publish Property"}
+          <Button type="submit" size="lg" disabled={saving}>
+            {saving ? "Saving…" : isEditing ? "Save Changes" : "Publish Property"}
           </Button>
           <Button type="button" variant="outline" size="lg" onClick={() => router.push("/dashboard/host/properties")}>
             Cancel

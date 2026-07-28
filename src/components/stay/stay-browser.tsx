@@ -16,7 +16,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { listProperties, propertyPriceBounds, type StayFilters } from "@/lib/stay-repository";
-import { useHostCreatedProperties } from "@/lib/host-properties-store";
+import { useDbStayListings } from "@/lib/db-listings";
 import { useAllBookedRanges, dbRoomsLeft, dbUnitAvailable } from "@/lib/db-availability";
 import type { PropertyType } from "@/lib/stay-types";
 
@@ -73,7 +73,7 @@ function StayBrowserInner({
   }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const hostCreated = useHostCreatedProperties();
+  const catalog = useDbStayListings();
   const { byListing } = useAllBookedRanges();
   const matched = useMemo(
     () =>
@@ -89,9 +89,9 @@ function StayBrowserInner({
           guests: filters.guests > 1 ? filters.guests : undefined,
           sort: filters.sort,
         },
-        hostCreated
+        catalog
       ),
-    [filters, hostCreated]
+    [filters, catalog]
   );
 
   // Availability now comes from the database: with both dates set, drop anything with nothing

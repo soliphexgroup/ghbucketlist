@@ -1,7 +1,5 @@
 import { properties } from "@/data/properties";
 import { hosts } from "@/data/hosts";
-import { hasAvailability } from "@/lib/stay-availability";
-import type { StoredStayBooking } from "@/lib/stay-bookings-store";
 import type { Property, PropertyType } from "@/lib/stay-types";
 
 export type StayFilters = {
@@ -22,13 +20,10 @@ export type StayFilters = {
 
 export function listProperties(
   filters: StayFilters = {},
-  extra: Property[] = [],
-  /** The viewer's own bookings, so a just-booked stay drops out of results too. */
-  bookings: StoredStayBooking[] = []
+  /** The catalog to search. Defaults to the seeded mock; callers pass the DB listings. */
+  source: Property[] = properties
 ): Property[] {
-  const overrideIds = new Set(extra.map((p) => p.id));
-  const base = properties.filter((p) => !overrideIds.has(p.id));
-  let results = [...extra, ...base];
+  let results = [...source];
 
   if (filters.q) {
     const q = filters.q.toLowerCase();
@@ -71,9 +66,6 @@ export function listProperties(
     results = results.filter((p) => p.rating >= filters.minRating!);
   }
 
-  if (filters.checkIn && filters.checkOut) {
-    results = results.filter((p) => hasAvailability(p, filters.checkIn!, filters.checkOut!, bookings));
-  }
 
   const sort = filters.sort ?? "recommended";
   results.sort((a, b) => {

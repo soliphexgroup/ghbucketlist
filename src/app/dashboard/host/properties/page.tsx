@@ -18,13 +18,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { StarRating } from "@/components/star-rating";
-import { useHostProperties, useHostStayBookings } from "@/lib/host-repository";
+import { useCurrentHostId, useHostStayBookings } from "@/lib/host-repository";
+import { useHostDbStayListings, deleteListing } from "@/lib/db-listings";
 import { formatGHS } from "@/lib/format";
 
 const propertyTypeLabels = { hotel: "Hotel", apartment: "Apartment", vacation: "Vacation Home" };
 
 export default function MyPropertiesPage() {
-  const properties = useHostProperties();
+  const properties = useHostDbStayListings(useCurrentHostId());
   const bookings = useHostStayBookings();
   const [pausedIds, setPausedIds] = useState<Set<string>>(new Set());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
@@ -121,9 +122,10 @@ export default function MyPropertiesPage() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() =>
-                          setDeletedIds((prev) => new Set(prev).add(property.id))
-                        }
+                        onClick={() => {
+                          setDeletedIds((prev) => new Set(prev).add(property.id));
+                          void deleteListing(property.id);
+                        }}
                       >
                         Delete
                       </AlertDialogAction>

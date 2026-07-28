@@ -6,7 +6,6 @@ import { ReviewScoreBadge } from "@/components/stay/review-score-badge";
 import { WishlistButton } from "@/components/wishlist-button";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { getPropertyBySlug } from "@/data/properties";
 
 const propertyTypeLabels: Record<Property["propertyType"], string> = {
   hotel: "Hotel",
@@ -24,11 +23,9 @@ export function PropertyCard({
   /** Searched dates/guests to carry through, so the booking widget opens pre-filled. */
   bookingQuery?: string;
 }) {
-  const isStaticProperty = Boolean(getPropertyBySlug(property.slug));
-  const base = isStaticProperty
-    ? `/stay/${property.slug}`
-    : `/stay/preview?slug=${encodeURIComponent(property.slug)}`;
-  const href = bookingQuery ? `${base}${base.includes("?") ? "&" : "?"}${bookingQuery}` : base;
+  // Every listing lives in the DB now, so the detail route serves them all.
+  const base = `/stay/${property.slug}`;
+  const href = bookingQuery ? `${base}?${bookingQuery}` : base;
 
   return (
     <Link
