@@ -20,6 +20,9 @@ import { addCarBooking } from "@/lib/car-bookings-store";
 import { getCarVendor } from "@/lib/car-repository";
 import { usePaystackCheckout } from "@/hooks/use-paystack-checkout";
 import { paystackReference } from "@/lib/paystack";
+import { createDbBooking } from "@/lib/db-bookings";
+import { toISODate } from "@/lib/availability";
+import { useAuth } from "@/lib/auth-context";
 import type { Car } from "@/lib/car-types";
 
 export type CarBookingDetails = {
@@ -43,12 +46,15 @@ export function CarBookingDialog({
   onOpenChange: (open: boolean) => void;
   details: CarBookingDetails | null;
 }) {
-  const [stage, setStage] = useState<"summary" | "processing" | "confirmed" | "requested" | "failed">("summary");
+  const [stage, setStage] = useState<"summary" | "processing" | "confirmed" | "requested" | "failed" | "signin">(
+    "summary"
+  );
   const [message, setMessage] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [ref, setRef] = useState("");
   const checkout = usePaystackCheckout();
+  const { user } = useAuth();
 
   if (!details) return null;
 
@@ -91,18 +97,47 @@ export function CarBookingDialog({
     });
   }
 
+  // Write the rental to the database via the availability-checked RPC.
+  async function bookInDb(reference: string, requestOnly: boolean) {
+    const d = details!;
+    return createDbBooking({
+      reference,
+      kind: "car",
+      listingId: d.car.id,
+      unitKey: "",
+      start: toISODate(d.pickupDate),
+      end: toISODate(d.returnDate),
+      units: 1,
+      guests: 1,
+      total: d.total,
+      guestName: payerEmail || undefined,
+      guestEmail: payerEmail || undefined,
+      details: { withDriver: d.withDriver, requestOnly },
+    });
+  }
+
   async function submit() {
     const bookingDetails = details;
     if (!bookingDetails) return;
+
+    // Bookings are owned by the signed-in user (real, shared availability).
+    if (!user) {
+      setStage("signin");
+      return;
+    }
 
     if (!isInstant) {
       const ref2 = paystackReference();
       setRef(ref2);
       setStage("processing");
-      setTimeout(() => {
-        completeCarBooking(ref2, "pending_request");
-        setStage("requested");
-      }, 1200);
+      const res = await bookInDb(ref2, true);
+      if (!res.ok) {
+        setErrorMessage(res.message ?? "This car is no longer available for those dates.");
+        setStage("failed");
+        return;
+      }
+      completeCarBooking(ref2, "pending_request");
+      setStage("requested");
       return;
     }
 
@@ -124,6 +159,12 @@ export function CarBookingDialog({
       return;
     }
 
+    const saved = await bookInDb(result.reference, false);
+    if (!saved.ok) {
+      setErrorMessage(saved.message ?? "This car was just taken. You have not been charged for the rental.");
+      setStage("failed");
+      return;
+    }
     completeCarBooking(result.reference, "confirmed");
     setRef(result.reference);
     setStage("confirmed");
@@ -237,11 +278,25 @@ export function CarBookingDialog({
           </div>
         )}
 
+        {stage === "signin" && (
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            <div>
+              <p className="font-heading text-lg font-semibold text-foreground">Sign in to book</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Bookings are tied to your account so you can manage them and we can hold the car.
+              </p>
+            </div>
+            <Button asChild className="w-full">
+              <Link href={`/login?next=/cars/${details.car.slug}`}>Sign in to continue</Link>
+            </Button>
+          </div>
+        )}
+
         {stage === "failed" && (
           <div className="flex flex-col items-center gap-4 py-4 text-center">
             <XCircle className="size-10 text-destructive" />
             <div>
-              <p className="font-heading text-lg font-semibold text-foreground">Payment failed</p>
+              <p className="font-heading text-lg font-semibold text-foreground">Booking couldn&apos;t be completed</p>
               <p className="mt-1 text-sm text-muted-foreground">{errorMessage}</p>
             </div>
             <Button className="w-full" onClick={() => setStage("summary")}>

@@ -17,8 +17,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { listCars, carPriceBounds, type CarFilters } from "@/lib/car-repository";
 import { daysBetween, parseDateParam } from "@/lib/dates";
-import { useCarBookings } from "@/lib/car-bookings-store";
-import { useHostCreatedCars } from "@/lib/host-cars-store";
+import { useDbCarListings } from "@/lib/db-listings";
+import { useAllBookedRanges, dbUnitAvailable } from "@/lib/db-availability";
 import type { Car, CarCategory } from "@/lib/car-types";
 
 export type CarFilterState = Required<
@@ -70,9 +70,9 @@ function CarBrowserInner({
   }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const bookings = useCarBookings();
-  const hostCreated = useHostCreatedCars();
-  const cars = useMemo(
+  const catalog = useDbCarListings();
+  const { byListing } = useAllBookedRanges();
+  const matched = useMemo(
     () =>
       listCars(
         {
@@ -85,15 +85,18 @@ function CarBrowserInner({
           driverAvailableOnly: filters.driverAvailableOnly,
           instantBookOnly: filters.instantBookOnly,
           rentalDays,
-          pickup,
-          returnDate,
           sort: filters.sort,
         },
-        bookings,
-        hostCreated
+        catalog
       ),
-    [filters, rentalDays, pickup, returnDate, bookings, hostCreated]
+    [filters, rentalDays, catalog]
   );
+
+  // Availability from the DB: with both dates set, drop cars booked or blocked for the range.
+  const cars = useMemo(() => {
+    if (!pickup || !returnDate) return matched;
+    return matched.filter((c) => dbUnitAvailable(byListing.get(c.id) ?? [], pickup, returnDate));
+  }, [matched, byListing, pickup, returnDate]);
 
   // Carry the searched dates onto each card so the detail widget opens pre-filled.
   const bookingQuery =

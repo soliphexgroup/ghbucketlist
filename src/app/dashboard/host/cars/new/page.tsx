@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/select";
 import { ListingImageManager } from "@/components/dashboard/listing-image-manager";
 import { carFeatures } from "@/data/car-features";
-import { useCurrentHostId, useHostCars } from "@/lib/host-repository";
-import { addHostCreatedCar, upsertHostCreatedCar } from "@/lib/host-cars-store";
+import { useCurrentHostId } from "@/lib/host-repository";
+import { createCarListing, updateCarListing, useHostDbCarListings } from "@/lib/db-listings";
 import type { Car, CarCancellationPolicy, CarCategory, TransmissionType } from "@/lib/car-types";
 
 function slugify(text: string) {
@@ -44,7 +44,7 @@ export default function AddCarPage() {
 function CarFormResolver() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
-  const hostCars = useHostCars();
+  const hostCars = useHostDbCarListings(useCurrentHostId());
   const existing = editId ? hostCars.find((c) => c.id === editId) : undefined;
 
   return <CarForm key={existing?.id ?? editId ?? "new"} existing={existing} />;
@@ -78,6 +78,8 @@ function CarForm({ existing }: { existing?: Car }) {
   );
   const [images, setImages] = useState<string[]>(existing?.images ?? []);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   function toggleFeature(key: string, checked: boolean) {
     setSelectedFeatures((prev) => (checked ? [...prev, key] : prev.filter((f) => f !== key)));
@@ -90,10 +92,11 @@ function CarForm({ existing }: { existing?: Car }) {
     pickupLocation.trim().length > 0 &&
     Number(pricePerDay) > 0;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setAttemptedSubmit(true);
-    if (!canSubmit) return;
+    setSaveError("");
+    if (!canSubmit || saving) return;
 
     const sharedFields = {
       make: make.trim(),
@@ -115,6 +118,8 @@ function CarForm({ existing }: { existing?: Car }) {
       cancellationPolicy,
     };
 
+    setSaving(true);
+
     if (existing) {
       // Stock images stand in only until the host adds their own.
       const updated: Car = {
@@ -122,7 +127,12 @@ function CarForm({ existing }: { existing?: Car }) {
         ...sharedFields,
         images: images.length > 0 ? images : placeholderImages(existing.slug, 5),
       };
-      upsertHostCreatedCar(updated);
+      const res = await updateCarListing(updated, hostId);
+      if (!res.ok) {
+        setSaveError(res.message);
+        setSaving(false);
+        return;
+      }
       router.push("/dashboard/host/cars");
       return;
     }
@@ -142,7 +152,12 @@ function CarForm({ existing }: { existing?: Car }) {
       ...sharedFields,
     };
 
-    addHostCreatedCar(car);
+    const res = await createCarListing(car, hostId);
+    if (!res.ok) {
+      setSaveError(res.message);
+      setSaving(false);
+      return;
+    }
     router.push("/dashboard/host/cars");
   }
 
@@ -313,10 +328,11 @@ function CarForm({ existing }: { existing?: Car }) {
             Please fill in the make, model, year, pickup location, and a daily price before publishing.
           </p>
         )}
+        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
 
         <div className="flex gap-3">
-          <Button type="submit" size="lg">
-            {isEditing ? "Save Changes" : "Publish Car"}
+          <Button type="submit" size="lg" disabled={saving}>
+            {saving ? "Saving…" : isEditing ? "Save Changes" : "Publish Car"}
           </Button>
           <Button type="button" variant="outline" size="lg" onClick={() => router.push("/dashboard/host/cars")}>
             Cancel

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/stay-types";
+import type { Car } from "@/lib/car-types";
 
 // Read/write the shared listings catalog. Listings live as one row each with the full typed
 // object in `data`, so reads return the same shapes the app already uses. Writes require a
@@ -101,6 +102,81 @@ export function useHostDbStayListings(hostId: string): Property[] {
       .eq("host_id", hostId)
       .then(({ data }) => {
         if (active) setRows(((data ?? []) as ListingRow[]).map((r) => r.data));
+      });
+    return () => {
+      active = false;
+    };
+  }, [hostId]);
+  return rows;
+}
+
+// --- Cars (a car's owner is its vendorId; whole-unit, one bookable vehicle each) ---
+
+function carColumns(c: Car, hostId: string, createdBy: string | null) {
+  return {
+    id: c.id,
+    kind: "car" as const,
+    host_id: hostId,
+    slug: c.slug,
+    title: `${c.make} ${c.model} ${c.year}`,
+    city: c.city,
+    category: c.category,
+    price_from: c.pricePerDay,
+    rating: c.rating,
+    created_by: createdBy,
+    data: c,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+export async function createCarListing(car: Car, hostId: string): Promise<WriteResult> {
+  const { supabase, userId } = await requireUser();
+  if (!userId) return { ok: false, reason: "signin", message: "Please sign in to publish a car." };
+  const { error } = await supabase.from("listings").insert(carColumns(car, hostId, userId));
+  if (error) return { ok: false, reason: "error", message: error.message };
+  return { ok: true };
+}
+
+export async function updateCarListing(car: Car, hostId: string): Promise<WriteResult> {
+  const { supabase, userId } = await requireUser();
+  if (!userId) return { ok: false, reason: "signin", message: "Please sign in to edit a car." };
+  const { error } = await supabase.from("listings").update(carColumns(car, hostId, userId)).eq("id", car.id);
+  if (error) return { ok: false, reason: "error", message: error.message };
+  return { ok: true };
+}
+
+/** Every car listing in the catalog (seeded + host-created). Empty while loading. */
+export function useDbCarListings(): Car[] {
+  const [rows, setRows] = useState<Car[]>([]);
+  useEffect(() => {
+    let active = true;
+    createClient()
+      .from("listings")
+      .select("data")
+      .eq("kind", "car")
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        if (active) setRows(((data ?? []) as { data: Car }[]).map((r) => r.data));
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return rows;
+}
+
+/** The given host's own car listings. */
+export function useHostDbCarListings(hostId: string): Car[] {
+  const [rows, setRows] = useState<Car[]>([]);
+  useEffect(() => {
+    let active = true;
+    createClient()
+      .from("listings")
+      .select("data")
+      .eq("kind", "car")
+      .eq("host_id", hostId)
+      .then(({ data }) => {
+        if (active) setRows(((data ?? []) as { data: Car }[]).map((r) => r.data));
       });
     return () => {
       active = false;

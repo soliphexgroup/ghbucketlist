@@ -18,14 +18,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { StarRating } from "@/components/star-rating";
-import { useHostCars } from "@/lib/host-repository";
+import { useCurrentHostId } from "@/lib/host-repository";
+import { useHostDbCarListings, deleteListing } from "@/lib/db-listings";
 import { getCarBySlug } from "@/data/cars";
 import { formatGHS } from "@/lib/format";
 
 const categoryLabels = { economy: "Economy", suv: "SUV", luxury: "Luxury", van: "Van" };
 
 export default function MyCarsPage() {
-  const cars = useHostCars();
+  const cars = useHostDbCarListings(useCurrentHostId());
   const [pausedIds, setPausedIds] = useState<Set<string>>(new Set());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
@@ -123,7 +124,12 @@ export default function MyCarsPage() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => setDeletedIds((prev) => new Set(prev).add(car.id))}>
+                      <AlertDialogAction
+                        onClick={() => {
+                          setDeletedIds((prev) => new Set(prev).add(car.id));
+                          void deleteListing(car.id);
+                        }}
+                      >
                         Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>

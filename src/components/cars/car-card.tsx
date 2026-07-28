@@ -5,7 +5,6 @@ import type { Car } from "@/lib/car-types";
 import { StarRating } from "@/components/star-rating";
 import { WishlistButton } from "@/components/wishlist-button";
 import { formatGHS } from "@/lib/format";
-import { getCarBySlug } from "@/data/cars";
 import { cn } from "@/lib/utils";
 
 const categoryLabels: Record<Car["category"], string> = {
@@ -25,10 +24,9 @@ export function CarCard({
   /** Searched pickup/return to carry through, so the booking widget opens pre-filled. */
   bookingQuery?: string;
 }) {
-  const base = getCarBySlug(car.slug)
-    ? `/cars/${car.slug}`
-    : `/cars/preview?slug=${encodeURIComponent(car.slug)}`;
-  const href = bookingQuery ? `${base}${base.includes("?") ? "&" : "?"}${bookingQuery}` : base;
+  // Every car lives in the DB now, so the detail route serves them all.
+  const base = `/cars/${car.slug}`;
+  const href = bookingQuery ? `${base}?${bookingQuery}` : base;
 
   return (
     <Link

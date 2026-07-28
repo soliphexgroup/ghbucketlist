@@ -1,7 +1,5 @@
 import { cars } from "@/data/cars";
 import { hosts } from "@/data/hosts";
-import { isCarAvailable } from "@/lib/car-availability";
-import type { StoredCarBooking } from "@/lib/car-bookings-store";
 import type { Car, CarCategory } from "@/lib/car-types";
 
 export type CarFilters = {
@@ -29,13 +27,10 @@ export type CarFilters = {
 
 export function listCars(
   filters: CarFilters = {},
-  /** The viewer's own car bookings, so a just-rented car drops out of results too. */
-  bookings: StoredCarBooking[] = [],
-  /** Host-created cars from this browser; an entry with a static id overrides it in place. */
-  extra: Car[] = []
+  /** The catalog to search. Defaults to the seeded mock; callers pass the DB listings. */
+  source: Car[] = cars
 ): Car[] {
-  const overrideIds = new Set(extra.map((c) => c.id));
-  let results = [...extra, ...cars.filter((c) => !overrideIds.has(c.id))];
+  let results = [...source];
 
   if (filters.q) {
     const q = filters.q.toLowerCase();
@@ -88,10 +83,6 @@ export function listCars(
         c.minRentalDays <= filters.rentalDays! &&
         (c.maxRentalDays === undefined || c.maxRentalDays >= filters.rentalDays!)
     );
-  }
-
-  if (filters.pickup && filters.returnDate) {
-    results = results.filter((c) => isCarAvailable(c, filters.pickup!, filters.returnDate!, bookings));
   }
 
   const sort = filters.sort ?? "recommended";

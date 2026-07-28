@@ -14,8 +14,7 @@ import { CarBookingDialog, type CarBookingDetails } from "@/components/cars/car-
 import { formatGHS } from "@/lib/format";
 import { addDays, daysBetween, parseDateParam, resolveStayRange, startOfToday } from "@/lib/dates";
 import { isNightBlocked, toISODate } from "@/lib/availability";
-import { isCarAvailable, carBlockedRanges } from "@/lib/car-availability";
-import { useCarBookings } from "@/lib/car-bookings-store";
+import { useListingBookedRanges, dbUnitAvailable, dbUnitBlockedRanges } from "@/lib/db-availability";
 import type { Car } from "@/lib/car-types";
 
 export function CarBookingWidget({ car }: { car: Car }) {
@@ -35,10 +34,11 @@ export function CarBookingWidget({ car }: { car: Car }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pending, setPending] = useState<CarBookingDetails | null>(null);
 
-  // Availability: rented days are disabled in the calendar, and a clashing range blocks the reserve.
-  const bookings = useCarBookings();
-  const blockedRanges = carBlockedRanges(car, bookings);
-  const available = isCarAvailable(car, toISODate(range.from), toISODate(range.to), bookings);
+  // Availability from the real, shared DB: rented days are disabled in the calendar, and a
+  // clashing range blocks the reserve.
+  const { ranges } = useListingBookedRanges(car.id);
+  const blockedRanges = dbUnitBlockedRanges(ranges);
+  const available = dbUnitAvailable(ranges, toISODate(range.from), toISODate(range.to));
 
   const days = daysBetween(range.from, range.to);
   const dailyRate = withDriver ? car.withDriverPricePerDay : car.pricePerDay;
