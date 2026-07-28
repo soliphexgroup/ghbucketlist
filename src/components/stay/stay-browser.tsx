@@ -17,7 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { listProperties, propertyPriceBounds, type StayFilters } from "@/lib/stay-repository";
 import { useHostCreatedProperties } from "@/lib/host-properties-store";
-import { useStayBookings } from "@/lib/stay-bookings-store";
+import { useAllBookedRanges, dbRoomsLeft, dbUnitAvailable } from "@/lib/db-availability";
 import type { PropertyType } from "@/lib/stay-types";
 
 export type StayFilterState = Required<
@@ -74,8 +74,8 @@ function StayBrowserInner({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const hostCreated = useHostCreatedProperties();
-  const bookings = useStayBookings();
-  const properties = useMemo(
+  const { byListing } = useAllBookedRanges();
+  const matched = useMemo(
     () =>
       listProperties(
         {
@@ -87,15 +87,25 @@ function StayBrowserInner({
           instantBookOnly: filters.instantBookOnly,
           minRating: filters.minRating,
           guests: filters.guests > 1 ? filters.guests : undefined,
-          checkIn,
-          checkOut,
           sort: filters.sort,
         },
-        hostCreated,
-        bookings
+        hostCreated
       ),
-    [filters, hostCreated, bookings, checkIn, checkOut]
+    [filters, hostCreated]
   );
+
+  // Availability now comes from the database: with both dates set, drop anything with nothing
+  // free for the range (whole-unit booked, or every room type sold out).
+  const properties = useMemo(() => {
+    if (!checkIn || !checkOut) return matched;
+    return matched.filter((p) => {
+      const ranges = byListing.get(p.id) ?? [];
+      if (p.roomTypes && p.roomTypes.length > 0) {
+        return p.roomTypes.some((o) => dbRoomsLeft(o.id, o.inventory, ranges, checkIn, checkOut) > 0);
+      }
+      return dbUnitAvailable(ranges, checkIn, checkOut);
+    });
+  }, [matched, byListing, checkIn, checkOut]);
 
   function updateFilters(next: Partial<StayFilterState>) {
     setFilters((prev) => ({ ...prev, ...next }));

@@ -62,6 +62,46 @@ export function useListingBookedRanges(listingId: string | undefined) {
   return { ranges: ready ? fetched!.ranges : [], loading: !ready };
 }
 
+/**
+ * All booked/blocked ranges across every listing, grouped by listing id. Used by the listing
+ * search to filter out what's unavailable for the searched dates. Empty while loading.
+ */
+export function useAllBookedRanges() {
+  const [byListing, setByListing] = useState<Map<string, BookedRange[]>>(new Map());
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+    supabase
+      .from("listing_booked_ranges")
+      .select("listing_id,unit_key,start_date,end_date,units,source")
+      .then(({ data }) => {
+        if (!active) return;
+        const map = new Map<string, BookedRange[]>();
+        for (const r of (data ?? []) as (Row & { listing_id: string })[]) {
+          const entry: BookedRange = {
+            unitKey: r.unit_key,
+            start: r.start_date,
+            end: r.end_date,
+            units: r.units,
+            source: r.source === "block" ? "block" : "booking",
+          };
+          const list = map.get(r.listing_id);
+          if (list) list.push(entry);
+          else map.set(r.listing_id, [entry]);
+        }
+        setByListing(map);
+        setLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return { byListing, loaded };
+}
+
 /** Rooms of a hotel room type still bookable for the range, from real DB data. */
 export function dbRoomsLeft(
   unitKey: string,
