@@ -1,22 +1,25 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Container } from "@/components/container";
-import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 
-export const metadata: Metadata = { title: "Reset your password" };
+export const metadata: Metadata = { title: "Set a new password" };
 
-export default function ForgotPasswordPage() {
+export default function ResetPasswordPage() {
   return (
     <Container className="flex justify-center py-16">
       <div className="w-full max-w-sm">
         <h1 className="text-center font-heading text-2xl font-bold text-foreground">
-          Reset your password
+          Set a new password
         </h1>
         <p className="mt-1 text-center text-sm text-muted-foreground">
-          Enter your email and we&apos;ll send you a reset link.
+          Choose a new password for your account.
         </p>
 
         <div className="mt-6">
-          <ForgotPasswordForm />
+          <Suspense fallback={null}>
+            <ResetPasswordForm />
+          </Suspense>
         </div>
       </div>
     </Container>

@@ -2,20 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
-export function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,16 +20,31 @@ export function LoginForm() {
     setError(null);
 
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
 
-    if (signInError) {
-      setError(signInError.message);
+    if (resetError) {
+      setError(resetError.message);
       setSubmitting(false);
       return;
     }
 
-    router.push(searchParams.get("next") ?? "/");
-    router.refresh();
+    setSent(true);
+    setSubmitting(false);
+  }
+
+  if (sent) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-border px-4 py-8 text-center">
+        <MailCheck className="size-8 text-primary" />
+        <p className="font-heading text-base font-semibold text-foreground">Check your email</p>
+        <p className="text-sm text-muted-foreground">
+          If an account exists for {email}, we&apos;ve sent a password reset link. Open it soon — it
+          expires after a while and can only be used once.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -56,35 +68,15 @@ export function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
         />
       </div>
-      <div>
-        <div className="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
-          <Link
-            href="/forgot-password"
-            className="text-sm font-medium text-primary hover:underline"
-          >
-            Forgot password?
-          </Link>
-        </div>
-        <Input
-          id="password"
-          type="password"
-          required
-          placeholder="••••••••"
-          className="mt-1.5"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </div>
       <Button type="submit" className="mt-2 w-full gap-2" disabled={submitting}>
         {submitting && <Loader2 className="size-4 animate-spin" />}
-        Log in
+        Send reset link
       </Button>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
-        <Link href="/signup" className="font-medium text-primary hover:underline">
-          Sign up
+        Remembered your password?{" "}
+        <Link href="/login" className="font-medium text-primary hover:underline">
+          Log in
         </Link>
       </p>
     </form>
