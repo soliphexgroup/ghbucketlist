@@ -5,12 +5,8 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/container";
 import { StarRating } from "@/components/star-rating";
 import { ProviderDetailContent } from "@/components/services/provider-detail-content";
-import { serviceProviders, getServiceProviderBySlug } from "@/data/service-providers";
+import { getServiceListingBySlug } from "@/lib/supabase/listings-server";
 import { serviceCategoryLabels } from "@/data/service-categories";
-
-export function generateStaticParams() {
-  return serviceProviders.map((p) => ({ slug: p.slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -18,7 +14,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const provider = getServiceProviderBySlug(slug);
+  const provider = await getServiceListingBySlug(slug);
   if (!provider) return {};
   const title = `${provider.name} — ${serviceCategoryLabels[provider.category]}`;
   return {
@@ -34,7 +30,7 @@ export default async function ProviderDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const provider = getServiceProviderBySlug(slug);
+  const provider = await getServiceListingBySlug(slug);
   if (!provider) notFound();
 
   return (

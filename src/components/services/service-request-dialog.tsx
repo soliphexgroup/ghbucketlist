@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { addServiceRequest } from "@/lib/service-requests-store";
+import { createServiceRequest } from "@/lib/db-service-requests";
+import { useAuth } from "@/lib/auth-context";
 import type { ServiceProvider } from "@/lib/service-types";
 
 function reference() {
@@ -35,7 +37,11 @@ export function ServiceRequestDialog({
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [needsSignin, setNeedsSignin] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [ref, setRef] = useState("");
+  const { user } = useAuth();
 
   const canSubmit = jobDescription.trim().length > 5 && address.trim().length > 0 && phone.trim().length > 0;
 
@@ -44,6 +50,9 @@ export function ServiceRequestDialog({
     if (!next) {
       setTimeout(() => {
         setSubmitted(false);
+        setSubmitting(false);
+        setNeedsSignin(false);
+        setError(null);
         setJobDescription("");
         setPreferredDate("");
         setAddress("");
@@ -52,10 +61,37 @@ export function ServiceRequestDialog({
     }
   }
 
-  function submit() {
-    if (!canSubmit) return;
+  async function submit() {
+    if (!canSubmit || submitting) return;
+    // Requests are tied to the signed-in user so they show up in "My Bookings".
+    if (!user) {
+      setNeedsSignin(true);
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
     const ref2 = reference();
-    setRef(ref2);
+
+    const res = await createServiceRequest({
+      reference: ref2,
+      provider,
+      jobDescription: jobDescription.trim(),
+      preferredDate: preferredDate.trim(),
+      address: address.trim(),
+      phone: phone.trim(),
+    });
+    if (!res.ok) {
+      setSubmitting(false);
+      if (res.reason === "signin") {
+        setNeedsSignin(true);
+        return;
+      }
+      setError(res.message);
+      return;
+    }
+
+    // Keep a local copy so the transition period's dashboards stay consistent.
     addServiceRequest({
       reference: ref2,
       providerId: provider.id,
@@ -70,18 +106,39 @@ export function ServiceRequestDialog({
       status: "pending",
       createdAtISO: new Date().toISOString(),
     });
+    setRef(ref2);
+    setSubmitting(false);
     setSubmitted(true);
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
-        {!submitted ? (
+        {needsSignin ? (
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            <div>
+              <p className="font-heading text-lg font-semibold text-foreground">Sign in to request</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Requests are tied to your account so you can track {provider.name}&apos;s reply in My
+                Bookings.
+              </p>
+            </div>
+            <Button asChild className="w-full">
+              <Link href={`/login?next=/services/${provider.slug}`}>Sign in to continue</Link>
+            </Button>
+          </div>
+        ) : !submitted ? (
           <>
             <DialogHeader>
               <DialogTitle>Request {provider.name}</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4">
+              {error && (
+                <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
               <div>
                 <Label htmlFor="job-description">What do you need done?</Label>
                 <Textarea
@@ -130,7 +187,8 @@ export function ServiceRequestDialog({
               </p>
             </div>
             <DialogFooter className="-mx-4 -mb-4 mt-2">
-              <Button onClick={submit} disabled={!canSubmit} className="w-full sm:w-auto">
+              <Button onClick={submit} disabled={!canSubmit || submitting} className="w-full gap-2 sm:w-auto">
+                {submitting && <Loader2 className="size-4 animate-spin" />}
                 Send Request
               </Button>
             </DialogFooter>

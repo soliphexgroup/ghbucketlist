@@ -16,8 +16,11 @@ export type ServiceFilters = {
   sort?: "recommended" | "rate-asc" | "rate-desc" | "rating" | "response-time";
 };
 
-export function listProviders(filters: ServiceFilters = {}): ServiceProvider[] {
-  let results = [...serviceProviders];
+export function listProviders(
+  filters: ServiceFilters = {},
+  source: ServiceProvider[] = serviceProviders
+): ServiceProvider[] {
+  let results = [...source];
 
   if (filters.q) {
     const q = filters.q.toLowerCase();
@@ -45,10 +48,10 @@ export function listProviders(filters: ServiceFilters = {}): ServiceProvider[] {
   }
 
   if (filters.date) {
+    // Keep providers whose weekly schedule covers the searched date's weekday. Service requests
+    // are leads, not calendar reservations, so there's no per-date sold-out state to enforce.
     const weekday = weekdayFromISODate(filters.date);
     if (weekday) results = results.filter((p) => p.workingDays.includes(weekday));
-    // Drop providers who work that weekday but are already booked out on this date.
-    results = results.filter((p) => !(p.unavailableDates ?? []).includes(filters.date!));
   }
 
   const sort = filters.sort ?? "recommended";

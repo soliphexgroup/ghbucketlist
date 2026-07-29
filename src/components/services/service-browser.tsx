@@ -16,6 +16,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { listProviders, type ServiceFilters } from "@/lib/service-repository";
+import { useDbServiceListings } from "@/lib/db-listings";
 import { serviceCategories } from "@/data/service-categories";
 import type { ServiceCategory } from "@/lib/service-types";
 
@@ -58,17 +59,21 @@ function ServiceBrowserInner({
   }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  const catalog = useDbServiceListings();
   const providers = useMemo(
     () =>
-      listProviders({
-        q: filters.q,
-        categories: filters.categories,
-        verifiedOnly: filters.verifiedOnly,
-        minRating: filters.minRating,
-        date,
-        sort: filters.sort,
-      }),
-    [filters, date]
+      listProviders(
+        {
+          q: filters.q,
+          categories: filters.categories,
+          verifiedOnly: filters.verifiedOnly,
+          minRating: filters.minRating,
+          date,
+          sort: filters.sort,
+        },
+        catalog
+      ),
+    [filters, date, catalog]
   );
 
   function updateFilters(next: Partial<ServiceFilterState>) {

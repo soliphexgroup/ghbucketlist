@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Property } from "@/lib/stay-types";
 import type { Car } from "@/lib/car-types";
 import type { Experience } from "@/lib/types";
+import type { ServiceProvider } from "@/lib/service-types";
 
 // Server-side catalog reads for detail pages (server components). Public-read RLS applies.
 
@@ -39,4 +40,16 @@ export async function getExperienceListingBySlug(slug: string): Promise<Experien
     .eq("slug", slug)
     .maybeSingle();
   return (data?.data as Experience) ?? null;
+}
+
+/** Fetch one service provider by slug from the DB, or null. */
+export async function getServiceListingBySlug(slug: string): Promise<ServiceProvider | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("listings")
+    .select("data")
+    .eq("kind", "service")
+    .eq("slug", slug)
+    .maybeSingle();
+  return (data?.data as ServiceProvider) ?? null;
 }

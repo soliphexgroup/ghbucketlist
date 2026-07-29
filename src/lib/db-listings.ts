@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/stay-types";
 import type { Car } from "@/lib/car-types";
 import type { Experience } from "@/lib/types";
+import type { ServiceProvider } from "@/lib/service-types";
 import { getPriceFrom } from "@/data/experiences";
 
 // Read/write the shared listings catalog. Listings live as one row each with the full typed
@@ -262,5 +263,27 @@ export function useHostDbExperienceListings(hostId: string): Experience[] {
       active = false;
     };
   }, [hostId]);
+  return rows;
+}
+
+// --- Services (handyman providers; read-only catalog — no self-serve host CRUD) ---
+
+/** Every service provider in the catalog. Empty while loading. */
+export function useDbServiceListings(): ServiceProvider[] {
+  const [rows, setRows] = useState<ServiceProvider[]>([]);
+  useEffect(() => {
+    let active = true;
+    createClient()
+      .from("listings")
+      .select("data")
+      .eq("kind", "service")
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        if (active) setRows(((data ?? []) as { data: ServiceProvider }[]).map((r) => r.data));
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
   return rows;
 }

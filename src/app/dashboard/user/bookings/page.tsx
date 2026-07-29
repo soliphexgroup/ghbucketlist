@@ -11,13 +11,13 @@ import { isUpcoming, isPast } from "@/lib/bookings-store";
 import { useDbActivityBookings } from "@/lib/db-activity-bookings";
 import { useDbStayBookings } from "@/lib/db-stay-bookings";
 import { useDbCarBookings } from "@/lib/db-car-bookings";
-import { useServiceRequests } from "@/lib/service-requests-store";
+import { useDbServiceRequests } from "@/lib/db-service-requests";
 
 export default function MyBookingsPage() {
   const bookings = useDbActivityBookings();
   const stayBookings = useDbStayBookings();
   const carBookings = useDbCarBookings();
-  const serviceRequests = useServiceRequests();
+  const serviceRequests = useDbServiceRequests();
   const now = new Date();
 
   const upcoming = bookings.filter((b) => isUpcoming(b, now));
