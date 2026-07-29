@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/stay-types";
 import type { Car } from "@/lib/car-types";
+import type { Experience } from "@/lib/types";
+import { getPriceFrom } from "@/data/experiences";
 
 // Read/write the shared listings catalog. Listings live as one row each with the full typed
 // object in `data`, so reads return the same shapes the app already uses. Writes require a
@@ -177,6 +179,84 @@ export function useHostDbCarListings(hostId: string): Car[] {
       .eq("host_id", hostId)
       .then(({ data }) => {
         if (active) setRows(((data ?? []) as { data: Car }[]).map((r) => r.data));
+      });
+    return () => {
+      active = false;
+    };
+  }, [hostId]);
+  return rows;
+}
+
+// --- Experiences (capacity-based single-day sessions; owner is the experience's hostId) ---
+
+function experienceColumns(e: Experience, hostId: string, createdBy: string | null) {
+  return {
+    id: e.id,
+    kind: "experience" as const,
+    host_id: hostId,
+    slug: e.slug,
+    title: e.title,
+    city: e.city,
+    category: e.categoryId,
+    price_from: getPriceFrom(e),
+    rating: e.rating,
+    created_by: createdBy,
+    data: e,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+export async function createExperienceListing(exp: Experience, hostId: string): Promise<WriteResult> {
+  const { supabase, userId } = await requireUser();
+  if (!userId) return { ok: false, reason: "signin", message: "Please sign in to publish an experience." };
+  const { error } = await supabase.from("listings").insert(experienceColumns(exp, hostId, userId));
+  if (error) return { ok: false, reason: "error", message: error.message };
+  return { ok: true };
+}
+
+export async function updateExperienceListing(exp: Experience, hostId: string): Promise<WriteResult> {
+  const { supabase, userId } = await requireUser();
+  if (!userId) return { ok: false, reason: "signin", message: "Please sign in to edit an experience." };
+  const { error } = await supabase
+    .from("listings")
+    .update(experienceColumns(exp, hostId, userId))
+    .eq("id", exp.id);
+  if (error) return { ok: false, reason: "error", message: error.message };
+  return { ok: true };
+}
+
+/** Every experience listing in the catalog (seeded + host-created). Empty while loading. */
+export function useDbExperienceListings(): Experience[] {
+  const [rows, setRows] = useState<Experience[]>([]);
+  useEffect(() => {
+    let active = true;
+    createClient()
+      .from("listings")
+      .select("data")
+      .eq("kind", "experience")
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        if (active) setRows(((data ?? []) as { data: Experience }[]).map((r) => r.data));
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return rows;
+}
+
+/** The given host's own experience listings. */
+export function useHostDbExperienceListings(hostId: string): Experience[] {
+  const [rows, setRows] = useState<Experience[]>([]);
+  useEffect(() => {
+    let active = true;
+    createClient()
+      .from("listings")
+      .select("data")
+      .eq("kind", "experience")
+      .eq("host_id", hostId)
+      .then(({ data }) => {
+        if (active) setRows(((data ?? []) as { data: Experience }[]).map((r) => r.data));
       });
     return () => {
       active = false;

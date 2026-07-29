@@ -3,7 +3,7 @@ import Link from "next/link";
 import { MapPin, Zap } from "lucide-react";
 import type { Experience } from "@/lib/types";
 import { getExperienceCategory, getExperienceHost } from "@/lib/repository";
-import { getPriceFrom, getExperienceBySlug } from "@/data/experiences";
+import { getPriceFrom } from "@/data/experiences";
 import { formatGHS } from "@/lib/format";
 import { CategoryBadge } from "@/components/category-badge";
 import { StarRating } from "@/components/star-rating";
@@ -20,10 +20,8 @@ export function ActivityCard({
   const category = getExperienceCategory(experience);
   const host = getExperienceHost(experience);
   const price = getPriceFrom(experience);
-  const isStaticExperience = Boolean(getExperienceBySlug(experience.slug));
-  const href = isStaticExperience
-    ? `/activities/${experience.slug}`
-    : `/activities/preview?slug=${encodeURIComponent(experience.slug)}`;
+  // Every experience is a real DB row now, so the detail route resolves for all of them.
+  const href = `/activities/${experience.slug}`;
 
   return (
     <Link

@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import {
-  experiences,
-  getExperienceBySlug,
-} from "@/data/experiences";
 import { getExperienceCategory, getExperienceHost, listReviewsFor } from "@/lib/repository";
+import { getExperienceListingBySlug } from "@/lib/supabase/listings-server";
 import { ActivityDetailWithOverride } from "@/components/activities/detail/activity-detail-with-override";
-
-export function generateStaticParams() {
-  return experiences.map((e) => ({ slug: e.slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -17,7 +10,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const experience = getExperienceBySlug(slug);
+  const experience = await getExperienceListingBySlug(slug);
   if (!experience) return {};
   return {
     title: experience.title,
@@ -36,7 +29,7 @@ export default async function ActivityDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const experience = getExperienceBySlug(slug);
+  const experience = await getExperienceListingBySlug(slug);
   if (!experience) notFound();
 
   const category = getExperienceCategory(experience);

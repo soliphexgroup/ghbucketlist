@@ -18,12 +18,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { StarRating } from "@/components/star-rating";
-import { useHostExperiences, useHostBookings } from "@/lib/host-repository";
+import { useCurrentHostId, useHostBookings } from "@/lib/host-repository";
+import { useHostDbExperienceListings, deleteListing } from "@/lib/db-listings";
 import { getPriceFrom } from "@/data/experiences";
 import { formatGHS } from "@/lib/format";
 
 export default function MyExperiencesPage() {
-  const experiences = useHostExperiences();
+  const experiences = useHostDbExperienceListings(useCurrentHostId());
   const bookings = useHostBookings();
   const [pausedIds, setPausedIds] = useState<Set<string>>(new Set());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
@@ -119,9 +120,10 @@ export default function MyExperiencesPage() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() =>
-                          setDeletedIds((prev) => new Set(prev).add(experience.id))
-                        }
+                        onClick={() => {
+                          setDeletedIds((prev) => new Set(prev).add(experience.id));
+                          void deleteListing(experience.id);
+                        }}
                       >
                         Delete
                       </AlertDialogAction>

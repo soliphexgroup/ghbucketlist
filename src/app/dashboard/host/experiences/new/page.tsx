@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/select";
 import { ListingImageManager } from "@/components/dashboard/listing-image-manager";
 import { categories } from "@/data/categories";
-import { useCurrentHostId, useHostExperiences } from "@/lib/host-repository";
-import { addHostCreatedExperience, upsertHostCreatedExperience } from "@/lib/host-experiences-store";
+import { useCurrentHostId } from "@/lib/host-repository";
+import { createExperienceListing, updateExperienceListing, useHostDbExperienceListings } from "@/lib/db-listings";
 import type { Experience, TicketType } from "@/lib/types";
 
 const SCHEDULE_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -58,12 +58,12 @@ export default function AddExperiencePage() {
 function ExperienceFormResolver() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
-  const hostExperiences = useHostExperiences();
+  const hostExperiences = useHostDbExperienceListings(useCurrentHostId());
   const existing = editId ? hostExperiences.find((e) => e.id === editId) : undefined;
 
   // Remounts (via key) whenever the resolved edit target changes — including the moment
-  // the localStorage-backed store hydrates on the client — so the form's initial state
-  // always reflects `existing` without needing an effect-driven setState cascade.
+  // the DB listings arrive on the client — so the form's initial state always reflects
+  // `existing` without needing an effect-driven setState cascade.
   return <ExperienceForm key={existing?.id ?? editId ?? "new"} existing={existing} />;
 }
 
@@ -95,6 +95,8 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
   const [visibility, setVisibility] = useState<"public" | "private">(existing?.visibility ?? "public");
   const [images, setImages] = useState<string[]>(existing?.images ?? []);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   function toggleScheduleDay(day: string, checked: boolean) {
     setScheduleDays((prev) => (checked ? [...prev, day] : prev.filter((d) => d !== day)));
@@ -135,13 +137,16 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
     scheduleTime.trim().length > 0 &&
     (isFree || validTickets.length > 0);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setAttemptedSubmit(true);
-    if (!canSubmit) return;
+    setSaveError("");
+    if (!canSubmit || saving) return;
 
     const included = whatsIncluded.map((s) => s.trim()).filter(Boolean);
     const ticketsToSave: TicketType[] = isFree ? [{ id: "free", name: "Free Entry", priceGHS: 0 }] : validTickets;
+
+    setSaving(true);
 
     if (existing) {
       const updated: Experience = {
@@ -166,7 +171,12 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
         gpPoints: Number(gpPoints) || 0,
         visibility,
       };
-      upsertHostCreatedExperience(updated);
+      const res = await updateExperienceListing(updated, existing.hostId || hostId);
+      if (!res.ok) {
+        setSaveError(res.message);
+        setSaving(false);
+        return;
+      }
       router.push("/dashboard/host/experiences");
       return;
     }
@@ -202,7 +212,12 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
       createdAt: new Date().toISOString(),
     };
 
-    addHostCreatedExperience(experience);
+    const res = await createExperienceListing(experience, hostId);
+    if (!res.ok) {
+      setSaveError(res.message);
+      setSaving(false);
+      return;
+    }
     router.push("/dashboard/host/experiences");
   }
 
@@ -503,9 +518,11 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
           </p>
         )}
 
+        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
+
         <div className="flex gap-3">
-          <Button type="submit" size="lg">
-            {isEditing ? "Save Changes" : "Publish Experience"}
+          <Button type="submit" size="lg" disabled={saving}>
+            {saving ? "Saving…" : isEditing ? "Save Changes" : "Publish Experience"}
           </Button>
           <Button type="button" variant="outline" size="lg" onClick={() => router.push("/dashboard/host/experiences")}>
             Cancel

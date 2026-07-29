@@ -15,7 +15,9 @@ import { WishlistButton } from "@/components/wishlist-button";
 import { ShareButtons } from "@/components/activities/detail/share-buttons";
 import { BookingDialog, type BookingDetails } from "@/components/activities/detail/booking-dialog";
 import { formatDuration, formatGHS } from "@/lib/format";
-import { isDateInList } from "@/lib/availability";
+import { toISODate } from "@/lib/availability";
+import { addDays } from "@/lib/dates";
+import { useListingBookedRanges, dbSeatsLeft } from "@/lib/db-availability";
 import { useBookings } from "@/lib/bookings-store";
 import { useMyReviews } from "@/lib/reviews-store";
 import { computeGpBalance, gpToDiscount, maxRedeemableGp } from "@/lib/gp";
@@ -32,11 +34,11 @@ const DAY_NAME_TO_INDEX: Record<string, number> = {
   Saturday: 6,
 };
 
-function nextAvailableDate(scheduleDays: string[], unavailableDates: string[]) {
+function nextScheduledDate(scheduleDays: string[]) {
   const allowed = scheduleDays.map((d) => DAY_NAME_TO_INDEX[d]);
   const date = new Date();
   for (let i = 0; i < 60; i++) {
-    if (allowed.includes(date.getDay()) && !isDateInList(date, unavailableDates)) return date;
+    if (allowed.includes(date.getDay())) return date;
     date.setDate(date.getDate() + 1);
   }
   return new Date();
@@ -47,8 +49,15 @@ export function BookingWidget({ experience }: { experience: Experience }) {
     () => experience.scheduleDays.map((d) => DAY_NAME_TO_INDEX[d]),
     [experience.scheduleDays]
   );
-  const unavailableDates = experience.unavailableDates ?? [];
-  const [date, setDate] = useState<Date>(() => nextAvailableDate(experience.scheduleDays, unavailableDates));
+  const [date, setDate] = useState<Date>(() => nextScheduledDate(experience.scheduleDays));
+
+  // Real, shared availability from the DB: seats remaining on a given date = capacity minus
+  // everyone's confirmed bookings that day (host blocks zero it out).
+  const { ranges } = useListingBookedRanges(experience.id);
+  const seatsOn = (d: Date) =>
+    dbSeatsLeft(experience.maxCapacity, ranges, toISODate(d), toISODate(addDays(d, 1)));
+  const seatsLeft = seatsOn(date);
+  const capForDay = seatsLeft > 0 ? seatsLeft : experience.maxCapacity;
   const [ticketTypeId, setTicketTypeId] = useState(experience.ticketTypes[0]?.id);
   const [quantity, setQuantity] = useState(1);
   const [isGift, setIsGift] = useState(false);
@@ -132,7 +141,7 @@ export function BookingWidget({ experience }: { experience: Experience }) {
                 disabled={(d) =>
                   d < new Date(new Date().setHours(0, 0, 0, 0)) ||
                   !allowedDays.includes(d.getDay()) ||
-                  isDateInList(d, unavailableDates)
+                  seatsOn(d) === 0
                 }
                 autoFocus
               />
@@ -206,10 +215,10 @@ export function BookingWidget({ experience }: { experience: Experience }) {
               </span>
               <button
                 type="button"
-                onClick={() => setQuantity((q) => Math.min(experience.maxCapacity, q + 1))}
+                onClick={() => setQuantity((q) => Math.min(capForDay, q + 1))}
                 aria-label="Increase quantity"
                 className="flex size-7 items-center justify-center rounded-full border border-border text-foreground hover:bg-muted disabled:opacity-40"
-                disabled={quantity >= experience.maxCapacity}
+                disabled={quantity >= capForDay}
               >
                 <Plus className="size-3.5" />
               </button>

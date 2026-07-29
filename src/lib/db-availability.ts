@@ -116,6 +116,23 @@ export function dbRoomsLeft(
   return Math.max(0, inventory - taken);
 }
 
+/**
+ * Seats still bookable for a capacity-based listing (experiences) over a date range, from real
+ * DB data. Experiences book against `maxCapacity`, so availability is a running tally of units
+ * rather than whole units. A host block on the range zeroes it out.
+ */
+export function dbSeatsLeft(
+  capacity: number,
+  ranges: BookedRange[],
+  startISO: string,
+  endISO: string
+) {
+  const overlapping = ranges.filter((r) => rangesOverlap(startISO, endISO, r.start, r.end));
+  if (overlapping.some((r) => r.source === "block")) return 0;
+  const taken = overlapping.reduce((sum, r) => sum + (r.units ?? 0), 0);
+  return Math.max(0, capacity - taken);
+}
+
 /** Whether a whole-unit listing (unit_key "") is free for the range. */
 export function dbUnitAvailable(ranges: BookedRange[], startISO: string, endISO: string) {
   return !ranges.some((r) => r.unitKey === "" && rangesOverlap(startISO, endISO, r.start, r.end));

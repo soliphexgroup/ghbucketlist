@@ -7,13 +7,14 @@ import { BookingCard } from "@/components/dashboard/booking-card";
 import { StayBookingCard } from "@/components/dashboard/stay-booking-card";
 import { CarBookingCard } from "@/components/dashboard/car-booking-card";
 import { ServiceRequestCard } from "@/components/dashboard/service-request-card";
-import { useBookings, isUpcoming, isPast } from "@/lib/bookings-store";
+import { isUpcoming, isPast } from "@/lib/bookings-store";
+import { useDbActivityBookings } from "@/lib/db-activity-bookings";
 import { useDbStayBookings } from "@/lib/db-stay-bookings";
 import { useDbCarBookings } from "@/lib/db-car-bookings";
 import { useServiceRequests } from "@/lib/service-requests-store";
 
 export default function MyBookingsPage() {
-  const bookings = useBookings().filter((b) => !b.isGift);
+  const bookings = useDbActivityBookings();
   const stayBookings = useDbStayBookings();
   const carBookings = useDbCarBookings();
   const serviceRequests = useServiceRequests();

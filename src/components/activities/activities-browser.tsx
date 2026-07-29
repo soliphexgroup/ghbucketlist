@@ -16,7 +16,10 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { listExperiences, priceRangeBounds } from "@/lib/repository";
-import { useHostCreatedExperiences } from "@/lib/host-experiences-store";
+import { useDbExperienceListings } from "@/lib/db-listings";
+import { useAllBookedRanges, dbSeatsLeft } from "@/lib/db-availability";
+import { addDays, parseDateParam } from "@/lib/dates";
+import { toISODate } from "@/lib/availability";
 import type { ExperienceFilters } from "@/lib/repository";
 
 /** "2026-07-17" → "Fri 17 Jul" */
@@ -86,8 +89,19 @@ export function ActivitiesBrowser({
   const [filters, setFilters] = useState<FilterState>(() => initialFilters(searchParams));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const hostCreated = useHostCreatedExperiences();
-  const experiences = useMemo(() => listExperiences(filters, hostCreated), [filters, hostCreated]);
+  const catalog = useDbExperienceListings();
+  const { byListing } = useAllBookedRanges();
+  const matched = useMemo(() => listExperiences(filters, catalog), [filters, catalog]);
+
+  // With a searched date, drop sessions that are fully booked (or host-blocked) that day, from
+  // real DB availability — so a sold-out date disappears for everyone, on every device.
+  const experiences = useMemo(() => {
+    if (!filters.date) return matched;
+    const start = parseDateParam(filters.date);
+    if (!start) return matched;
+    const endISO = toISODate(addDays(start, 1));
+    return matched.filter((e) => dbSeatsLeft(e.maxCapacity, byListing.get(e.id) ?? [], filters.date!, endISO) > 0);
+  }, [matched, byListing, filters.date]);
 
   function updateFilters(next: Partial<FilterState>) {
     const merged = { ...filters, ...next };

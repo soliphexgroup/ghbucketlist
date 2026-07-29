@@ -42,10 +42,8 @@ function matchesDuration(minutes: number, bucket?: ExperienceFilters["duration"]
   return true;
 }
 
-export function listExperiences(filters: ExperienceFilters = {}, extra: Experience[] = []) {
-  const overrideIds = new Set(extra.map((e) => e.id));
-  const base = experiences.filter((e) => !overrideIds.has(e.id));
-  let results: Experience[] = [...extra, ...base].filter((e) => e.visibility === "public");
+export function listExperiences(filters: ExperienceFilters = {}, source: Experience[] = experiences) {
+  let results: Experience[] = source.filter((e) => e.visibility === "public");
 
   if (filters.q) {
     const q = filters.q.toLowerCase();
@@ -86,10 +84,10 @@ export function listExperiences(filters: ExperienceFilters = {}, extra: Experien
   }
 
   if (filters.date) {
+    // Keep only sessions whose weekly schedule runs on the searched date's weekday. Whether a
+    // specific date is sold out is decided from real DB availability by the caller.
     const weekday = weekdayFromISODate(filters.date);
     if (weekday) results = results.filter((e) => e.scheduleDays.includes(weekday));
-    // Drop sessions that run that weekday but are sold out on this specific date.
-    results = results.filter((e) => !(e.unavailableDates ?? []).includes(filters.date!));
   }
 
   const sort = filters.sort ?? "recommended";

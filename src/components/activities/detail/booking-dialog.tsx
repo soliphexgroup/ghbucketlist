@@ -19,6 +19,11 @@ import { formatGHS } from "@/lib/format";
 import { addBooking } from "@/lib/bookings-store";
 import { getExperienceCategory, getExperienceHost } from "@/lib/repository";
 import { usePaystackCheckout } from "@/hooks/use-paystack-checkout";
+import { paystackReference } from "@/lib/paystack";
+import { createDbBooking } from "@/lib/db-bookings";
+import { toISODate } from "@/lib/availability";
+import { addDays } from "@/lib/dates";
+import { useAuth } from "@/lib/auth-context";
 import type { Experience, TicketType } from "@/lib/types";
 
 export type BookingDetails = {
@@ -43,11 +48,14 @@ export function BookingDialog({
   onOpenChange: (open: boolean) => void;
   details: BookingDetails | null;
 }) {
-  const [stage, setStage] = useState<"summary" | "processing" | "confirmed" | "failed">("summary");
+  const [stage, setStage] = useState<"summary" | "processing" | "confirmed" | "failed" | "signin">(
+    "summary"
+  );
   const [reference, setReference] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const checkout = usePaystackCheckout();
+  const { user } = useAuth();
 
   if (!details) return null;
 
@@ -63,31 +71,78 @@ export function BookingDialog({
     }
   }
 
+  // Reserve capacity in the DB via the availability-checked RPC. Real bookings hold a seat for
+  // everyone; gifts are vouchers the recipient schedules later, so they don't reserve a date.
+  async function reserveInDb(reference: string, d: BookingDetails) {
+    return createDbBooking({
+      reference,
+      kind: "experience",
+      listingId: d.experience.id,
+      unitKey: "",
+      start: toISODate(d.date),
+      end: toISODate(addDays(d.date, 1)),
+      units: d.quantity,
+      guests: d.quantity,
+      total: d.total,
+      guestName: payerEmail || undefined,
+      guestEmail: payerEmail || undefined,
+      details: { ticketTypeName: d.ticketType.name, requestOnly: false },
+    });
+  }
+
   async function handlePay() {
     const bookingDetails = details;
-    if (!bookingDetails || !canPay) return;
+    if (!bookingDetails) return;
+    // Paid bookings need a receipt email; free ones don't show the field.
+    if (bookingDetails.total > 0 && !canPay) return;
+
+    // Bookings and gifts are owned by the signed-in user (real, shared availability).
+    if (!user) {
+      setStage("signin");
+      return;
+    }
+
     setStage("processing");
 
-    const result = await checkout({
-      email: payerEmail,
-      amountGHS: bookingDetails.total,
-      metadata: { experienceId: bookingDetails.experience.id, kind: "activity_booking" },
-    });
-
-    if (!result.success) {
-      if (result.reason === "cancelled") {
-        setStage("summary");
+    // Free experiences skip the payment step but still get a booking reference.
+    let bookingReference: string;
+    if (bookingDetails.total > 0) {
+      const result = await checkout({
+        email: payerEmail,
+        amountGHS: bookingDetails.total,
+        metadata: { experienceId: bookingDetails.experience.id, kind: "activity_booking" },
+      });
+      if (!result.success) {
+        if (result.reason === "cancelled") {
+          setStage("summary");
+          return;
+        }
+        setErrorMessage(result.message ?? "Payment could not be completed. Please try again.");
+        setStage("failed");
         return;
       }
-      setErrorMessage(result.message ?? "Payment could not be completed. Please try again.");
-      setStage("failed");
-      return;
+      bookingReference = result.reference;
+    } else {
+      bookingReference = paystackReference();
+    }
+
+    // A real (non-gift) booking reserves the seats; if the session just filled, stop here.
+    if (!bookingDetails.isGift) {
+      const reserved = await reserveInDb(bookingReference, bookingDetails);
+      if (!reserved.ok) {
+        setErrorMessage(
+          reserved.message ??
+            "This session was just filled for that date. You have not been charged."
+        );
+        setStage("failed");
+        return;
+      }
     }
 
     const category = getExperienceCategory(bookingDetails.experience);
     const host = getExperienceHost(bookingDetails.experience);
     addBooking({
-      reference: result.reference,
+      reference: bookingReference,
       experienceId: bookingDetails.experience.id,
       experienceSlug: bookingDetails.experience.slug,
       experienceTitle: bookingDetails.experience.title,
@@ -110,7 +165,7 @@ export function BookingDialog({
       status: "confirmed",
       createdAtISO: new Date().toISOString(),
     });
-    setReference(result.reference);
+    setReference(bookingReference);
     setStage("confirmed");
   }
 
@@ -214,6 +269,20 @@ export function BookingDialog({
           <div className="flex flex-col items-center gap-3 py-10">
             <Loader2 className="size-8 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Waiting for Paystack…</p>
+          </div>
+        )}
+
+        {stage === "signin" && (
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            <div>
+              <p className="font-heading text-lg font-semibold text-foreground">Sign in to book</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Bookings are tied to your account so you can manage them and we can hold your seats.
+              </p>
+            </div>
+            <Button asChild className="w-full">
+              <Link href={`/login?next=/activities/${details.experience.slug}`}>Sign in to continue</Link>
+            </Button>
           </div>
         )}
 
