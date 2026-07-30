@@ -12,52 +12,61 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAllPlatformBookings } from "@/lib/admin-repository";
-import { getExperienceById } from "@/data/experiences";
-import { getExperienceHost } from "@/lib/repository";
+import { useAdminBookings, setBookingStatus, type BookingDbStatus } from "@/lib/db-admin-bookings";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { HostBookingStatus } from "@/lib/host-types";
 
-const statusStyles: Record<HostBookingStatus, string> = {
+const statusStyles: Record<BookingDbStatus, string> = {
+  pending: "bg-brand-coral/10 text-brand-coral",
   confirmed: "bg-success/10 text-success",
-  attended: "bg-secondary text-secondary-foreground",
+  completed: "bg-secondary text-secondary-foreground",
   cancelled: "bg-destructive/10 text-destructive",
-  refunded: "bg-destructive/10 text-destructive",
+  declined: "bg-destructive/10 text-destructive",
 };
 
 export default function AdminBookingsPage() {
-  const bookings = useAllPlatformBookings();
+  const { bookings, refresh } = useAdminBookings();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
     return bookings
-      .map((b) => {
-        const exp = getExperienceById(b.experienceId);
-        const host = exp ? getExperienceHost(exp) : undefined;
-        return { ...b, experienceTitle: exp?.title ?? "—", hostName: host?.name ?? "—" };
-      })
       .filter((b) => (statusFilter === "all" ? true : b.status === statusFilter))
       .filter(
         (b) =>
-          !query.trim() ||
-          b.guestName.toLowerCase().includes(query.trim().toLowerCase()) ||
-          b.hostName.toLowerCase().includes(query.trim().toLowerCase()) ||
-          b.experienceTitle.toLowerCase().includes(query.trim().toLowerCase()) ||
-          b.id.toLowerCase().includes(query.trim().toLowerCase())
+          !q ||
+          (b.guestName ?? "").toLowerCase().includes(q) ||
+          (b.guestEmail ?? "").toLowerCase().includes(q) ||
+          b.listingTitle.toLowerCase().includes(q) ||
+          b.reference.toLowerCase().includes(q)
       );
   }, [bookings, query, statusFilter]);
 
+  async function decide(reference: string, status: BookingDbStatus) {
+    setBusy(reference);
+    setError(null);
+    const res = await setBookingStatus(reference, status);
+    setBusy(null);
+    if (!res.ok) {
+      setError(res.message);
+      return;
+    }
+    refresh();
+  }
+
   function exportCsv() {
-    const header = ["Booking ID", "Guest", "Host", "Activity", "Date", "Gross", "Platform Fee", "Net to Host", "Status"];
+    const header = ["Reference", "Guest", "Kind", "Listing", "Start", "End", "Gross", "Platform Fee", "Net to Host", "Status"];
     const lines = rows.map((b) =>
       [
-        b.id,
-        b.guestName,
-        b.hostName,
-        b.experienceTitle,
-        b.dateISO.slice(0, 10),
+        b.reference,
+        b.guestName ?? "",
+        b.kind,
+        b.listingTitle,
+        b.startDate,
+        b.endDate,
         b.total,
         (b.total * 0.05).toFixed(2),
         (b.total * 0.95).toFixed(2),
@@ -87,10 +96,12 @@ export default function AdminBookingsPage() {
         </Button>
       </div>
 
+      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+
       <div className="mt-6 flex flex-wrap gap-3">
         <div className="relative min-w-[220px] flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search booking, guest, host, activity…" className="pl-9" />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search reference, guest, listing…" className="pl-9" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[160px]">
@@ -98,10 +109,11 @@ export default function AdminBookingsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="attended">Attended</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="refunded">Refunded</SelectItem>
+            <SelectItem value="declined">Declined</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -114,28 +126,41 @@ export default function AdminBookingsPage() {
         <table className="w-full text-sm">
           <thead className="bg-secondary/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-3 font-medium">Booking</th>
+              <th className="px-4 py-3 font-medium">Reference</th>
               <th className="px-4 py-3 font-medium">Guest</th>
-              <th className="px-4 py-3 font-medium">Host</th>
-              <th className="px-4 py-3 font-medium">Activity</th>
+              <th className="px-4 py-3 font-medium">Kind</th>
+              <th className="px-4 py-3 font-medium">Listing</th>
               <th className="px-4 py-3 font-medium">Gross</th>
-              <th className="px-4 py-3 font-medium">Fee (5%)</th>
               <th className="px-4 py-3 font-medium">Net to host</th>
               <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((b) => (
-              <tr key={b.id} className="border-t border-border">
-                <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{b.id}</td>
-                <td className="px-4 py-3 text-foreground">{b.guestName}</td>
-                <td className="px-4 py-3 text-muted-foreground">{b.hostName}</td>
-                <td className="px-4 py-3 text-muted-foreground">{b.experienceTitle}</td>
+              <tr key={b.reference} className="border-t border-border">
+                <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{b.reference}</td>
+                <td className="px-4 py-3 text-foreground">{b.guestName ?? b.guestEmail ?? "—"}</td>
+                <td className="px-4 py-3 capitalize text-muted-foreground">{b.kind}</td>
+                <td className="px-4 py-3 text-muted-foreground">{b.listingTitle}</td>
                 <td className="px-4 py-3 text-foreground">{formatGHS(b.total)}</td>
-                <td className="px-4 py-3 text-muted-foreground">{formatGHS(b.total * 0.05)}</td>
                 <td className="px-4 py-3 text-success">{formatGHS(b.total * 0.95)}</td>
                 <td className="px-4 py-3">
                   <Badge className={cn("capitalize", statusStyles[b.status])}>{b.status}</Badge>
+                </td>
+                <td className="px-4 py-3">
+                  {b.status === "pending" ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" disabled={busy === b.reference} onClick={() => decide(b.reference, "declined")}>
+                        Decline
+                      </Button>
+                      <Button size="sm" disabled={busy === b.reference} onClick={() => decide(b.reference, "confirmed")}>
+                        Confirm
+                      </Button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </td>
               </tr>
             ))}

@@ -7,20 +7,22 @@ import { AlertCircle, Loader2, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createClient } from "@/lib/supabase/client";
-import type { UserRole } from "@/types/profile";
 
 export function SignupForm() {
   const router = useRouter();
-  const requestedRole = useSearchParams().get("role");
+  // Everyone signs up as a customer; hosting is granted later via an approved application
+  // (see /hosting). `next` lets us land the user where they were headed (e.g. the host application).
+  const next = useSearchParams().get("next");
+  const wantsToHost = useSearchParams().get("role") === "host";
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>(requestedRole === "host" ? "host" : "customer");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
+
+  const destination = next ?? (wantsToHost ? "/hosting" : "/");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,7 +34,7 @@ export function SignupForm() {
       email,
       password,
       options: {
-        data: { full_name: fullName, role },
+        data: { full_name: fullName },
       },
     });
 
@@ -49,7 +51,7 @@ export function SignupForm() {
       return;
     }
 
-    router.push(role === "host" ? "/dashboard/host" : "/");
+    router.push(destination);
     router.refresh();
   }
 
@@ -111,23 +113,12 @@ export function SignupForm() {
         />
       </div>
 
-      <div>
-        <Label className="text-sm">I want to…</Label>
-        <RadioGroup
-          value={role}
-          onValueChange={(v) => setRole(v as UserRole)}
-          className="mt-2 flex flex-col gap-2"
-        >
-          <label className="flex items-center gap-2.5 rounded-lg border border-border px-3 py-2.5 text-sm has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-accent">
-            <RadioGroupItem value="customer" />
-            Explore experiences
-          </label>
-          <label className="flex items-center gap-2.5 rounded-lg border border-border px-3 py-2.5 text-sm has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-accent">
-            <RadioGroupItem value="host" />
-            Host experiences
-          </label>
-        </RadioGroup>
-      </div>
+      {wantsToHost && (
+        <p className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
+          Create your account first — you&apos;ll submit a host application right after, and our team
+          reviews it before your host dashboard opens.
+        </p>
+      )}
 
       <Button type="submit" className="mt-2 w-full gap-2" disabled={submitting}>
         {submitting && <Loader2 className="size-4 animate-spin" />}

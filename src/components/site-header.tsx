@@ -81,7 +81,7 @@ export function SiteHeader() {
   const router = useRouter();
 
   const dashboardHref = profile ? dashboardHrefByRole[profile.role] : "/dashboard/user";
-  const hostHref = user ? "/hosting" : "/signup?role=host";
+  const hostHref = "/hosting";
 
   async function handleSignOut() {
     await signOut();

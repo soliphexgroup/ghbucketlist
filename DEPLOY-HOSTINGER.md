@@ -43,13 +43,33 @@ Once the app answers on its Hostinger domain (e.g. `https://ghbucketlist.com`):
    - **Redirect URLs:** `https://<your-hostinger-domain>/reset-password`
    (keep `http://localhost:3010/reset-password` for local testing)
 
-## 4. Already done / not needed
-- **`supabase/marketplace.sql`** — already run in Supabase. ✅
+## 4. Database SQL scripts (run in the Supabase SQL Editor, in this order)
+Run once per Supabase project. All three are idempotent (safe to re-run).
+
+| Script | Purpose | Status |
+|---|---|---|
+| `supabase/migration.sql` | Auth: profiles, roles, signup trigger, image storage bucket | already run ✅ |
+| `supabase/marketplace.sql` | Listings, bookings, availability, `create_booking` RPC | already run ✅ |
+| `supabase/admin.sql` | **Admin dashboard**: `is_admin()`, admin RLS, host applications + approve/decline, payouts, user status, `admin_list_users()` | **run this** 🔴 |
+
+`admin.sql` depends on `migration.sql` + `marketplace.sql` already being applied. Until it's run,
+the admin dashboard pages (Hosts, Bookings, Listings, Users, Payouts) and the `/hosting`
+application flow will error because their tables/RPCs don't exist yet. After running it, promote
+your own account to admin:
+
+```sql
+update public.profiles set role='admin'
+where id=(select id from auth.users where email='<you>');
+```
+
+## 5. Already done / not needed
 - **Image optimization** — `next.config.ts` sets `images.unoptimized: true`, so there is no
   `sharp` native dependency to install on Hostinger; images pass straight through.
 - **No `output: export`** — intentionally; the app must stay a running Node server.
 
-## 5. Smoke test after deploy
+## 6. Smoke test after deploy
 - Home page loads.
 - A stay/car/activity/service **detail page** loads (proves server rendering + Supabase reads work).
 - Visiting `/dashboard/user` while signed out redirects to `/login` (proves middleware runs).
+- After running `admin.sql` and promoting an admin account: `/dashboard/admin` loads and the Users
+  tab lists real accounts (proves the admin RPCs/RLS work).

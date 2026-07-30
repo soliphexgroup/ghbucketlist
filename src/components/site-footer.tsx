@@ -25,7 +25,7 @@ const columns = [
     heading: "Hosting",
     links: [
       { label: "Hosting Overview", href: "/hosting" },
-      { label: "Become a Host", href: "/host" },
+      { label: "Become a Host", href: "/hosting" },
       { label: "Resources", href: "/resources" },
       { label: "Guidelines", href: "/guidelines" },
     ],

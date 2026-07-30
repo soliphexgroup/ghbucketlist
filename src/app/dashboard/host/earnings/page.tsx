@@ -19,8 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCurrentHostId, useCurrentHost, useHostLedger, platformFee, netPayout } from "@/lib/host-repository";
-import { addPayout, usePayouts } from "@/lib/payouts-store";
+import { useHostLedger, platformFee, netPayout } from "@/lib/host-repository";
+import { requestPayout as submitPayoutRequest, usePayouts } from "@/lib/db-payouts";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -31,11 +31,9 @@ const statusStyles = {
 };
 
 export default function EarningsPage() {
-  const host = useCurrentHost();
-  const hostId = useCurrentHostId();
   const ledger = useHostLedger();
-  const allPayouts = usePayouts();
-  const payouts = allPayouts.filter((p) => p.hostId === hostId);
+  // RLS scopes payouts to the signed-in host, so no client-side owner filter is needed.
+  const { payouts, refresh: refreshPayouts } = usePayouts();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("mobile-money");
@@ -50,20 +48,14 @@ export default function EarningsPage() {
     .reduce((sum, p) => sum + p.amount, 0);
   const availableBalance = Math.max(0, netEarned - payoutsTotal);
 
-  function requestPayout() {
+  async function requestPayout() {
     const value = Number(amount);
     if (!value || value <= 0 || value > availableBalance) return;
-    addPayout({
-      id: `PO-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
-      hostId,
-      hostName: host.name,
-      amount: value,
-      method,
-      requestedAtISO: new Date().toISOString(),
-      status: "pending",
-    });
+    const res = await submitPayoutRequest({ amount: value, method });
+    if (!res.ok) return;
     setAmount("");
     setDialogOpen(false);
+    refreshPayouts();
   }
 
   return (
@@ -174,7 +166,7 @@ export default function EarningsPage() {
                 <p className="font-medium text-foreground">{p.id}</p>
                 <p className="text-muted-foreground">
                   {p.method === "mobile-money" ? "Mobile Money" : "Bank Transfer"} ·{" "}
-                  {new Date(p.requestedAtISO).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                  {new Date(p.requestedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                 </p>
               </div>
               <div className="flex items-center gap-3">

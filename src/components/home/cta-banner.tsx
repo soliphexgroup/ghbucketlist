@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
 
 export function CtaBanner() {
-  const { user } = useAuth();
-  const hostHref = user ? "/hosting" : "/signup?role=host";
+  // /hosting handles both signed-in and signed-out visitors (shows the application or a sign-in prompt).
+  const hostHref = "/hosting";
 
   return (
     <section className="bg-secondary/40 py-16 sm:py-20">
