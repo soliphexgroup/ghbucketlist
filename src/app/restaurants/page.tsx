@@ -1,13 +1,6 @@
-import type { Metadata } from "next";
-import { ComingSoon } from "@/components/coming-soon";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Restaurants Guide" };
-
+// The old "Restaurants Guide" tab is now Bucket Rewards.
 export default function RestaurantsPage() {
-  return (
-    <ComingSoon
-      title="Restaurants Guide"
-      description="Our curated guide to the best places to eat across Ghana is coming soon."
-    />
-  );
+  redirect("/rewards");
 }

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { BedDouble, Heart, MapPin, Utensils, Wrench, type LucideIcon } from "lucide-react";
+import { BedDouble, Heart, MapPin, Gift, Wrench, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MobileStaySearch } from "@/components/home/mobile-stay-search";
 import { MobileCarSearch } from "@/components/home/mobile-car-search";
@@ -25,7 +25,7 @@ const shortcuts: Shortcut[] = [
   { id: "things-to-do", label: "Things to do", icon: Heart, href: "/activities" },
   { id: "car-rentals", label: "Car Rentals", icon: MapPin, href: "/cars" },
   { id: "handyman", label: "Handyman Services", icon: Wrench, href: "/services" },
-  { id: "restaurants", label: "Restaurants Guide", icon: Utensils, href: "/restaurants", badge: { text: "New", tone: "new" } },
+  { id: "rewards", label: "Bucket Rewards", icon: Gift, href: "/rewards", badge: { text: "New", tone: "new" } },
 ];
 
 export function MobileHero({

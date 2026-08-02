@@ -51,11 +51,13 @@ Run once per Supabase project. All three are idempotent (safe to re-run).
 | `supabase/migration.sql` | Auth: profiles, roles, signup trigger, image storage bucket | already run ✅ |
 | `supabase/marketplace.sql` | Listings, bookings, availability, `create_booking` RPC | already run ✅ |
 | `supabase/admin.sql` | **Admin dashboard**: `is_admin()`, admin RLS, host applications + approve/decline, payouts, user status, `admin_list_users()` | **run this** 🔴 |
+| `supabase/bucket-rewards.sql` | **Bucket Rewards**: partners, members, redemptions + token-gated `br_signup` / `br_lookup_member` / `br_redeem` RPCs | **run this** 🔴 |
 
-`admin.sql` depends on `migration.sql` + `marketplace.sql` already being applied. Until it's run,
-the admin dashboard pages (Hosts, Bookings, Listings, Users, Payouts) and the `/hosting`
-application flow will error because their tables/RPCs don't exist yet. After running it, promote
-your own account to admin:
+`admin.sql` and `bucket-rewards.sql` depend on `migration.sql` + `marketplace.sql` (and
+`bucket-rewards.sql` also needs `is_admin()` from `admin.sql`). Until they're run, the admin
+dashboard pages, the `/hosting` application flow, and the `/rewards` Bucket Rewards pages will
+error because their tables/RPCs don't exist yet. After running them, promote your own account to
+admin:
 
 ```sql
 update public.profiles set role='admin'

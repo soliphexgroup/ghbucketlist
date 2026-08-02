@@ -16,7 +16,7 @@ const listingPathByTab: Record<ServiceTabId, string> = {
   "things-to-do": "/activities",
   "car-rentals": "/cars",
   handyman: "/services",
-  restaurants: "/restaurants",
+  rewards: "/rewards",
 };
 
 /** "17 Jul" */
