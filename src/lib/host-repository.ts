@@ -14,6 +14,12 @@ import { useHostCreatedProperties } from "@/lib/host-properties-store";
 import { useHostCreatedCars } from "@/lib/host-cars-store";
 import { useDemoHostPreview } from "@/lib/demo-host-preview";
 import { useAuth } from "@/lib/auth-context";
+import {
+  useHostDbExperienceListings,
+  useHostDbStayListings,
+  useHostDbCarListings,
+} from "@/lib/db-listings";
+import { useHostDbLedger, useHostDbExperienceBookings } from "@/lib/db-host-ledger";
 import type { Car } from "@/lib/car-types";
 import type { HostBooking, HostLedgerEntry, HostLedgerStatus } from "@/lib/host-types";
 import type { Host } from "@/lib/types";
@@ -29,6 +35,16 @@ export function useCurrentHostId() {
   const preview = useDemoHostPreview();
   if (preview) return DEMO_HOST_ID;
   return user?.id ?? DEMO_HOST_ID;
+}
+
+/**
+ * A real signed-in host (not the ?preview=1 sales view) gets live DB data; the preview shows
+ * the seeded demo so the sample dashboard still looks populated. The hooks below branch on this.
+ */
+function useIsRealHost() {
+  const { user } = useAuth();
+  const preview = useDemoHostPreview();
+  return !!user && !preview;
 }
 
 /** Display info (name/avatar/bio) for the signed-in host, for sidebar/header UI. */
@@ -61,12 +77,20 @@ function getHostExperiences(hostId: string) {
  * edited for the host. A store entry with the same id as a static one is an edit override
  * and replaces it in place, rather than appearing as a duplicate.
  */
-export function useHostExperiences() {
+function useHostExperiencesDemo() {
   const hostId = useCurrentHostId();
   const created = useHostCreatedExperiences().filter((e) => e.hostId === hostId);
   const overrideIds = new Set(created.map((e) => e.id));
   const staticOnes = getHostExperiences(hostId).filter((e) => !overrideIds.has(e.id));
   return [...created, ...staticOnes];
+}
+
+/** The host's experience listings — real from the DB for a signed-in host, demo in preview. */
+export function useHostExperiences() {
+  const real = useIsRealHost();
+  const db = useHostDbExperienceListings(useCurrentHostId());
+  const demo = useHostExperiencesDemo();
+  return real ? db : demo;
 }
 
 export function useHostExperienceIds() {
@@ -78,12 +102,20 @@ function getHostProperties(hostId: string) {
 }
 
 /** Same static+override merge pattern as useHostExperiences, for Stay listings. */
-export function useHostProperties() {
+function useHostPropertiesDemo() {
   const hostId = useCurrentHostId();
   const created = useHostCreatedProperties().filter((p) => p.hostId === hostId);
   const overrideIds = new Set(created.map((p) => p.id));
   const staticOnes = getHostProperties(hostId).filter((p) => !overrideIds.has(p.id));
   return [...created, ...staticOnes];
+}
+
+/** The host's stay listings — real from the DB for a signed-in host, demo in preview. */
+export function useHostProperties() {
+  const real = useIsRealHost();
+  const db = useHostDbStayListings(useCurrentHostId());
+  const demo = useHostPropertiesDemo();
+  return real ? db : demo;
 }
 
 /** A car's vendor is a host, so the host's own cars are those with vendorId === their id. */
@@ -92,12 +124,20 @@ function getHostCars(hostId: string) {
 }
 
 /** Same static+override merge pattern, for Car listings. */
-export function useHostCars(): Car[] {
+function useHostCarsDemo(): Car[] {
   const hostId = useCurrentHostId();
   const created = useHostCreatedCars().filter((c) => c.vendorId === hostId);
   const overrideIds = new Set(created.map((c) => c.id));
   const staticOnes = getHostCars(hostId).filter((c) => !overrideIds.has(c.id));
   return [...created, ...staticOnes];
+}
+
+/** The host's car listings — real from the DB for a signed-in host, demo in preview. */
+export function useHostCars(): Car[] {
+  const real = useIsRealHost();
+  const db = useHostDbCarListings(useCurrentHostId());
+  const demo = useHostCarsDemo();
+  return real ? db : demo;
 }
 
 /** Combines seeded demo stay bookings with any live bookings made for the host's own properties. */
@@ -150,7 +190,7 @@ function carLedgerStatus(booking: StoredCarBooking, now: number): HostLedgerStat
  * Experiences and stays, normalized into one list so the dashboard's totals, activity feeds
  * and tables can treat them uniformly. Sorted most-recent first by the entry's date.
  */
-export function useHostLedger(): HostLedgerEntry[] {
+function useHostLedgerDemo(): HostLedgerEntry[] {
   const experienceBookings = useHostBookings();
   const stayBookings = useHostStayBookings();
   const carBookings = useHostCarBookings();
@@ -214,8 +254,16 @@ export function useHostLedger(): HostLedgerEntry[] {
   );
 }
 
+/** Unified host ledger — real bookings from the DB for a signed-in host, demo in preview. */
+export function useHostLedger(): HostLedgerEntry[] {
+  const real = useIsRealHost();
+  const db = useHostDbLedger();
+  const demo = useHostLedgerDemo();
+  return real ? db : demo;
+}
+
 /** Combines static demo bookings with any live bookings this browser made for the host's own experiences. */
-export function useHostBookings(): HostBooking[] {
+function useHostBookingsDemo(): HostBooking[] {
   const liveBookings = useBookings();
   const hostExpIds = useHostExperienceIds();
 
@@ -247,6 +295,14 @@ export function useHostBookings(): HostBooking[] {
   return [...staticForHost, ...fromLive].sort(
     (a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime()
   );
+}
+
+/** The host's experience bookings — real from the DB for a signed-in host, demo in preview. */
+export function useHostBookings(): HostBooking[] {
+  const real = useIsRealHost();
+  const db = useHostDbExperienceBookings();
+  const demo = useHostBookingsDemo();
+  return real ? db : demo;
 }
 
 export function platformFee(gross: number) {
