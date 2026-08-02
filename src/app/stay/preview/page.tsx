@@ -8,7 +8,6 @@ import { Container } from "@/components/container";
 import { PropertyDetailContent } from "@/components/stay/property-detail-content";
 import { useHostCreatedProperties } from "@/lib/host-properties-store";
 import { getPropertyHost } from "@/lib/stay-repository";
-import { getPropertyReviews } from "@/data/property-reviews";
 
 export default function StayPreviewPage() {
   return (
@@ -36,11 +35,5 @@ function StayPreviewContent() {
     );
   }
 
-  return (
-    <PropertyDetailContent
-      property={property}
-      host={getPropertyHost(property)}
-      reviews={getPropertyReviews(property.id)}
-    />
-  );
+  return <PropertyDetailContent property={property} host={getPropertyHost(property)} />;
 }

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Bath, BedDouble, ChevronRight, MapPin, Users } from "lucide-react";
 import { Container } from "@/components/container";
 import { Separator } from "@/components/ui/separator";
-import { ReviewScoreBadge } from "@/components/stay/review-score-badge";
+import { ListingScoreBadge } from "@/components/reviews/listing-score-badge";
 import { Gallery } from "@/components/activities/detail/gallery";
 import { VenueMap } from "@/components/activities/detail/venue-map";
 import { AmenitiesGrid } from "@/components/stay/amenities-grid";
@@ -13,7 +13,6 @@ import { StayBookingWidget } from "@/components/stay/stay-booking-widget";
 import { RoomOfferTable } from "@/components/stay/room-offer-table";
 import { cn } from "@/lib/utils";
 import type { Property } from "@/lib/stay-types";
-import type { PropertyReview } from "@/lib/stay-types";
 import type { Host } from "@/lib/types";
 
 const propertyTypeLabels = { hotel: "Hotel", apartment: "Apartment", vacation: "Vacation Home" };
@@ -26,11 +25,9 @@ const cancellationCopy = {
 export function PropertyDetailContent({
   property,
   host,
-  reviews,
 }: {
   property: Property;
   host: Host | undefined;
-  reviews: PropertyReview[];
 }) {
   const mapQuery = `${property.neighbourhood}, ${property.city}`;
   // Hotels sell individual room types, so they get the availability table instead of
@@ -60,11 +57,7 @@ export function PropertyDetailContent({
             {property.neighbourhood}, {property.city}
           </p>
         </div>
-        <ReviewScoreBadge
-          rating={property.rating}
-          reviewCount={property.reviewCount}
-          className="shrink-0"
-        />
+        <ListingScoreBadge listingId={property.id} className="shrink-0" />
       </div>
 
       {hasRoomTable && (
@@ -185,12 +178,7 @@ export function PropertyDetailContent({
 
           <Separator />
 
-          <PropertyReviewsSection
-            rating={property.rating}
-            reviewCount={property.reviewCount}
-            categoryRatings={property.categoryRatings}
-            reviews={reviews}
-          />
+          <PropertyReviewsSection listingId={property.id} />
         </div>
 
         {!hasRoomTable && (

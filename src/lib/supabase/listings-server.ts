@@ -53,3 +53,15 @@ export async function getServiceListingBySlug(slug: string): Promise<ServiceProv
     .maybeSingle();
   return (data?.data as ServiceProvider) ?? null;
 }
+
+/** Computed rating + count for one listing from real reviews (server-side). Null when unreviewed. */
+export async function getListingRating(listingId: string): Promise<{ rating: number; count: number } | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("listing_ratings")
+    .select("rating,review_count")
+    .eq("listing_id", listingId)
+    .maybeSingle();
+  const r = data as { rating: number; review_count: number } | null;
+  return r ? { rating: r.rating, count: r.review_count } : null;
+}

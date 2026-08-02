@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { listCars, carPriceBounds, type CarFilters } from "@/lib/car-repository";
 import { daysBetween, parseDateParam } from "@/lib/dates";
 import { useDbCarListings } from "@/lib/db-listings";
+import { useListingRatings } from "@/lib/db-reviews";
 import { useAllBookedRanges, dbUnitAvailable } from "@/lib/db-availability";
 import type { Car, CarCategory } from "@/lib/car-types";
 
@@ -70,7 +71,17 @@ function CarBrowserInner({
   }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const catalog = useDbCarListings();
+  const rawCatalog = useDbCarListings();
+  const listingRatings = useListingRatings();
+  // Ratings come from real reviews only (0/"New" until reviewed).
+  const catalog = useMemo(
+    () =>
+      rawCatalog.map((c) => {
+        const r = listingRatings.get(c.id);
+        return { ...c, rating: r?.rating ?? 0, reviewCount: r?.count ?? 0 };
+      }),
+    [rawCatalog, listingRatings]
+  );
   const { byListing } = useAllBookedRanges();
   const matched = useMemo(
     () =>

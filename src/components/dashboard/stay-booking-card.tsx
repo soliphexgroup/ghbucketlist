@@ -17,6 +17,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cancelStayBooking, type StoredStayBooking } from "@/lib/stay-bookings-store";
+import { hasReviewed } from "@/lib/reviews-store";
+import { WriteReviewDialog } from "@/components/dashboard/write-review-dialog";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -99,6 +101,25 @@ export function StayBookingCard({ booking }: { booking: StoredStayBooking }) {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </div>
+        )}
+
+        {booking.status === "completed" && (
+          <div className="mt-2">
+            {hasReviewed(booking.reference) ? (
+              <Badge variant="secondary">Reviewed</Badge>
+            ) : (
+              <WriteReviewDialog
+                bookingReference={booking.reference}
+                listingId={booking.propertyId}
+                kind="stay"
+                listingTitle={booking.propertyTitle}
+                listingImage={booking.propertyImage}
+                listingSlug={booking.propertySlug}
+              >
+                <Button size="sm">Write a review</Button>
+              </WriteReviewDialog>
+            )}
           </div>
         )}
       </div>

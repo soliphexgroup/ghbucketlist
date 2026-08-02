@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/container";
 import { ActivityDetailContent } from "@/components/activities/detail/activity-detail-content";
 import { useHostCreatedExperiences } from "@/lib/host-experiences-store";
-import { getExperienceCategory, getExperienceHost, listReviewsFor } from "@/lib/repository";
+import { getExperienceCategory, getExperienceHost } from "@/lib/repository";
 
 export function HostCreatedExperienceDetail() {
   const searchParams = useSearchParams();
@@ -30,7 +30,6 @@ export function HostCreatedExperienceDetail() {
 
   const category = getExperienceCategory(experience);
   const host = getExperienceHost(experience);
-  const reviews = listReviewsFor(experience.id);
 
-  return <ActivityDetailContent experience={experience} category={category} host={host} reviews={reviews} />;
+  return <ActivityDetailContent experience={experience} category={category} host={host} />;
 }

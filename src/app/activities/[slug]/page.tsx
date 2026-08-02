@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getExperienceCategory, getExperienceHost, listReviewsFor } from "@/lib/repository";
+import { getExperienceCategory, getExperienceHost } from "@/lib/repository";
 import { getExperienceListingBySlug } from "@/lib/supabase/listings-server";
 import { ActivityDetailWithOverride } from "@/components/activities/detail/activity-detail-with-override";
 
@@ -34,7 +34,6 @@ export default async function ActivityDetailPage({
 
   const category = getExperienceCategory(experience);
   const host = getExperienceHost(experience);
-  const reviews = listReviewsFor(experience.id);
 
-  return <ActivityDetailWithOverride experience={experience} category={category} host={host} reviews={reviews} />;
+  return <ActivityDetailWithOverride experience={experience} category={category} host={host} />;
 }

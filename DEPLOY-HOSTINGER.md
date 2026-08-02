@@ -52,6 +52,7 @@ Run once per Supabase project. All three are idempotent (safe to re-run).
 | `supabase/marketplace.sql` | Listings, bookings, availability, `create_booking` RPC | already run ✅ |
 | `supabase/admin.sql` | **Admin dashboard**: `is_admin()`, admin RLS, host applications + approve/decline, payouts, user status, `admin_list_users()` | **run this** 🔴 |
 | `supabase/bucket-rewards.sql` | **Bucket Rewards**: partners, members, redemptions + token-gated `br_signup` / `br_lookup_member` / `br_redeem` RPCs | **run this** 🔴 |
+| `supabase/reviews.sql` | **Reviews**: reviews table + verified `create_review` RPC + `listing_ratings` view (ratings computed from real reviews) | **run this** 🔴 |
 
 `admin.sql` and `bucket-rewards.sql` depend on `migration.sql` + `marketplace.sql` (and
 `bucket-rewards.sql` also needs `is_admin()` from `admin.sql`). Until they're run, the admin

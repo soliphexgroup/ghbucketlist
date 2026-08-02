@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { listExperiences, priceRangeBounds } from "@/lib/repository";
 import { useDbExperienceListings } from "@/lib/db-listings";
+import { useListingRatings } from "@/lib/db-reviews";
 import { useAllBookedRanges, dbSeatsLeft } from "@/lib/db-availability";
 import { addDays, parseDateParam } from "@/lib/dates";
 import { toISODate } from "@/lib/availability";
@@ -89,7 +90,17 @@ export function ActivitiesBrowser({
   const [filters, setFilters] = useState<FilterState>(() => initialFilters(searchParams));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const catalog = useDbExperienceListings();
+  const rawCatalog = useDbExperienceListings();
+  const listingRatings = useListingRatings();
+  // Ratings shown across the catalog come from real reviews only (0/"New" until reviewed).
+  const catalog = useMemo(
+    () =>
+      rawCatalog.map((e) => {
+        const r = listingRatings.get(e.id);
+        return { ...e, rating: r?.rating ?? 0, reviewCount: r?.count ?? 0 };
+      }),
+    [rawCatalog, listingRatings]
+  );
   const { byListing } = useAllBookedRanges();
   const matched = useMemo(() => listExperiences(filters, catalog), [filters, catalog]);
 

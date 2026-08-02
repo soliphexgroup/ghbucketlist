@@ -12,53 +12,45 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useHostExperiences, useHostProperties } from "@/lib/host-repository";
-import { getReviewsForExperience } from "@/data/reviews";
-import { getPropertyReviews } from "@/data/property-reviews";
+import { useHostExperiences, useHostProperties, useHostCars } from "@/lib/host-repository";
+import { useHostReviews } from "@/lib/db-reviews";
 
 export default function HostReviewsPage() {
   const experiences = useHostExperiences();
   const properties = useHostProperties();
+  const cars = useHostCars();
   const [listingFilter, setListingFilter] = useState("all");
   const [ratingFilter, setRatingFilter] = useState("all");
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [draft, setDraft] = useState<Record<string, string>>({});
 
-  // Reviews across both listing kinds, normalized. Keyed by kind+id so experience and
-  // property review ids can't collide in the reply map or React keys.
-  const allReviews = useMemo(() => {
-    const fromExperiences = experiences.flatMap((e) =>
-      getReviewsForExperience(e.id).map((r) => ({
-        key: `exp-${r.id}`,
-        listingId: e.id,
-        listingTitle: e.title,
-        kind: "experience" as const,
-        userName: r.userName,
-        userAvatar: r.userAvatar,
-        rating: r.rating,
-        text: r.text,
-        date: r.date,
-      }))
-    );
-    const fromProperties = properties.flatMap((p) =>
-      getPropertyReviews(p.id).map((r) => ({
-        key: `prop-${r.id}`,
-        listingId: p.id,
-        listingTitle: p.title,
-        kind: "stay" as const,
-        userName: r.userName,
-        userAvatar: r.userAvatar,
-        rating: r.rating,
-        text: r.text,
-        date: r.date,
-      }))
-    );
-    return [...fromExperiences, ...fromProperties].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [experiences, properties]);
+  const listings = useMemo(
+    () => [
+      ...experiences.map((e) => ({ id: e.id, title: e.title })),
+      ...properties.map((p) => ({ id: p.id, title: p.title })),
+      ...cars.map((c) => ({ id: c.id, title: `${c.make} ${c.model}` })),
+    ],
+    [experiences, properties, cars]
+  );
+  const titleById = useMemo(() => new Map(listings.map((l) => [l.id, l.title])), [listings]);
+  const reviews = useHostReviews(listings.map((l) => l.id));
 
-  const listings = [...experiences, ...properties];
+  // Real reviews for the host's listings, normalized for this page's render.
+  const allReviews = useMemo(
+    () =>
+      reviews.map((r) => ({
+        key: r.id,
+        listingId: r.listingId,
+        listingTitle: titleById.get(r.listingId) ?? "Listing",
+        kind: r.kind,
+        userName: r.userName,
+        userAvatar: r.userAvatar,
+        rating: r.rating,
+        text: r.text,
+        date: r.date,
+      })),
+    [reviews, titleById]
+  );
 
   const breakdown = [5, 4, 3, 2, 1].map((star) => ({
     star,

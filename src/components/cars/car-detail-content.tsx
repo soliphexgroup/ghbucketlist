@@ -4,7 +4,8 @@ import Image from "next/image";
 import { Briefcase, ChevronRight, MapPin, Users } from "lucide-react";
 import { Container } from "@/components/container";
 import { Separator } from "@/components/ui/separator";
-import { StarRating } from "@/components/star-rating";
+import { ListingRatingStars } from "@/components/reviews/listing-rating-stars";
+import { ReviewsSection } from "@/components/activities/detail/reviews-section";
 import { Gallery } from "@/components/activities/detail/gallery";
 import { VenueMap } from "@/components/activities/detail/venue-map";
 import { FeaturesGrid } from "@/components/cars/features-grid";
@@ -40,7 +41,7 @@ export function CarDetailContent({ car, vendor }: { car: Car; vendor: Host | und
           <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-secondary-foreground">
             {categoryLabels[car.category]}
           </span>
-          <StarRating rating={car.rating} reviewCount={car.reviewCount} />
+          <ListingRatingStars listingId={car.id} />
         </div>
         <h1 className="font-heading text-3xl font-bold text-foreground sm:text-4xl">
           {title} <span className="font-normal text-muted-foreground">{car.year}</span>
@@ -130,6 +131,10 @@ export function CarDetailContent({ car, vendor }: { car: Car; vendor: Host | und
               <VenueMap query={mapQuery} />
             </div>
           </section>
+
+          <Separator />
+
+          <ReviewsSection listingId={car.id} />
         </div>
 
         <div>

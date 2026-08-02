@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import { formatScore, scoreLabel, toScore10 } from "@/lib/review-score";
-import type { CategoryRatings, PropertyReview } from "@/lib/stay-types";
+import { useListingReviews } from "@/lib/db-reviews";
+import type { CategoryRatings } from "@/lib/stay-types";
 
 const categoryLabels: { key: keyof CategoryRatings; label: string }[] = [
   { key: "cleanliness", label: "Cleanliness" },
@@ -10,53 +13,65 @@ const categoryLabels: { key: keyof CategoryRatings; label: string }[] = [
   { key: "value", label: "Value" },
 ];
 
-export function PropertyReviewsSection({
-  rating,
-  reviewCount,
-  categoryRatings,
-  reviews,
-}: {
-  rating: number;
-  reviewCount: number;
-  categoryRatings: CategoryRatings;
-  reviews: PropertyReview[];
-}) {
+export function PropertyReviewsSection({ listingId }: { listingId: string }) {
+  const reviews = useListingReviews(listingId);
+  const reviewCount = reviews.length;
+  const rating = reviewCount > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviewCount : 0;
   const score = toScore10(rating);
+
+  // Average each sub-score across reviews that provided category ratings; hide the grid if none did.
+  const withCats = reviews.filter((r) => r.categoryRatings);
+  const categoryAverages: Partial<CategoryRatings> = {};
+  if (withCats.length > 0) {
+    for (const { key } of categoryLabels) {
+      const vals = withCats
+        .map((r) => (r.categoryRatings as CategoryRatings)[key])
+        .filter((v) => typeof v === "number");
+      if (vals.length > 0) categoryAverages[key] = vals.reduce((s, v) => s + v, 0) / vals.length;
+    }
+  }
+  const hasCategories = Object.keys(categoryAverages).length > 0;
 
   return (
     <section>
       <h2 className="font-heading text-xl font-semibold text-foreground">Guest reviews</h2>
 
-      <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-start">
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="rounded-lg rounded-bl-none bg-primary px-3 py-2 font-heading text-2xl font-bold text-primary-foreground">
-            {formatScore(score)}
-          </span>
-          <div>
-            <p className="font-heading text-base font-semibold text-foreground">{scoreLabel(score)}</p>
-            <p className="text-sm text-muted-foreground">{reviewCount} reviews</p>
-          </div>
-        </div>
-
-        <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2">
-          {categoryLabels.map(({ key, label }) => (
-            <div key={key} className="flex items-center justify-between gap-3 text-sm">
-              <span className="text-muted-foreground">{label}</span>
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${(categoryRatings[key] / 5) * 100}%` }}
-                  />
-                </div>
-                <span className="w-6 text-right text-foreground">
-                  {formatScore(toScore10(categoryRatings[key]))}
-                </span>
-              </div>
+      {reviewCount > 0 && (
+        <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-start">
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="rounded-lg rounded-bl-none bg-primary px-3 py-2 font-heading text-2xl font-bold text-primary-foreground">
+              {formatScore(score)}
+            </span>
+            <div>
+              <p className="font-heading text-base font-semibold text-foreground">{scoreLabel(score)}</p>
+              <p className="text-sm text-muted-foreground">{reviewCount} reviews</p>
             </div>
-          ))}
+          </div>
+
+          {hasCategories && (
+            <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2">
+              {categoryLabels
+                .filter(({ key }) => categoryAverages[key] !== undefined)
+                .map(({ key, label }) => (
+                  <div key={key} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">{label}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${(categoryAverages[key]! / 5) * 100}%` }}
+                        />
+                      </div>
+                      <span className="w-6 text-right text-foreground">
+                        {formatScore(toScore10(categoryAverages[key]!))}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       <div className="mt-8 flex flex-col gap-6">
         {reviews.map((review) => (
@@ -82,7 +97,7 @@ export function PropertyReviewsSection({
             </div>
           </div>
         ))}
-        {reviews.length === 0 && (
+        {reviewCount === 0 && (
           <p className="text-sm text-muted-foreground">No reviews yet — be the first to stay here.</p>
         )}
       </div>

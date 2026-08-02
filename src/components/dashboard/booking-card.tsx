@@ -138,7 +138,14 @@ export function BookingCard({
             (alreadyReviewed ? (
               <Badge variant="secondary">Reviewed</Badge>
             ) : (
-              <WriteReviewDialog booking={booking}>
+              <WriteReviewDialog
+                bookingReference={booking.reference}
+                listingId={booking.experienceId}
+                kind="experience"
+                listingTitle={booking.experienceTitle}
+                listingImage={booking.experienceImage}
+                listingSlug={booking.experienceSlug}
+              >
                 <Button size="sm">Write a Review</Button>
               </WriteReviewDialog>
             ))}

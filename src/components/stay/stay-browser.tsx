@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { listProperties, propertyPriceBounds, type StayFilters } from "@/lib/stay-repository";
 import { useDbStayListings } from "@/lib/db-listings";
+import { useListingRatings } from "@/lib/db-reviews";
 import { useAllBookedRanges, dbRoomsLeft, dbUnitAvailable } from "@/lib/db-availability";
 import type { PropertyType } from "@/lib/stay-types";
 
@@ -73,7 +74,17 @@ function StayBrowserInner({
   }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const catalog = useDbStayListings();
+  const rawCatalog = useDbStayListings();
+  const listingRatings = useListingRatings();
+  // Ratings come from real reviews only (0/"New" until reviewed).
+  const catalog = useMemo(
+    () =>
+      rawCatalog.map((p) => {
+        const r = listingRatings.get(p.id);
+        return { ...p, rating: r?.rating ?? 0, reviewCount: r?.count ?? 0 };
+      }),
+    [rawCatalog, listingRatings]
+  );
   const { byListing } = useAllBookedRanges();
   const matched = useMemo(
     () =>
