@@ -23,6 +23,16 @@ function isOffline(errMessage?: string) {
   return !!errMessage && /fetch|network|failed to fetch/i.test(errMessage);
 }
 
+export type DeviceInfo = { name: string; active: boolean } | null;
+
+/** Resolve a device token to its partner (name + active), so the counter app can confirm setup. */
+export async function brDeviceInfo(token: string): Promise<DeviceInfo> {
+  const { data, error } = await createClient().rpc("br_device_info", { p_token: token });
+  if (error) return null;
+  const row = first<{ name: string; active: boolean }>(data);
+  return row ? { name: row.name, active: row.active } : null;
+}
+
 export async function brLookupMember(token: string, phone: string): Promise<LookupResult> {
   const { data, error } = await createClient().rpc("br_lookup_member", {
     p_token: token,

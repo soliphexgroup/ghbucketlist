@@ -173,3 +173,49 @@ $$;
 grant execute on function public.br_signup(text, text) to anon, authenticated;
 grant execute on function public.br_lookup_member(text, text) to anon, authenticated;
 grant execute on function public.br_redeem(text, text, numeric) to anon, authenticated;
+
+-- Confirm a device token resolves to a partner (so the counter app can show "This device: <name>").
+create or replace function public.br_device_info(p_token text)
+returns table (name text, active boolean)
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  return query
+    select p.name, (p.status = 'active')
+    from public.br_partners p
+    where p.device_token = p_token;
+end;
+$$;
+
+grant execute on function public.br_device_info(text) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 5. Settlement (commission reconciliation) ---------------------------------
+-- Redemptions start unsettled; an admin marks a partner's commission paid per cycle.
+-- ---------------------------------------------------------------------------
+alter table public.br_redemptions add column if not exists settled_at timestamptz;
+
+-- Mark all of a partner's currently-unsettled redemptions as settled; returns the amount settled.
+create or replace function public.br_settle_partner(p_partner_id uuid)
+returns numeric
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_total numeric;
+begin
+  if not public.is_admin() then raise exception 'Admin only'; end if;
+  select coalesce(sum(commission), 0) into v_total
+  from public.br_redemptions
+  where partner_id = p_partner_id and settled_at is null;
+
+  update public.br_redemptions
+  set settled_at = now()
+  where partner_id = p_partner_id and settled_at is null;
+
+  return v_total;
+end;
+$$;
+
+grant execute on function public.br_settle_partner(uuid) to authenticated;

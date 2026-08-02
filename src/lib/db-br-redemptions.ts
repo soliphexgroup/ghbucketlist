@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import type { WriteResult } from "@/lib/db-listings";
 
 // Admin-only read of BR redemptions, for tracking and commission reconciliation. RLS restricts
 // this to admins (is_admin()).
@@ -13,6 +14,7 @@ export type BrRedemption = {
   amount: number;
   customerSaving: number;
   commission: number;
+  settledAt: string | null;
   createdAt: string;
 };
 
@@ -23,6 +25,7 @@ type Row = {
   amount: number;
   customer_saving: number;
   commission: number;
+  settled_at: string | null;
   created_at: string;
 };
 
@@ -34,8 +37,17 @@ function toRedemption(r: Row): BrRedemption {
     amount: r.amount,
     customerSaving: r.customer_saving,
     commission: r.commission,
+    settledAt: r.settled_at,
     createdAt: r.created_at,
   };
+}
+
+/** Mark a partner's unsettled commission as paid; returns the settled amount. */
+export async function settlePartner(partnerId: string): Promise<WriteResult> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("br_settle_partner", { p_partner_id: partnerId });
+  if (error) return { ok: false, reason: "error", message: error.message };
+  return { ok: true };
 }
 
 /** Admin: every redemption, newest first. `refresh()` re-fetches. */
@@ -47,7 +59,7 @@ export function useBrRedemptions(): { redemptions: BrRedemption[]; loaded: boole
     let active = true;
     createClient()
       .from("br_redemptions")
-      .select("id,partner_id,member_phone,amount,customer_saving,commission,created_at")
+      .select("id,partner_id,member_phone,amount,customer_saving,commission,settled_at,created_at")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         if (!active) return;

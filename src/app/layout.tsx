@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
+import { SiteChrome } from "@/components/site-chrome";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
@@ -36,9 +35,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthProvider>
           <TooltipProvider delayDuration={200}>
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
+            <SiteChrome>{children}</SiteChrome>
           </TooltipProvider>
         </AuthProvider>
         <Script src="https://js.paystack.co/v2/inline.js" strategy="afterInteractive" />
