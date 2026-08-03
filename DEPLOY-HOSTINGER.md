@@ -37,11 +37,15 @@ Copy the values from your local `.env.local`:
 ## 3. Domain + Supabase URLs (do after the app is live)
 Once the app answers on its Hostinger domain (e.g. `https://ghbucketlist.com`):
 
-1. Point your domain at the Hostinger app.
-2. In **Supabase → Authentication → URL Configuration**, replace the Vercel URLs:
-   - **Site URL:** `https://<your-hostinger-domain>`
-   - **Redirect URLs:** `https://<your-hostinger-domain>/reset-password`
-   (keep `http://localhost:3010/reset-password` for local testing)
+1. Point your domain at the Hostinger app. **Live domain: `https://ghbucketlist.com`.**
+2. In **Supabase → Authentication → URL Configuration**:
+   - **Site URL:** `https://ghbucketlist.com`
+   - **Redirect URLs:** add `https://ghbucketlist.com/reset-password` and
+     `https://ghbucketlist.com/**` (the wildcard covers any future auth redirect paths);
+     keep `http://localhost:3010/reset-password` for local testing.
+   - Remove the old `aqua-eagle-…hostingersite.com` / Vercel entries.
+   The reset link is generated from the visited origin, so on the live domain it becomes
+   `https://ghbucketlist.com/reset-password` automatically — no code change needed.
 
 ## 4. Database SQL scripts (run in the Supabase SQL Editor, in this order)
 Run once per Supabase project. All three are idempotent (safe to re-run).
