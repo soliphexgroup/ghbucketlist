@@ -177,15 +177,24 @@ function CarBrowserInner({
           </p>
 
           {cars.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-24 text-center">
-              <p className="font-heading text-lg font-semibold text-foreground">
-                No cars match your filters
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">Try adjusting or clearing your filters.</p>
-              <Button variant="outline" className="mt-4" onClick={clearFilters}>
-                Clear all filters
-              </Button>
-            </div>
+            rawCatalog.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-24 text-center">
+                <p className="font-heading text-lg font-semibold text-foreground">No cars listed yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  New rentals are on the way — check back soon.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-24 text-center">
+                <p className="font-heading text-lg font-semibold text-foreground">
+                  No cars match your filters
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">Try adjusting or clearing your filters.</p>
+                <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                  Clear all filters
+                </Button>
+              </div>
+            )
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
               {cars.map((car) => (
