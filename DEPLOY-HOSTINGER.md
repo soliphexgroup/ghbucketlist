@@ -65,6 +65,11 @@ update public.profiles set role='admin'
 where id=(select id from auth.users where email='<you>');
 ```
 
+**Launch prep (optional, destructive):** `supabase/clear-seed.sql` removes the fabricated demo
+catalog so the marketplace shows only real host-published listings. It's not part of setup — run
+it only when you're ready to go live. It previews what it will delete first, and only ever removes
+seeded rows (`created_by IS NULL`), never real host listings.
+
 ## 5. Already done / not needed
 - **Image optimization** — `next.config.ts` sets `images.unoptimized: true`, so there is no
   `sharp` native dependency to install on Hostinger; images pass straight through.
