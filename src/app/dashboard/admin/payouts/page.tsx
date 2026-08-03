@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { usePayouts, setPayoutStatus, type PayoutStatus } from "@/lib/db-payouts";
 import { useAdminUsers } from "@/lib/db-admin-users";
+import { notifyPayout } from "@/lib/email/notify";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,7 @@ export default function AdminPayoutsPage() {
     const res = await setPayoutStatus(id, status);
     setBusy(null);
     if (!res.ok) return setError(res.message);
+    void notifyPayout(id);
     refresh();
   }
 

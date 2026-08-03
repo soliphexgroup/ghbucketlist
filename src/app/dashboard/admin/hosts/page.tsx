@@ -12,6 +12,7 @@ import {
 } from "@/lib/db-host-applications";
 import { useAdminUsers } from "@/lib/db-admin-users";
 import { useAdminListings } from "@/lib/db-admin-listings";
+import { notifyHostApplication } from "@/lib/email/notify";
 
 export default function AdminHostsPage() {
   const { applications, refresh: refreshApps } = useHostApplications();
@@ -39,6 +40,7 @@ export default function AdminHostsPage() {
       setError(res.message);
       return;
     }
+    void notifyHostApplication(id);
     // Approval flips a user's role → refresh both lists.
     refreshApps();
     refreshUsers();

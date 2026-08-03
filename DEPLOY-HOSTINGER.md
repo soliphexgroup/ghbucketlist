@@ -31,8 +31,21 @@ Copy the values from your local `.env.local`:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | public | Supabase anon key |
 | `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | public | Paystack `pk_...` |
 | `PAYSTACK_SECRET_KEY` | **server-only** | Paystack `sk_...` — never expose to the browser |
+| `RESEND_API_KEY` | **server-only** | Resend API key for transactional email (`re_...`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **server-only** | Supabase → Project Settings → API → service_role key. Bypasses RLS — server only; used to look up host emails for notifications |
+| `EMAIL_FROM` | server-only | Sender, e.g. `GH Bucketlist <no-reply@ghbucketlist.com>` (must be a verified Resend sender) |
 
 `NEXT_PUBLIC_*` vars are inlined at **build time**, so if you change them you must rebuild.
+
+### Transactional email (Resend) setup
+1. Create a [Resend](https://resend.com) account and add the domain **ghbucketlist.com**.
+2. Add the DNS records Resend gives you (SPF/DKIM) to the domain, and wait for verification.
+3. Set `EMAIL_FROM` to a sender on the verified domain (e.g. `no-reply@ghbucketlist.com`).
+4. Put `RESEND_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `EMAIL_FROM` in Hostinger env vars (and `.env.local` for local testing).
+
+Until this is configured the app runs normally — the notify calls just no-op (no emails send).
+Emails fire after: a booking (→ guest + host), a host-application approve/decline (→ applicant),
+and a payout approve/reject (→ host).
 
 ## 3. Domain + Supabase URLs (do after the app is live)
 Once the app answers on its Hostinger domain (e.g. `https://ghbucketlist.com`):

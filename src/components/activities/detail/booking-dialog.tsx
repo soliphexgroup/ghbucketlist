@@ -21,6 +21,7 @@ import { getExperienceCategory, getExperienceHost } from "@/lib/repository";
 import { usePaystackCheckout } from "@/hooks/use-paystack-checkout";
 import { paystackReference } from "@/lib/paystack";
 import { createDbBooking } from "@/lib/db-bookings";
+import { notifyBooking } from "@/lib/email/notify";
 import { toISODate } from "@/lib/availability";
 import { addDays } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-context";
@@ -137,6 +138,7 @@ export function BookingDialog({
         setStage("failed");
         return;
       }
+      void notifyBooking(bookingReference);
     }
 
     const category = getExperienceCategory(bookingDetails.experience);

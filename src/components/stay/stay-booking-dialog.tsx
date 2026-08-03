@@ -21,6 +21,7 @@ import { getPropertyHost } from "@/lib/stay-repository";
 import { usePaystackCheckout } from "@/hooks/use-paystack-checkout";
 import { paystackReference } from "@/lib/paystack";
 import { createDbBooking } from "@/lib/db-bookings";
+import { notifyBooking } from "@/lib/email/notify";
 import { toISODate } from "@/lib/availability";
 import { useAuth } from "@/lib/auth-context";
 import type { Property, RoomOffer } from "@/lib/stay-types";
@@ -168,6 +169,7 @@ export function StayBookingDialog({
         return;
       }
       completeStayBooking(ref2, "pending_request");
+      void notifyBooking(ref2);
       setStage("requested");
       return;
     }
@@ -197,6 +199,7 @@ export function StayBookingDialog({
       return;
     }
     completeStayBooking(result.reference, "confirmed");
+    void notifyBooking(result.reference);
     setRef(result.reference);
     setStage("confirmed");
   }
