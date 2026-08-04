@@ -260,7 +260,7 @@ begin
   ) values (
     p_reference, p_kind, p_listing_id, coalesce(p_unit_key, ''), uid, p_guest_name, p_guest_email,
     p_start, p_end, p_units, p_guests, p_total,
-    case when (p_details->>'requestOnly')::boolean then 'pending' else 'confirmed' end,
+    (case when (p_details->>'requestOnly')::boolean then 'pending' else 'confirmed' end)::public.booking_status,
     p_details
   )
   returning * into result;
