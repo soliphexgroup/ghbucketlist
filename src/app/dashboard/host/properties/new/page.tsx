@@ -113,13 +113,15 @@ function PropertyForm({ existing }: { existing?: Property }) {
   }
 
   const validRooms = rooms.filter((r) => r.roomName.trim().length > 0);
-  const canSubmit =
-    title.trim().length > 2 &&
-    description.trim().length > 20 &&
-    neighbourhood.trim().length > 0 &&
-    address.trim().length > 0 &&
-    validRooms.length > 0 &&
-    Number(pricePerNight) > 0;
+  const validationErrors = [
+    title.trim().length > 2 ? null : "Give the property a title (at least 3 characters).",
+    description.trim().length > 20 ? null : "Write a description of at least 20 characters.",
+    neighbourhood.trim().length > 0 ? null : "Add a neighbourhood.",
+    address.trim().length > 0 ? null : "Add an address.",
+    validRooms.length > 0 ? null : "Add at least one room with a name.",
+    Number(pricePerNight) > 0 ? null : "Set a nightly price greater than 0.",
+  ].filter((e): e is string => e !== null);
+  const canSubmit = validationErrors.length === 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -409,10 +411,15 @@ function PropertyForm({ existing }: { existing?: Property }) {
           </div>
         </section>
 
-        {attemptedSubmit && !canSubmit && (
-          <p className="text-sm text-destructive">
-            Please fill in the title, description, location, at least one room, and a nightly price before publishing.
-          </p>
+        {attemptedSubmit && validationErrors.length > 0 && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+            <p className="font-medium">Before publishing, please fix:</p>
+            <ul className="mt-1 list-disc pl-5">
+              {validationErrors.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          </div>
         )}
         {saveError && <p className="text-sm text-destructive">{saveError}</p>}
 

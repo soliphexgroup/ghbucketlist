@@ -85,12 +85,14 @@ function CarForm({ existing }: { existing?: Car }) {
     setSelectedFeatures((prev) => (checked ? [...prev, key] : prev.filter((f) => f !== key)));
   }
 
-  const canSubmit =
-    make.trim().length > 0 &&
-    model.trim().length > 0 &&
-    Number(year) > 1980 &&
-    pickupLocation.trim().length > 0 &&
-    Number(pricePerDay) > 0;
+  const validationErrors = [
+    make.trim().length > 0 ? null : "Add the car make.",
+    model.trim().length > 0 ? null : "Add the car model.",
+    Number(year) > 1980 ? null : "Enter a valid year (after 1980).",
+    pickupLocation.trim().length > 0 ? null : "Add a pickup location.",
+    Number(pricePerDay) > 0 ? null : "Set a daily price greater than 0.",
+  ].filter((e): e is string => e !== null);
+  const canSubmit = validationErrors.length === 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -323,10 +325,15 @@ function CarForm({ existing }: { existing?: Car }) {
           </div>
         </section>
 
-        {attemptedSubmit && !canSubmit && (
-          <p className="text-sm text-destructive">
-            Please fill in the make, model, year, pickup location, and a daily price before publishing.
-          </p>
+        {attemptedSubmit && validationErrors.length > 0 && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+            <p className="font-medium">Before publishing, please fix:</p>
+            <ul className="mt-1 list-disc pl-5">
+              {validationErrors.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          </div>
         )}
         {saveError && <p className="text-sm text-destructive">{saveError}</p>}
 

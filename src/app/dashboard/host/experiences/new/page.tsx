@@ -127,15 +127,17 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
   }
 
   const validTickets = ticketTypes.filter((t) => t.name.trim().length > 0 && t.priceGHS > 0);
-  const canSubmit =
-    title.trim().length > 2 &&
-    shortDescription.trim().length > 5 &&
-    description.trim().length > 20 &&
-    venueName.trim().length > 0 &&
-    neighbourhood.trim().length > 0 &&
-    scheduleDays.length > 0 &&
-    scheduleTime.trim().length > 0 &&
-    (isFree || validTickets.length > 0);
+  const validationErrors = [
+    title.trim().length > 2 ? null : "Give the experience a title (at least 3 characters).",
+    shortDescription.trim().length > 5 ? null : "Add a short description (at least 6 characters).",
+    description.trim().length > 20 ? null : "Write a full description of at least 20 characters.",
+    venueName.trim().length > 0 ? null : "Add a venue name.",
+    neighbourhood.trim().length > 0 ? null : "Add a neighbourhood.",
+    scheduleDays.length > 0 ? null : "Pick at least one day it runs.",
+    scheduleTime.trim().length > 0 ? null : "Add a start time.",
+    isFree || validTickets.length > 0 ? null : "Add a ticket type with a price, or mark the experience free.",
+  ].filter((e): e is string => e !== null);
+  const canSubmit = validationErrors.length === 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -511,11 +513,15 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
           </div>
         </section>
 
-        {attemptedSubmit && !canSubmit && (
-          <p className="text-sm text-destructive">
-            Please fill in the title, descriptions, location, schedule, and at least one ticket type (unless
-            this experience is free) before publishing.
-          </p>
+        {attemptedSubmit && validationErrors.length > 0 && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+            <p className="font-medium">Before publishing, please fix:</p>
+            <ul className="mt-1 list-disc pl-5">
+              {validationErrors.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          </div>
         )}
 
         {saveError && <p className="text-sm text-destructive">{saveError}</p>}
