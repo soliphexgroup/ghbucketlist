@@ -18,9 +18,9 @@ export function VerticalHero({
   showSearch?: boolean;
 }) {
   return (
-    <section className="bg-gradient-to-br from-[var(--brand-primary-gradient-from)] via-[var(--brand-primary-gradient-via)] to-[var(--brand-primary-gradient-to)] text-white">
+    <section className="bg-white text-neutral-900">
       <Container className="max-w-[64rem] overflow-x-auto pt-4 lg:px-6">
-        <ServiceTabsBar activeId={activeTab} />
+        <ServiceTabsBar activeId={activeTab} tone="light" />
       </Container>
 
       <div className="mx-auto flex w-full max-w-[64rem] flex-col items-start px-4 pt-16 pb-16 text-left sm:px-6 sm:pt-20 sm:pb-24">
@@ -37,7 +37,7 @@ export function VerticalHero({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-            className="mt-4 max-w-[700px] text-balance text-base text-white/85 sm:text-lg"
+            className="mt-4 max-w-[700px] text-balance text-base text-neutral-600 sm:text-lg"
           >
             {subheading}
           </motion.p>

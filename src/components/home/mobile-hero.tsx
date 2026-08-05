@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -42,21 +41,8 @@ export function MobileHero({
   const searchActive = useSearchParams().toString().length > 0;
 
   return (
-    <section className="relative overflow-hidden lg:hidden">
-      {/* Tropical backdrop under a green brand tint */}
-      <div className="absolute inset-0">
-        <Image
-          src="/images/hero/beach-bar-sunset.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[var(--brand-primary-gradient-from)]/95 via-[var(--brand-primary-gradient-via)]/90 to-[var(--brand-primary-gradient-to)]/85" />
-      </div>
-
-      <div className="relative px-5 pt-6 pb-9 text-white">
+    <section className="relative overflow-hidden bg-white lg:hidden">
+      <div className="relative px-5 pt-6 pb-9 text-neutral-900">
         {/* Category shortcuts — first thing under the header, so the delays below
             cascade top-down from here. */}
         <motion.nav
@@ -74,18 +60,23 @@ export function MobileHero({
                 key={s.id}
                 href={s.href}
                 aria-current={isActive ? "page" : undefined}
-                className="group flex flex-col items-center gap-2 rounded-xl px-0.5 py-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                className="group flex flex-col items-center gap-2 rounded-xl px-0.5 py-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-coral)]"
               >
                 <div className="relative">
                   <div
                     className={cn(
                       "flex size-14 items-center justify-center rounded-full transition-colors duration-200",
                       isActive
-                        ? "bg-white/15 ring-2 ring-[var(--brand-coral)]"
-                        : "bg-white/10 group-hover:bg-white/20"
+                        ? "bg-[var(--brand-coral)]/10 ring-2 ring-[var(--brand-coral)]"
+                        : "bg-neutral-100 group-hover:bg-neutral-200"
                     )}
                   >
-                    <Icon className="size-6 text-white" />
+                    <Icon
+                      className={cn(
+                        "size-6",
+                        isActive ? "text-[var(--brand-coral)]" : "text-neutral-700"
+                      )}
+                    />
                   </div>
                   {s.badge && (
                     <span
@@ -100,7 +91,7 @@ export function MobileHero({
                     </span>
                   )}
                 </div>
-                <span className="text-[11px] font-medium leading-tight text-white">{s.label}</span>
+                <span className="text-[11px] font-medium leading-tight text-neutral-700">{s.label}</span>
               </Link>
             );
           })}
@@ -118,7 +109,7 @@ export function MobileHero({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="mt-4 max-w-[22rem] text-lg leading-snug text-white/90"
+          className="mt-4 max-w-[22rem] text-lg leading-snug text-neutral-600"
         >
           {subheading}
         </motion.p>
