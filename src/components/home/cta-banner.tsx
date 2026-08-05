@@ -19,7 +19,7 @@ export function CtaBanner() {
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button size="lg" asChild className="rounded-full px-8">
-            <Link href="/activities">Browse Activities</Link>
+            <Link href="/">Browse Activities</Link>
           </Button>
           <Button
             size="lg"

@@ -60,7 +60,7 @@ export default function DashboardOverviewPage() {
               No upcoming bookings yet. Time to discover something new.
             </p>
             <Button asChild className="mt-4">
-              <Link href="/activities">Discover new experiences</Link>
+              <Link href="/">Discover new experiences</Link>
             </Button>
           </div>
         ) : (

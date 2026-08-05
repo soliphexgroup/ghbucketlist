@@ -13,7 +13,7 @@ import type { ServiceTabId } from "@/lib/service-tabs";
 
 const listingPathByTab: Record<ServiceTabId, string> = {
   stays: "/stay",
-  "things-to-do": "/activities",
+  "things-to-do": "/",
   "car-rentals": "/cars",
   handyman: "/services",
   rewards: "/rewards",

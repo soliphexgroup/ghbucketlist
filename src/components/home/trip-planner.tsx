@@ -174,7 +174,7 @@ export function TripPlanner() {
           {active.locations.map((location) => (
             <Link
               key={location.name}
-              href={`/activities?category=${active.slug}&neighbourhood=${encodeURIComponent(location.name)}`}
+              href={`/?category=${active.slug}&neighbourhood=${encodeURIComponent(location.name)}`}
               className="group flex w-36 shrink-0 flex-col gap-2 sm:w-44"
             >
               <div className="relative aspect-square w-full overflow-hidden rounded-md">

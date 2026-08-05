@@ -34,7 +34,7 @@ export function MobileActivitySearch({
       onSearch(params);
       return;
     }
-    router.push(`/activities?${params.toString()}`);
+    router.push(`/?${params.toString()}`);
   }
 
   return (

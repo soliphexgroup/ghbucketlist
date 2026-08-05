@@ -15,7 +15,7 @@ const columns = [
   {
     heading: "Community",
     links: [
-      { label: "Activities", href: "/activities" },
+      { label: "Activities", href: "/" },
       { label: "Guidelines", href: "/guidelines" },
       { label: "Curated Trips", href: "/trips" },
       { label: "Success Stories", href: "/about" },

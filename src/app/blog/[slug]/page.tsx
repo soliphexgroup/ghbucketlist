@@ -98,7 +98,7 @@ export default async function BlogPostPage({
               Find your next experience on GH Bucketlist.
             </p>
             <Button asChild className="mt-4 w-full">
-              <Link href="/activities">Explore Activities</Link>
+              <Link href="/">Explore Activities</Link>
             </Button>
           </div>
 

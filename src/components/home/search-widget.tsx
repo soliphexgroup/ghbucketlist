@@ -336,7 +336,7 @@ export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
         // Searching with nothing filled in still means "show me results", so say so
         // explicitly rather than landing back on the category tiles.
         if ([...params.keys()].length === 0) params.set("searched", "1");
-        router.push(`/activities?${params.toString()}`);
+        router.push(`/?${params.toString()}`);
         return;
       }
       case "car-rentals": {

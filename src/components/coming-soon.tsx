@@ -20,7 +20,7 @@ export function ComingSoon({
       </h1>
       <p className="mt-3 max-w-md text-muted-foreground">{description}</p>
       <Button asChild className="mt-8">
-        <Link href="/activities">Browse Activities</Link>
+        <Link href="/">Browse Activities</Link>
       </Button>
     </Container>
   );

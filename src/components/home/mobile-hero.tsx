@@ -21,8 +21,8 @@ type Shortcut = {
 };
 
 const shortcuts: Shortcut[] = [
-  { id: "stays", label: "Stays", icon: BedDouble, href: "/stay", badge: { text: "Popular", tone: "popular" } },
-  { id: "things-to-do", label: "Things to do", icon: Heart, href: "/activities" },
+  { id: "things-to-do", label: "Things to do", icon: Heart, href: "/", badge: { text: "Popular", tone: "popular" } },
+  { id: "stays", label: "Stays", icon: BedDouble, href: "/stay" },
   { id: "car-rentals", label: "Car Rentals", icon: MapPin, href: "/cars" },
   { id: "handyman", label: "Handyman Services", icon: Wrench, href: "/services" },
   { id: "rewards", label: "Bucket Rewards", icon: Gift, href: "/rewards", badge: { text: "New", tone: "new" } },

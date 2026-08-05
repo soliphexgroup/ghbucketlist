@@ -32,7 +32,7 @@ export default function MyWishlistPage() {
             it here.
           </p>
           <Button asChild className="mt-4">
-            <Link href="/activities">Browse Activities</Link>
+            <Link href="/">Browse Activities</Link>
           </Button>
         </div>
       ) : (

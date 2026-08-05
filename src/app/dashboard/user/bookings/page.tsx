@@ -202,7 +202,7 @@ function EmptyState({ message = "No upcoming bookings yet." }: { message?: strin
     <div className="rounded-2xl border border-dashed border-border p-10 text-center">
       <p className="text-sm text-muted-foreground">{message}</p>
       <Button asChild className="mt-4">
-        <Link href="/activities">Browse Activities</Link>
+        <Link href="/">Browse Activities</Link>
       </Button>
     </div>
   );

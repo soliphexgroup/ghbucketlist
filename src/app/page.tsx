@@ -1,34 +1,33 @@
 import { Suspense } from "react";
 import { VerticalHero } from "@/components/vertical-hero";
 import { MobileHero } from "@/components/home/mobile-hero";
-import { WhyGHBucketlist } from "@/components/home/why-ghbucketlist";
-import { BrowseByPropertyType } from "@/components/stay/browse-by-property-type";
-import { TrendingDestinations } from "@/components/home/trending-destinations";
-import { TripPlanner } from "@/components/home/trip-planner";
-import { CtaBanner } from "@/components/home/cta-banner";
+import { MobileSearchBar } from "@/components/home/mobile-search-bar";
+import { ThingsToDoLanding } from "@/components/activities/things-to-do-landing";
 
 export default function Home() {
   return (
     <>
       <Suspense fallback={null}>
         <MobileHero
-          activeTab="stays"
-          headline="Find your next stay"
-          subheading="Book stays, date experiences, activities, rentals and trusted local services."
+          activeTab="things-to-do"
+          headline="Find things to do"
+          subheading="Day trips, tours, attractions, and activities — discover things to do across Accra and beyond."
         />
+      </Suspense>
+      <Suspense fallback={null}>
+        <MobileSearchBar activeTab="things-to-do" />
       </Suspense>
       <div className="hidden lg:block">
         <VerticalHero
-          activeTab="stays"
-          headline="Find your next stay"
-          subheading="Search low prices on hotels, homes and much more..."
+          activeTab="things-to-do"
+          headline="Find things to do"
+          subheading="Day trips, tours, attractions, and activities — discover things to do across Accra and beyond."
+          showSearch={false}
         />
       </div>
-      <WhyGHBucketlist />
-      <BrowseByPropertyType />
-      <TrendingDestinations />
-      <TripPlanner />
-      <CtaBanner />
+      <Suspense fallback={null}>
+        <ThingsToDoLanding />
+      </Suspense>
     </>
   );
 }

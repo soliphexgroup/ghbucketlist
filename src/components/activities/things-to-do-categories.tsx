@@ -82,7 +82,7 @@ export function ThingsToDoCategories() {
 
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {categoryTiles.map((tile) => (
-          <Link key={tile.slug} href={`/activities?category=${tile.slug}`} className="group flex flex-col gap-3">
+          <Link key={tile.slug} href={`/?category=${tile.slug}`} className="group flex flex-col gap-3">
             <div className="relative aspect-[5/4] w-full overflow-hidden rounded-2xl">
               <Image
                 src={tile.image}

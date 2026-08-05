@@ -24,5 +24,5 @@ const RESULT_PARAMS = [
 export function ThingsToDoLanding() {
   const params = useSearchParams();
   const hasQuery = RESULT_PARAMS.some((key) => params.get(key));
-  return hasQuery ? <ActivitiesBrowser /> : <ThingsToDoCategories />;
+  return hasQuery ? <ActivitiesBrowser basePath="/" /> : <ThingsToDoCategories />;
 }

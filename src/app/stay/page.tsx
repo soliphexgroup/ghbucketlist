@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { StaySearchAndResults } from "@/components/stay/stay-search-and-results";
+import { StayLanding } from "@/components/stay/stay-landing";
 
 export const metadata: Metadata = {
   title: "Places to Stay",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function StayPage() {
   return (
     <Suspense fallback={null}>
-      <StaySearchAndResults />
+      <StayLanding />
     </Suspense>
   );
 }
