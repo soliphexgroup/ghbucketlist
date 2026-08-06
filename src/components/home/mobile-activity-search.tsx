@@ -43,7 +43,7 @@ export function MobileActivitySearch({
         icon={MapPin}
         value={location}
         onChange={setLocation}
-        placeholder="Where do you want to go?"
+        placeholder="Tours, Dates, Activities..."
       />
 
       <MobileDateField

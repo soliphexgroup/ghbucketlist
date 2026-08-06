@@ -375,7 +375,7 @@ export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
             <Input
               value={activityLocation}
               onChange={(e) => setActivityLocation(e.target.value)}
-              placeholder="Where do you want to go?"
+              placeholder="Tours, Dates, Activities..."
               className="h-full border-0 p-0 shadow-none focus-visible:ring-0"
             />
           </FieldShell>
