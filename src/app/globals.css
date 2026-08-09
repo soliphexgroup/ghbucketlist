@@ -90,7 +90,7 @@
   /* A light neutral that matches the search placeholder text, so the box reads
      as a soft frame against the white hero rather than a loud coral outline. */
   --search-accent: var(--muted-foreground);
-  --search-button: #0a7a3f;
+  --search-button: var(--search-accent);
   --search-button-foreground: #ffffff;
   --success: #22c55e;
   --error: #ef4444;
@@ -141,7 +141,7 @@
   /* A light neutral that matches the search placeholder text, so the box reads
      as a soft frame against the white hero rather than a loud coral outline. */
   --search-accent: var(--muted-foreground);
-  --search-button: #0a7a3f;
+  --search-button: var(--search-accent);
   --search-button-foreground: #ffffff;
   --success: #22c55e;
   --error: #ef4444;
