@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -93,11 +94,15 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-br from-[var(--brand-primary-gradient-from)] via-[var(--brand-primary-gradient-via)] to-[var(--brand-primary-gradient-to)] text-white">
       <Container className="flex h-16 max-w-[64rem] items-center justify-between gap-4 lg:px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="font-heading text-2xl font-bold tracking-tight">
-            <span className="text-white">GH</span>
-            <span className="text-[var(--brand-coral)]">Bucketlist</span>
-          </span>
+        <Link href="/" className="flex items-center gap-2" aria-label="GH Bucketlist home">
+          <Image
+            src="/brand/ghbucketlist-white.png"
+            alt="GH Bucketlist"
+            width={1074}
+            height={262}
+            priority
+            className="h-7 w-auto sm:h-8"
+          />
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
