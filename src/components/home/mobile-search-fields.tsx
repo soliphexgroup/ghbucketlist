@@ -40,7 +40,7 @@ export function MobileSearchShell({
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-1.5 rounded-xl bg-search-accent p-1.5 shadow-2xl"
+      className="flex flex-col gap-1.5 rounded-xl bg-neutral-200 p-1.5 shadow-2xl"
     >
       {children}
     </form>
