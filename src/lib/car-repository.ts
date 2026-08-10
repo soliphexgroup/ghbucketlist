@@ -106,5 +106,7 @@ export function listCarCategories(): CarCategory[] {
 
 export function carPriceBounds() {
   const prices = cars.map((c) => c.pricePerDay);
-  return { min: 0, max: Math.max(...prices, 500) };
+  // Floor the slider at GHS 10,000 so the "up to" filter has real headroom; it still
+  // stretches further automatically if a pricier car is ever listed.
+  return { min: 0, max: Math.max(...prices, 10000) };
 }
