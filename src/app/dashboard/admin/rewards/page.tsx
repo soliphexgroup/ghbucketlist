@@ -13,7 +13,7 @@ import {
   setBrPartnerStatus,
   type AdminBrPartner,
 } from "@/lib/db-br-partners";
-import { useBrRedemptions, settlePartner } from "@/lib/db-br-redemptions";
+import { useBrRedemptions, useBrFailedRedemptions, settlePartner } from "@/lib/db-br-redemptions";
 import { useBrMembers } from "@/lib/db-br-members";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -21,9 +21,16 @@ import { cn } from "@/lib/utils";
 const FLAG_MEMBER_PARTNERS = 4; // redeeming across this many distinct partners
 const FLAG_MEMBER_COUNT = 10; // or this many total redemptions
 
+const FAILED_REASON: Record<string, string> = {
+  not_member: "Not a member",
+  unknown_device: "Unknown device",
+  invalid_amount: "Invalid amount",
+};
+
 export default function AdminRewardsPage() {
   const { partners, refresh } = useAdminBrPartners();
   const { redemptions, refresh: refreshRedemptions } = useBrRedemptions();
+  const { failed: failedRedemptions } = useBrFailedRedemptions();
   const { members } = useBrMembers();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -179,6 +186,7 @@ export default function AdminRewardsPage() {
           <TabsTrigger value="partners">Partners ({partners.length})</TabsTrigger>
           <TabsTrigger value="redemptions">Redemptions ({redemptions.length})</TabsTrigger>
           <TabsTrigger value="members">Members ({members.length})</TabsTrigger>
+          <TabsTrigger value="failed">Failed offline ({failedRedemptions.length})</TabsTrigger>
         </TabsList>
 
         {/* Partners */}
@@ -358,6 +366,59 @@ export default function AdminRewardsPage() {
                   <tr>
                     <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">
                       No members yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
+
+        {/* Failed offline redemptions */}
+        <TabsContent value="failed" className="mt-4">
+          <p className="mb-3 text-sm text-muted-foreground">
+            Offline sales that couldn&apos;t be confirmed when the device reconnected — usually a discount
+            given to a number that isn&apos;t a member. Follow up with the partner.
+          </p>
+          <div className="overflow-x-auto rounded-2xl border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-secondary/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-medium">When</th>
+                  <th className="px-4 py-3 font-medium">Partner</th>
+                  <th className="px-4 py-3 font-medium">Phone</th>
+                  <th className="px-4 py-3 font-medium">Amount</th>
+                  <th className="px-4 py-3 font-medium">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {failedRedemptions.map((f) => (
+                  <tr key={f.id} className="border-t border-border">
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {new Date(f.occurredAt ?? f.createdAt).toLocaleString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td className="px-4 py-3 text-foreground">
+                      {f.partnerId ? partnerNameById.get(f.partnerId) ?? "—" : "Unknown device"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{f.memberPhone ?? "—"}</td>
+                    <td className="px-4 py-3 text-foreground">{f.amount != null ? formatGHS(f.amount) : "—"}</td>
+                    <td className="px-4 py-3">
+                      <Badge className="bg-destructive/10 text-destructive">
+                        {FAILED_REASON[f.reason] ?? f.reason}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+                {failedRedemptions.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                      No failed offline redemptions.
                     </td>
                   </tr>
                 )}

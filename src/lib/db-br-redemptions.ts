@@ -72,3 +72,59 @@ export function useBrRedemptions(): { redemptions: BrRedemption[]; loaded: boole
   }, [tick]);
   return { redemptions, loaded, refresh: () => setTick((t) => t + 1) };
 }
+
+// --- Failed offline redemptions ---
+// Offline sales that failed validation when the device synced (e.g. the phone wasn't a member, so a
+// discount was given in error). Written by br_redeem_offline(); admin-only read for follow-up.
+
+export type BrFailedRedemption = {
+  id: string;
+  partnerId: string | null;
+  memberPhone: string | null;
+  amount: number | null;
+  reason: string; // 'not_member' | 'unknown_device' | 'invalid_amount'
+  occurredAt: string | null;
+  createdAt: string;
+};
+
+type FailedRow = {
+  id: string;
+  partner_id: string | null;
+  member_phone: string | null;
+  amount: number | null;
+  reason: string;
+  occurred_at: string | null;
+  created_at: string;
+};
+
+/** Admin: offline redemptions that failed to sync, newest first. */
+export function useBrFailedRedemptions(): { failed: BrFailedRedemption[]; loaded: boolean } {
+  const [failed, setFailed] = useState<BrFailedRedemption[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    let active = true;
+    createClient()
+      .from("br_failed_redemptions")
+      .select("id,partner_id,member_phone,amount,reason,occurred_at,created_at")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (!active) return;
+        setFailed(
+          ((data ?? []) as FailedRow[]).map((r) => ({
+            id: r.id,
+            partnerId: r.partner_id,
+            memberPhone: r.member_phone,
+            amount: r.amount,
+            reason: r.reason,
+            occurredAt: r.occurred_at,
+            createdAt: r.created_at,
+          }))
+        );
+        setLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return { failed, loaded };
+}

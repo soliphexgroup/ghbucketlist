@@ -2,12 +2,22 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, CloudOff, Gift, Loader2, RefreshCw, WifiOff, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CloudOff, Gift, Loader2, RefreshCw, WifiOff, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatGHS } from "@/lib/format";
-import { brDeviceInfo, brLookupMember, brRedeem, flushQueue, queuedCount, type DeviceInfo } from "@/lib/db-br-pos";
+import {
+  brDeviceInfo,
+  brLookupMember,
+  brRedeem,
+  flushQueue,
+  memberStatusOffline,
+  queuedCount,
+  refreshMemberDigest,
+  type DeviceInfo,
+  type Provisional,
+} from "@/lib/db-br-pos";
 
 export default function BrPosPage() {
   return (
@@ -20,7 +30,7 @@ export default function BrPosPage() {
 type Stage = "phone" | "amount" | "result";
 type Outcome =
   | { kind: "success"; memberName: string | null; amountDue: number; customerSaving: number; commission: number }
-  | { kind: "queued" }
+  | { kind: "queued"; provisional?: Provisional }
   | null;
 
 function Pos() {
@@ -34,6 +44,7 @@ function Pos() {
   const [error, setError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<Outcome>(null);
   const [queued, setQueued] = useState(0);
+  const [failedSync, setFailedSync] = useState(0);
   const [online, setOnline] = useState(true);
   const [device, setDevice] = useState<{ status: "loading" | "ready"; info: DeviceInfo }>({
     status: "loading",
@@ -53,16 +64,19 @@ function Pos() {
   }, [token]);
 
   const sync = useCallback(async () => {
-    await flushQueue();
+    const { failed } = await flushQueue();
     setQueued(queuedCount());
+    if (failed > 0) setFailedSync((n) => n + failed);
   }, []);
 
   useEffect(() => {
     setOnline(navigator.onLine);
     setQueued(queuedCount());
+    if (navigator.onLine && token) void refreshMemberDigest(token);
     void sync();
     const goOnline = () => {
       setOnline(true);
+      if (token) void refreshMemberDigest(token); // keep the offline member list fresh
       void sync();
     };
     const goOffline = () => setOnline(false);
@@ -72,7 +86,7 @@ function Pos() {
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
     };
-  }, [sync]);
+  }, [sync, token]);
 
   function reset() {
     setStage("phone");
@@ -88,7 +102,11 @@ function Pos() {
     if (busy) return;
     setError(null);
     if (!navigator.onLine) {
-      // Can't verify offline — proceed and let the sync reconcile membership.
+      // Verify against the cached member digest when we have one; otherwise trust and reconcile on sync.
+      const status = await memberStatusOffline(token, phone);
+      if (status === "no") {
+        return setError("Not a member — no Bucket Rewards discount for this number.");
+      }
       setOfflineEntry(true);
       setMemberName(null);
       setStage("amount");
@@ -123,7 +141,7 @@ function Pos() {
       });
       setStage("result");
     } else if (res.queued) {
-      setOutcome({ kind: "queued" });
+      setOutcome({ kind: "queued", provisional: res.provisional });
       setStage("result");
     } else {
       setError(res.message);
@@ -167,7 +185,7 @@ function Pos() {
   }
 
   return (
-    <Shell online={online} queued={queued} onSync={sync} partnerName={device.info?.name ?? null}>
+    <Shell online={online} queued={queued} failed={failedSync} onSync={sync} partnerName={device.info?.name ?? null}>
       {error && (
         <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
           {error}
@@ -245,12 +263,25 @@ function Pos() {
       )}
 
       {stage === "result" && outcome?.kind === "queued" && (
-        <div className="flex flex-col items-center gap-4 py-4 text-center">
+        <div className="flex flex-col items-center gap-4 py-2 text-center">
           <CloudOff className="size-12 text-brand-coral" />
           <p className="font-heading text-lg font-semibold text-foreground">Saved offline</p>
-          <p className="text-sm text-muted-foreground">
-            This redemption is stored on the device and will sync automatically when the internet returns.
-          </p>
+          {outcome.provisional ? (
+            <>
+              <div className="w-full rounded-2xl border border-border p-4 text-left">
+                <Row label="Customer pays" value={formatGHS(outcome.provisional.amountDue)} strong />
+                <Row label="They save" value={formatGHS(outcome.provisional.customerSaving)} success />
+                <Row label="Commission" value={formatGHS(outcome.provisional.commission)} muted />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Provisional — confirmed automatically when the internet returns.
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Stored on the device and will sync automatically when the internet returns.
+            </p>
+          )}
           <Button size="lg" className="h-14 w-full text-base" onClick={reset}>New sale</Button>
         </div>
       )}
@@ -262,12 +293,14 @@ function Shell({
   children,
   online,
   queued,
+  failed = 0,
   onSync,
   partnerName,
 }: {
   children: React.ReactNode;
   online: boolean;
   queued: number;
+  failed?: number;
   onSync: () => void;
   partnerName?: string | null;
 }) {
@@ -290,6 +323,14 @@ function Shell({
             <button onClick={onSync} className="flex items-center gap-1 rounded-full bg-brand-coral/10 px-2 py-1 text-brand-coral">
               <RefreshCw className="size-3.5" /> {queued} to sync
             </button>
+          )}
+          {failed > 0 && (
+            <span
+              className="flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-1 text-destructive"
+              title="Offline sales that couldn't be confirmed (e.g. not a member) — reported to the GH Bucketlist team."
+            >
+              <AlertTriangle className="size-3.5" /> {failed} couldn&apos;t sync
+            </span>
           )}
         </div>
       </div>

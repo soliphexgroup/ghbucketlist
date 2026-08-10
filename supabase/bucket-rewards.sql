@@ -174,15 +174,17 @@ grant execute on function public.br_signup(text, text) to anon, authenticated;
 grant execute on function public.br_lookup_member(text, text) to anon, authenticated;
 grant execute on function public.br_redeem(text, text, numeric) to anon, authenticated;
 
--- Confirm a device token resolves to a partner (so the counter app can show "This device: <name>").
+-- Confirm a device token resolves to a partner (so the counter app can show "This device: <name>")
+-- and hand back the partner's discount rates, so the device can compute the split offline.
+drop function if exists public.br_device_info(text);
 create or replace function public.br_device_info(p_token text)
-returns table (name text, active boolean)
+returns table (name text, active boolean, total_discount_pct numeric, customer_pct numeric, commission_pct numeric)
 language plpgsql
 security definer set search_path = public
 as $$
 begin
   return query
-    select p.name, (p.status = 'active')
+    select p.name, (p.status = 'active'), p.total_discount_pct, p.customer_pct, p.commission_pct
     from public.br_partners p
     where p.device_token = p_token;
 end;
@@ -219,3 +221,107 @@ end;
 $$;
 
 grant execute on function public.br_settle_partner(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 6. Offline support --------------------------------------------------------
+-- The counter device keeps working with no internet: it caches the partner's discount rates
+-- (from br_device_info above) and a SHA-256 digest of member phones (below), so it can compute
+-- the discount and check membership offline, then syncs queued sales via br_redeem_offline().
+-- ---------------------------------------------------------------------------
+create extension if not exists pgcrypto;
+
+-- Hashed member phones for offline membership checks. Only hashes ever leave the server — never
+-- raw numbers. Token-gated. Members are global, so every active device caches the same set.
+create or replace function public.br_member_digest(p_token text)
+returns table (phone_hash text)
+language plpgsql
+security definer set search_path = public, extensions
+stable
+as $$
+begin
+  if not exists (
+    select 1 from public.br_partners where device_token = p_token and status = 'active'
+  ) then
+    raise exception 'Invalid or inactive device';
+  end if;
+  return query
+    select encode(digest(m.phone, 'sha256'), 'hex') from public.br_members m;
+end;
+$$;
+
+grant execute on function public.br_member_digest(text) to anon, authenticated;
+
+-- Offline sales that failed validation on sync (e.g. the phone turned out not to be a member, so
+-- a discount was given in error), kept for the admin team to follow up. Written by br_redeem_offline.
+create table if not exists public.br_failed_redemptions (
+  id uuid primary key default gen_random_uuid(),
+  partner_id uuid references public.br_partners (id) on delete set null,
+  device_token text,
+  member_phone text,
+  amount numeric,
+  reason text not null,               -- 'not_member' | 'unknown_device' | 'invalid_amount'
+  occurred_at timestamptz,            -- when the offline sale was rung up on the device
+  created_at timestamptz not null default now()
+);
+
+create index if not exists br_failed_partner_idx on public.br_failed_redemptions (partner_id);
+create index if not exists br_failed_created_idx on public.br_failed_redemptions (created_at);
+
+alter table public.br_failed_redemptions enable row level security;
+
+drop policy if exists "Admins read failed redemptions" on public.br_failed_redemptions;
+create policy "Admins read failed redemptions" on public.br_failed_redemptions
+  for select using (public.is_admin());
+
+-- Sync one queued offline redemption. Unlike br_redeem (which raises on a non-member so the live
+-- counter blocks the sale), this LOGS failures to br_failed_redemptions and returns
+-- status='rejected' so the device drops the item. Records the original sale time via p_at.
+create or replace function public.br_redeem_offline(
+  p_token text, p_phone text, p_amount numeric, p_at timestamptz default now()
+)
+returns table (status text, member_name text, customer_saving numeric, amount_due numeric, commission numeric)
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_partner public.br_partners;
+  v_member public.br_members;
+  v_saving numeric;
+  v_commission numeric;
+begin
+  select * into v_partner from public.br_partners where device_token = p_token and status = 'active';
+  if not found then
+    insert into public.br_failed_redemptions (partner_id, device_token, member_phone, amount, reason, occurred_at)
+      values (null, p_token, trim(p_phone), p_amount, 'unknown_device', p_at);
+    return query select 'rejected'::text, null::text, null::numeric, null::numeric, null::numeric;
+    return;
+  end if;
+
+  if p_amount is null or p_amount <= 0 then
+    insert into public.br_failed_redemptions (partner_id, device_token, member_phone, amount, reason, occurred_at)
+      values (v_partner.id, p_token, trim(p_phone), p_amount, 'invalid_amount', p_at);
+    return query select 'rejected'::text, null::text, null::numeric, null::numeric, null::numeric;
+    return;
+  end if;
+
+  select * into v_member from public.br_members where phone = trim(p_phone);
+  if not found then
+    insert into public.br_failed_redemptions (partner_id, device_token, member_phone, amount, reason, occurred_at)
+      values (v_partner.id, p_token, trim(p_phone), p_amount, 'not_member', p_at);
+    return query select 'rejected'::text, null::text, null::numeric, null::numeric, null::numeric;
+    return;
+  end if;
+
+  v_saving := round(p_amount * v_partner.customer_pct / 100.0, 2);
+  v_commission := round(p_amount * v_partner.commission_pct / 100.0, 2);
+
+  insert into public.br_redemptions
+    (partner_id, member_phone, amount, total_discount_pct, customer_saving, commission, created_at)
+  values
+    (v_partner.id, v_member.phone, p_amount, v_partner.total_discount_pct, v_saving, v_commission, coalesce(p_at, now()));
+
+  return query select 'ok'::text, v_member.name, v_saving, (p_amount - v_saving), v_commission;
+end;
+$$;
+
+grant execute on function public.br_redeem_offline(text, text, numeric, timestamptz) to anon, authenticated;
