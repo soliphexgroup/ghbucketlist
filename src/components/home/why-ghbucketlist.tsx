@@ -29,7 +29,7 @@ export function WhyGHBucketlist() {
     <section className="py-10 sm:py-12">
       <Container className="max-w-[64rem] lg:px-6">
         <h2 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
-          Why GH Bucketlist?
+          Why GHBucketlist?
         </h2>
 
         {/* Phones: a compact icon-left list. sm+ : the boxed grid (2-up, then 4-up on lg). */}
