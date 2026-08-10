@@ -5,6 +5,7 @@ import { MobileHero } from "@/components/home/mobile-hero";
 import { MobileSearchBar } from "@/components/home/mobile-search-bar";
 import { VerticalHero } from "@/components/vertical-hero";
 import { WhyGHBucketlist } from "@/components/home/why-ghbucketlist";
+import { HotelsCarousels } from "@/components/stay/hotels-carousels";
 import { BrowseByPropertyType } from "@/components/stay/browse-by-property-type";
 import { TrendingDestinations } from "@/components/home/trending-destinations";
 import { TripPlanner } from "@/components/home/trip-planner";
@@ -45,6 +46,7 @@ export function StayLanding() {
       ) : (
         <>
           <WhyGHBucketlist />
+          <HotelsCarousels />
           <BrowseByPropertyType />
           <TrendingDestinations />
           <TripPlanner />

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BedDouble, Zap } from "lucide-react";
+import { BedDouble, Navigation, Zap } from "lucide-react";
 import type { Property } from "@/lib/stay-types";
 import { ReviewScoreBadge } from "@/components/stay/review-score-badge";
 import { WishlistButton } from "@/components/wishlist-button";
@@ -17,11 +17,14 @@ export function PropertyCard({
   property,
   className,
   bookingQuery,
+  note,
 }: {
   property: Property;
   className?: string;
   /** Searched dates/guests to carry through, so the booking widget opens pre-filled. */
   bookingQuery?: string;
+  /** Optional small caption under the location, e.g. a distance ("3 km away"). */
+  note?: string;
 }) {
   // Every listing lives in the DB now, so the detail route serves them all.
   const base = `/stay/${property.slug}`;
@@ -60,6 +63,12 @@ export function PropertyCard({
           {property.title}
         </h3>
         <p className="truncate text-xs text-muted-foreground sm:text-sm">{property.neighbourhood}, {property.city}</p>
+        {note && (
+          <p className="flex items-center gap-1 truncate text-xs font-medium text-primary">
+            <Navigation className="size-3 shrink-0" />
+            {note}
+          </p>
+        )}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground sm:text-sm">
           <BedDouble className="size-3.5 shrink-0" />
           <span className="truncate">{property.bedrooms} bed · {property.bathrooms} bath · Up to {property.maxGuests} guests</span>
