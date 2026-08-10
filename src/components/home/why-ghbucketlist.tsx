@@ -32,16 +32,22 @@ export function WhyGHBucketlist() {
           Why GH Bucketlist?
         </h2>
 
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        {/* Phones: a compact icon-left list. sm+ : the boxed grid (2-up, then 4-up on lg). */}
+        <div className="mt-8 flex flex-col gap-5 sm:grid sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {reasons.map((reason) => (
-            <div key={reason.title} className="rounded-2xl bg-muted p-5 sm:p-6">
-              <span className="flex size-10 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+            <div
+              key={reason.title}
+              className="flex items-start gap-4 sm:block sm:rounded-2xl sm:bg-muted sm:p-6"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                 <reason.icon className="size-5" />
               </span>
-              <h3 className="mt-4 font-heading text-base font-semibold text-foreground">
-                {reason.title}
-              </h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{reason.description}</p>
+              <div className="sm:mt-4">
+                <h3 className="font-heading text-base font-semibold text-foreground">
+                  {reason.title}
+                </h3>
+                <p className="mt-1.5 text-sm text-muted-foreground">{reason.description}</p>
+              </div>
             </div>
           ))}
         </div>
