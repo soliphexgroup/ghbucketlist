@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Loader2, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Container } from "@/components/container";
 import { PropertyCard } from "@/components/stay/property-card";
 import { listProperties } from "@/lib/stay-repository";
@@ -18,10 +19,13 @@ function HotelCarousel({
   title,
   subtitle,
   cards,
+  headerAction,
 }: {
   title: string;
   subtitle: string;
   cards: Card[];
+  /** Optional control shown in the header (e.g. a "Use my location" button). */
+  headerAction?: React.ReactNode;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -36,12 +40,13 @@ function HotelCarousel({
   return (
     <section className="py-8 sm:py-10">
       <Container className="max-w-[64rem] lg:px-6">
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">{title}</h2>
             <p className="mt-1 text-muted-foreground">{subtitle}</p>
           </div>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex shrink-0 items-center gap-2">
+            {headerAction}
             <button
               type="button"
               aria-label={`Scroll ${title} left`}
@@ -95,23 +100,44 @@ export function HotelsCarousels() {
   );
 
   const [origin, setOrigin] = useState<LatLng | null>(null);
-  const [located, setLocated] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const located = origin !== null;
+  const from = origin ?? ACCRA_CENTER;
 
-  useEffect(() => {
-    if (typeof navigator === "undefined" || !("geolocation" in navigator)) return;
+  // Only ask for the visitor's location when they click the button — never on load.
+  function requestLocation() {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      setStatus("error");
+      return;
+    }
+    setStatus("loading");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setOrigin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocated(true);
+        setStatus("idle");
       },
-      () => {
-        // Denied or unavailable: keep the central-Accra fallback below.
-      },
+      () => setStatus("error"),
       { timeout: 8000, maximumAge: 10 * 60 * 1000 }
     );
-  }, []);
+  }
 
-  const from = origin ?? ACCRA_CENTER;
+  const locationButton = located ? null : (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={requestLocation}
+      disabled={status === "loading"}
+      className="gap-1.5"
+    >
+      {status === "loading" ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        <MapPin className="size-4" />
+      )}
+      {status === "loading" ? "Locating…" : status === "error" ? "Try again" : "Use my location"}
+    </Button>
+  );
 
   const nearby = useMemo<Card[]>(() => {
     return catalog
@@ -136,8 +162,15 @@ export function HotelsCarousels() {
       />
       <HotelCarousel
         title="Nearby hotels"
-        subtitle={located ? "Closest to you right now" : "Closest to central Accra — allow location for exact distances"}
+        subtitle={
+          located
+            ? "Closest to you right now"
+            : status === "error"
+              ? "Couldn't access your location — showing central Accra"
+              : "Closest to central Accra — use your location for exact distances"
+        }
         cards={nearby}
+        headerAction={locationButton}
       />
     </>
   );
