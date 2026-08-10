@@ -10,7 +10,7 @@ export default function SignupPage() {
     <Container className="flex justify-center py-16">
       <div className="w-full max-w-sm">
         <h1 className="text-center font-heading text-2xl font-bold text-foreground">
-          Join GH Bucketlist
+          Join GHBucketlist
         </h1>
         <p className="mt-1 text-center text-sm text-muted-foreground">
           Create an account to start booking curated experiences.

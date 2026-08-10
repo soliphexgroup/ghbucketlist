@@ -157,7 +157,7 @@ export function HotelsCarousels() {
     <>
       <HotelCarousel
         title="Recommended hotels"
-        subtitle="Top-rated stays on GH Bucketlist"
+        subtitle="Top-rated stays on GHBucketlist"
         cards={recommended}
       />
       <HotelCarousel

@@ -323,7 +323,7 @@ export function BookingWidget({ experience }: { experience: Experience }) {
         </Button>
 
         <p className="text-center text-xs text-muted-foreground">
-          Paying through GH Bucketlist secures your booking and confirms your full payment. You
+          Paying through GHBucketlist secures your booking and confirms your full payment. You
           won&apos;t be required to make any additional payments at the venue.
         </p>
 

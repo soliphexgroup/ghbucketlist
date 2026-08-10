@@ -94,10 +94,10 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-br from-[var(--brand-primary-gradient-from)] via-[var(--brand-primary-gradient-via)] to-[var(--brand-primary-gradient-to)] text-white">
       <Container className="flex h-16 max-w-[64rem] items-center justify-between gap-4 lg:px-6">
-        <Link href="/" className="flex items-center gap-2" aria-label="GH Bucketlist home">
+        <Link href="/" className="flex items-center gap-2" aria-label="GHBucketlist home">
           <Image
             src="/brand/ghbucketlist-white.png"
-            alt="GH Bucketlist"
+            alt="GHBucketlist"
             width={1074}
             height={262}
             priority
@@ -177,7 +177,7 @@ export function SiteHeader() {
           </SheetTrigger>
           <SheetContent side="right" className="w-80">
             <SheetHeader>
-              <SheetTitle className="font-heading text-xl text-primary">GH Bucketlist</SheetTitle>
+              <SheetTitle className="font-heading text-xl text-primary">GHBucketlist</SheetTitle>
             </SheetHeader>
             <nav className="flex flex-col gap-1 px-4">
               <p className="mt-2 mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

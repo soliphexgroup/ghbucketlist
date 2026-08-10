@@ -6,7 +6,7 @@ import { BrPartnerDirectory } from "@/components/rewards/br-partner-directory";
 export const metadata: Metadata = {
   title: "Bucket Rewards",
   description:
-    "Bucket Rewards (BR) — powered by GH Bucketlist. Join free and get exclusive discounts at partner restaurants, salons, spas and more across Ghana.",
+    "Bucket Rewards (BR) — powered by GHBucketlist. Join free and get exclusive discounts at partner restaurants, salons, spas and more across Ghana.",
 };
 
 export default function RewardsPage() {
@@ -15,7 +15,7 @@ export default function RewardsPage() {
       <section className="bg-[linear-gradient(135deg,var(--brand-primary-gradient-from),var(--brand-primary-gradient-to))] py-14 text-primary-foreground sm:py-20">
         <Container>
           <p className="text-sm font-semibold uppercase tracking-wide text-primary-foreground/80">
-            BR — powered by GH Bucketlist
+            BR — powered by GHBucketlist
           </p>
           <h1 className="mt-2 max-w-2xl font-heading text-3xl font-bold sm:text-4xl">
             Bucket Rewards: real discounts at your favourite local spots

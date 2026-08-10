@@ -15,8 +15,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "GH Bucketlist — Curated Experiences & Activities in Accra",
-    template: "%s | GH Bucketlist",
+    default: "GHBucketlist — Curated Experiences & Activities in Accra",
+    template: "%s | GHBucketlist",
   },
   description:
     "Discover, book, and gift curated experiences and activities in Accra and beyond. Gather differently.",

@@ -4,7 +4,7 @@ import { Container } from "@/components/container";
 
 const columns = [
   {
-    heading: "GH Bucketlist",
+    heading: "GHBucketlist",
     links: [
       { label: "About Us", href: "/about" },
       { label: "Careers", href: "/careers" },
@@ -64,7 +64,7 @@ export function SiteFooter() {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="GH Bucketlist on Instagram"
+                aria-label="GHBucketlist on Instagram"
                 className="flex size-9 items-center justify-center rounded-full border border-border text-foreground transition-colors duration-200 hover:border-primary hover:text-primary"
               >
                 <SocialIcon name="instagram" className="size-4" />
@@ -73,7 +73,7 @@ export function SiteFooter() {
                 href="https://tiktok.com"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="GH Bucketlist on TikTok"
+                aria-label="GHBucketlist on TikTok"
                 className="flex size-9 items-center justify-center rounded-full border border-border text-foreground transition-colors duration-200 hover:border-primary hover:text-primary"
               >
                 <SocialIcon name="tiktok" className="size-4" />
@@ -82,7 +82,7 @@ export function SiteFooter() {
                 href="https://x.com"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="GH Bucketlist on X"
+                aria-label="GHBucketlist on X"
                 className="flex size-9 items-center justify-center rounded-full border border-border text-foreground transition-colors duration-200 hover:border-primary hover:text-primary"
               >
                 <SocialIcon name="x" className="size-4" />
@@ -100,7 +100,7 @@ export function SiteFooter() {
 
         <div className="mt-12 flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} GH Bucketlist. All rights reserved.
+            &copy; {new Date().getFullYear()} GHBucketlist. All rights reserved.
           </p>
           <div className="flex gap-6">
             <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary">

@@ -7,7 +7,7 @@ export const testimonials: Testimonial[] = [
     location: "Accra, Ghana",
     avatarUrl: "https://i.pravatar.cc/100?img=5",
     rating: 5,
-    text: "GH Bucketlist turned my boring weekends into something I actually look forward to. I've met some of my closest friends through activities I found here.",
+    text: "GHBucketlist turned my boring weekends into something I actually look forward to. I've met some of my closest friends through activities I found here.",
     activityName: "Handbuilding + Wheel Throwing Pottery Class",
   },
   {

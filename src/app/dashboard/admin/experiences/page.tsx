@@ -73,7 +73,7 @@ export default function AdminExperiencesPage() {
     <div>
       <h1 className="font-heading text-2xl font-bold text-foreground">Listings</h1>
       <p className="mt-1 text-muted-foreground">
-        Every listing on GH Bucketlist. Pause hides it from the public marketplace; remove deletes it.
+        Every listing on GHBucketlist. Pause hides it from the public marketplace; remove deletes it.
       </p>
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}

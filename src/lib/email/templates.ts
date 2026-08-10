@@ -29,7 +29,7 @@ function layout(heading: string, bodyHtml: string) {
       ${bodyHtml}
     </div>
     <p style="text-align:center;color:#8a94a3;font-size:12px;margin:16px 0;">
-      GH Bucketlist · <a href="${SITE}" style="color:${BRAND};text-decoration:none;">ghbucketlist.com</a>
+      GHBucketlist · <a href="${SITE}" style="color:${BRAND};text-decoration:none;">ghbucketlist.com</a>
     </p>
   </div></body></html>`;
 }
@@ -104,12 +104,12 @@ export function hostApplicationDecision(input: { name?: string | null; approved:
   const greeting = input.name ? `Hi ${input.name},` : "Hi there,";
   const body = input.approved
     ? `<p style="font-size:14px;line-height:1.6;">${esc(greeting)}</p>
-       <p style="font-size:14px;line-height:1.6;">Great news — your application to host on GH Bucketlist has been <strong>approved</strong>. You can now publish listings from your host dashboard.</p>
+       <p style="font-size:14px;line-height:1.6;">Great news — your application to host on GHBucketlist has been <strong>approved</strong>. You can now publish listings from your host dashboard.</p>
        ${button(`${SITE}/dashboard/host`, "Go to host dashboard")}`
     : `<p style="font-size:14px;line-height:1.6;">${esc(greeting)}</p>
-       <p style="font-size:14px;line-height:1.6;">Thank you for your interest in hosting on GH Bucketlist. After review, we're not moving forward with your application at this time. You're welcome to apply again in the future.</p>`;
+       <p style="font-size:14px;line-height:1.6;">Thank you for your interest in hosting on GHBucketlist. After review, we're not moving forward with your application at this time. You're welcome to apply again in the future.</p>`;
   return {
-    subject: input.approved ? "You're approved to host on GH Bucketlist" : "Update on your host application",
+    subject: input.approved ? "You're approved to host on GHBucketlist" : "Update on your host application",
     html: layout(input.approved ? "You're approved to host 🎉" : "Host application update", body),
   };
 }

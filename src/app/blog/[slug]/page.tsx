@@ -95,7 +95,7 @@ export default async function BlogPostPage({
               Ready to explore?
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Find your next experience on GH Bucketlist.
+              Find your next experience on GHBucketlist.
             </p>
             <Button asChild className="mt-4 w-full">
               <Link href="/">Explore Activities</Link>

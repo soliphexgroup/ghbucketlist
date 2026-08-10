@@ -155,7 +155,7 @@ function Pos() {
           <XCircle className="size-10 text-destructive" />
           <p className="font-heading text-lg font-semibold text-foreground">Device not set up</p>
           <p className="text-sm text-muted-foreground">
-            This link is missing its device code. Ask GH Bucketlist for your Bucket Rewards device link.
+            This link is missing its device code. Ask GHBucketlist for your Bucket Rewards device link.
           </p>
         </div>
       </Shell>
@@ -176,8 +176,8 @@ function Pos() {
           </p>
           <p className="text-sm text-muted-foreground">
             {inactiveDevice
-              ? "Bucket Rewards is paused for this business. Contact GH Bucketlist to reactivate."
-              : "This link isn't recognised. Ask GH Bucketlist for your Bucket Rewards device link."}
+              ? "Bucket Rewards is paused for this business. Contact GHBucketlist to reactivate."
+              : "This link isn't recognised. Ask GHBucketlist for your Bucket Rewards device link."}
           </p>
         </div>
       </Shell>
@@ -327,7 +327,7 @@ function Shell({
           {failed > 0 && (
             <span
               className="flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-1 text-destructive"
-              title="Offline sales that couldn't be confirmed (e.g. not a member) — reported to the GH Bucketlist team."
+              title="Offline sales that couldn't be confirmed (e.g. not a member) — reported to the GHBucketlist team."
             >
               <AlertTriangle className="size-3.5" /> {failed} couldn&apos;t sync
             </span>

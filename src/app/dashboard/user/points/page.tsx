@@ -63,7 +63,7 @@ export default function LoyaltyPointsPage() {
 
   return (
     <div>
-      <h1 className="font-heading text-2xl font-bold text-foreground">GH Bucketlist Points</h1>
+      <h1 className="font-heading text-2xl font-bold text-foreground">GHBucketlist Points</h1>
       <p className="mt-1 text-muted-foreground">
         Earn points on every booking and redeem them for discounts.
       </p>

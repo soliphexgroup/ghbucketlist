@@ -12,7 +12,7 @@ export default function HostingPage() {
           Turn your passion into extraordinary experiences
         </h1>
         <p className="mt-2 text-muted-foreground">
-          List stays, cars, activities, or handyman services on GH Bucketlist. Apply below — our team
+          List stays, cars, activities, or handyman services on GHBucketlist. Apply below — our team
           reviews each application before unlocking your host dashboard.
         </p>
         <div className="mt-8">

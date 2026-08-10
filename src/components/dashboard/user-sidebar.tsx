@@ -18,7 +18,7 @@ const navItems = [
   { href: "/dashboard/user/bookings", label: "My Bookings", icon: CalendarCheck },
   { href: "/dashboard/user/wishlist", label: "My Wishlist", icon: Heart },
   { href: "/dashboard/user/reviews", label: "My Reviews", icon: Star },
-  { href: "/dashboard/user/points", label: "GH Bucketlist Points", icon: Zap },
+  { href: "/dashboard/user/points", label: "GHBucketlist Points", icon: Zap },
   { href: "/dashboard/user/gifts", label: "Gifts", icon: Gift },
   { href: "/dashboard/user/settings", label: "Profile & Settings", icon: Settings },
 ];

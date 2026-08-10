@@ -505,7 +505,7 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="public">Public — listed on GH Bucketlist</SelectItem>
+                  <SelectItem value="public">Public — listed on GHBucketlist</SelectItem>
                   <SelectItem value="private">Private — link only</SelectItem>
                 </SelectContent>
               </Select>
