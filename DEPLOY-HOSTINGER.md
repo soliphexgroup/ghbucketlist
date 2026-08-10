@@ -68,7 +68,7 @@ Run once per Supabase project. All three are idempotent (safe to re-run).
 | `supabase/migration.sql` | Auth: profiles, roles, signup trigger, image storage bucket | already run ✅ |
 | `supabase/marketplace.sql` | Listings, bookings, availability, `create_booking` RPC | already run ✅ |
 | `supabase/admin.sql` | **Admin dashboard**: `is_admin()`, admin RLS, host applications + approve/decline, payouts, user status, `admin_list_users()` | **run this** 🔴 |
-| `supabase/bucket-rewards.sql` | **Bucket Rewards**: partners, members, redemptions + token-gated `br_signup` / `br_lookup_member` / `br_redeem` RPCs | **run this** 🔴 |
+| `supabase/bucket-rewards.sql` | **Bucket Rewards**: partners, members, redemptions + token-gated `br_signup` / `br_lookup_member` / `br_redeem` RPCs. Also the **offline** additions — `br_member_digest` (hashed member list), `br_failed_redemptions`, `br_redeem_offline`, extended `br_device_info`, and the `pgcrypto` extension | **run / re-run this** 🔴 |
 | `supabase/reviews.sql` | **Reviews**: reviews table + verified `create_review` RPC + `listing_ratings` view (ratings computed from real reviews) | **run this** 🔴 |
 
 `admin.sql` and `bucket-rewards.sql` depend on `migration.sql` + `marketplace.sql` (and
@@ -81,6 +81,13 @@ admin:
 update public.profiles set role='admin'
 where id=(select id from auth.users where email='<you>');
 ```
+
+**Re-run `bucket-rewards.sql` after the offline update.** If you already ran an earlier version,
+re-run the whole file to pick up offline support: it drops/recreates `br_device_info` (now returns
+the partner's discount rates), adds `br_member_digest`, `br_failed_redemptions`, `br_redeem_offline`,
+and `create extension if not exists pgcrypto`. It's idempotent. Without this, the counter device
+can't compute discounts or verify members offline. If `pgcrypto` errors on your instance (schema
+restrictions), tell your developer — the hashing function's `search_path` may need adjusting.
 
 **Launch prep (optional, destructive):** `supabase/clear-seed.sql` removes the fabricated demo
 catalog so the marketplace shows only real host-published listings. It's not part of setup — run
