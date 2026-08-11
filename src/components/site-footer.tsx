@@ -61,31 +61,22 @@ export function SiteFooter() {
             <h3 className="font-heading text-sm font-semibold text-foreground">Connect</h3>
             <div className="mt-4 flex items-center gap-3">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/gh.bucketlist"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="GHBucketlist on Instagram"
+                aria-label="GHBucketlist on Instagram (@gh.bucketlist)"
                 className="flex size-9 items-center justify-center rounded-full border border-border text-foreground transition-colors duration-200 hover:border-primary hover:text-primary"
               >
                 <SocialIcon name="instagram" className="size-4" />
               </a>
               <a
-                href="https://tiktok.com"
+                href="https://www.tiktok.com/@gh.bucketlist"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="GHBucketlist on TikTok"
+                aria-label="GHBucketlist on TikTok (@gh.bucketlist)"
                 className="flex size-9 items-center justify-center rounded-full border border-border text-foreground transition-colors duration-200 hover:border-primary hover:text-primary"
               >
                 <SocialIcon name="tiktok" className="size-4" />
-              </a>
-              <a
-                href="https://x.com"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="GHBucketlist on X"
-                className="flex size-9 items-center justify-center rounded-full border border-border text-foreground transition-colors duration-200 hover:border-primary hover:text-primary"
-              >
-                <SocialIcon name="x" className="size-4" />
               </a>
             </div>
             <p className="mt-5 text-sm text-muted-foreground">Help Center</p>
