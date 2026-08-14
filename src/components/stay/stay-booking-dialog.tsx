@@ -131,6 +131,8 @@ export function StayBookingDialog({
       const c = calls[i];
       const res = await createDbBooking({
         reference: calls.length > 1 ? `${reference}-${i + 1}` : reference,
+        paymentReference: reference,
+        requestOnly,
         kind: "stay",
         listingId: d.property.id,
         unitKey: c.unitKey,

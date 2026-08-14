@@ -77,6 +77,8 @@ export function BookingDialog({
   async function reserveInDb(reference: string, d: BookingDetails) {
     return createDbBooking({
       reference,
+      paymentReference: reference,
+      requestOnly: false,
       kind: "experience",
       listingId: d.experience.id,
       unitKey: "",

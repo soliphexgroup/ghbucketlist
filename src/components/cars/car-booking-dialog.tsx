@@ -103,6 +103,8 @@ export function CarBookingDialog({
     const d = details!;
     return createDbBooking({
       reference,
+      paymentReference: reference,
+      requestOnly,
       kind: "car",
       listingId: d.car.id,
       unitKey: "",

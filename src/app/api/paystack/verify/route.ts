@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 type PaystackVerifyResponse = {
   status: boolean;
@@ -53,6 +54,21 @@ export async function POST(request: Request) {
 
   const amountMatches = expectedAmountPesewas === null || data.amount === expectedAmountPesewas;
   const verified = data.status === "success" && data.currency === "GHS" && amountMatches;
+
+  // Record the ACTUAL Paystack-confirmed charge (server-side, service role). The booking flow reads
+  // this — the client can never assert its own payment. Recorded on any real success, so the
+  // authoritative amount is what create_paid_booking enforces against.
+  if (data.status === "success") {
+    const svc = createServiceClient();
+    if (svc) {
+      await svc
+        .from("verified_payments")
+        .upsert(
+          { reference: data.reference, amount_pesewas: data.amount, currency: data.currency } as never,
+          { onConflict: "reference" }
+        );
+    }
+  }
 
   return NextResponse.json({
     verified,
