@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, Download, Link2, Pause, Play, Pencil, Plus, Search } from "lucide-react";
+import { AlertTriangle, Download, Info, Link2, Pause, Play, Pencil, Plus, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -190,7 +190,18 @@ export default function AdminRewardsPage() {
         </TabsList>
 
         {/* Partners */}
-        <TabsContent value="partners" className="mt-4 overflow-x-auto rounded-2xl border border-border">
+        <TabsContent value="partners" className="mt-4">
+          <p className="mb-3 flex items-start gap-2 rounded-xl bg-secondary/40 px-3 py-2.5 text-xs text-muted-foreground">
+            <Info className="mt-0.5 size-3.5 shrink-0 text-primary" />
+            <span>
+              The device link (copy icon under <span className="font-medium text-foreground">Actions</span>) is an
+              installable offline app. Tell partners to open it once with internet and tap{" "}
+              <span className="font-medium text-foreground">&ldquo;Install for offline use&rdquo;</span> (Android) or
+              Add to Home Screen (iPhone). It then redeems rewards with no internet and syncs automatically when the
+              connection returns.
+            </span>
+          </p>
+          <div className="overflow-x-auto rounded-2xl border border-border">
           <table className="w-full text-sm">
             <thead className="bg-secondary/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
@@ -261,6 +272,7 @@ export default function AdminRewardsPage() {
               )}
             </tbody>
           </table>
+          </div>
         </TabsContent>
 
         {/* Redemptions */}
