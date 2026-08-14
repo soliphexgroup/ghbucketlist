@@ -94,23 +94,27 @@ export function useDbStayListings(): Property[] {
 }
 
 /** The given host's own stay listings (their seeded ones plus anything they've created). */
-export function useHostDbStayListings(hostId: string): Property[] {
+export function useHostDbStayListings(hostId: string): { items: Property[]; loaded: boolean } {
   const [rows, setRows] = useState<Property[]>([]);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     let active = true;
+    setLoaded(false);
     createClient()
       .from("listings")
       .select("data")
       .eq("kind", "stay")
       .eq("host_id", hostId)
       .then(({ data }) => {
-        if (active) setRows(((data ?? []) as ListingRow[]).map((r) => r.data));
+        if (!active) return;
+        setRows(((data ?? []) as ListingRow[]).map((r) => r.data));
+        setLoaded(true);
       });
     return () => {
       active = false;
     };
   }, [hostId]);
-  return rows;
+  return { items: rows, loaded };
 }
 
 // --- Cars (a car's owner is its vendorId; whole-unit, one bookable vehicle each) ---
@@ -169,23 +173,27 @@ export function useDbCarListings(): Car[] {
 }
 
 /** The given host's own car listings. */
-export function useHostDbCarListings(hostId: string): Car[] {
+export function useHostDbCarListings(hostId: string): { items: Car[]; loaded: boolean } {
   const [rows, setRows] = useState<Car[]>([]);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     let active = true;
+    setLoaded(false);
     createClient()
       .from("listings")
       .select("data")
       .eq("kind", "car")
       .eq("host_id", hostId)
       .then(({ data }) => {
-        if (active) setRows(((data ?? []) as { data: Car }[]).map((r) => r.data));
+        if (!active) return;
+        setRows(((data ?? []) as { data: Car }[]).map((r) => r.data));
+        setLoaded(true);
       });
     return () => {
       active = false;
     };
   }, [hostId]);
-  return rows;
+  return { items: rows, loaded };
 }
 
 // --- Experiences (capacity-based single-day sessions; owner is the experience's hostId) ---
@@ -247,23 +255,27 @@ export function useDbExperienceListings(): Experience[] {
 }
 
 /** The given host's own experience listings. */
-export function useHostDbExperienceListings(hostId: string): Experience[] {
+export function useHostDbExperienceListings(hostId: string): { items: Experience[]; loaded: boolean } {
   const [rows, setRows] = useState<Experience[]>([]);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     let active = true;
+    setLoaded(false);
     createClient()
       .from("listings")
       .select("data")
       .eq("kind", "experience")
       .eq("host_id", hostId)
       .then(({ data }) => {
-        if (active) setRows(((data ?? []) as { data: Experience }[]).map((r) => r.data));
+        if (!active) return;
+        setRows(((data ?? []) as { data: Experience }[]).map((r) => r.data));
+        setLoaded(true);
       });
     return () => {
       active = false;
     };
   }, [hostId]);
-  return rows;
+  return { items: rows, loaded };
 }
 
 // --- Services (handyman providers; read-only catalog — no self-serve host CRUD) ---

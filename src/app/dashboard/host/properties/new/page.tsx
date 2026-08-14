@@ -21,6 +21,7 @@ import { ListingImageManager } from "@/components/dashboard/listing-image-manage
 import { amenities } from "@/data/amenities";
 import { useCurrentHostId } from "@/lib/host-repository";
 import { createStayListing, updateStayListing, useHostDbStayListings } from "@/lib/db-listings";
+import { EditListingLoading, EditListingNotFound } from "@/components/dashboard/edit-listing-gate";
 import type { CancellationPolicy, Property, PropertyRoom, PropertyType, StayBookingType } from "@/lib/stay-types";
 
 function slugify(title: string) {
@@ -56,10 +57,14 @@ export default function AddPropertyPage() {
 function PropertyFormResolver() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
-  const hostProperties = useHostDbStayListings(useCurrentHostId());
+  const { items: hostProperties, loaded } = useHostDbStayListings(useCurrentHostId());
   const existing = editId ? hostProperties.find((p) => p.id === editId) : undefined;
 
-  return <PropertyForm key={existing?.id ?? editId ?? "new"} existing={existing} />;
+  // When editing, wait for the listing to load so the form mounts pre-filled instead of blank.
+  if (editId && !loaded) return <EditListingLoading />;
+  if (editId && loaded && !existing) return <EditListingNotFound backHref="/dashboard/host/properties" />;
+
+  return <PropertyForm key={existing?.id ?? "new"} existing={existing} />;
 }
 
 function PropertyForm({ existing }: { existing?: Property }) {

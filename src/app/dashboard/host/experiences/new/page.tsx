@@ -21,6 +21,7 @@ import { ListingImageManager } from "@/components/dashboard/listing-image-manage
 import { categories } from "@/data/categories";
 import { useCurrentHostId } from "@/lib/host-repository";
 import { createExperienceListing, updateExperienceListing, useHostDbExperienceListings } from "@/lib/db-listings";
+import { EditListingLoading, EditListingNotFound } from "@/components/dashboard/edit-listing-gate";
 import type { Experience, TicketType } from "@/lib/types";
 
 const SCHEDULE_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -58,13 +59,16 @@ export default function AddExperiencePage() {
 function ExperienceFormResolver() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
-  const hostExperiences = useHostDbExperienceListings(useCurrentHostId());
+  const { items: hostExperiences, loaded } = useHostDbExperienceListings(useCurrentHostId());
   const existing = editId ? hostExperiences.find((e) => e.id === editId) : undefined;
 
-  // Remounts (via key) whenever the resolved edit target changes — including the moment
-  // the DB listings arrive on the client — so the form's initial state always reflects
-  // `existing` without needing an effect-driven setState cascade.
-  return <ExperienceForm key={existing?.id ?? editId ?? "new"} existing={existing} />;
+  // When editing, wait for the listing to load so the form mounts pre-filled instead of blank.
+  // (The DB listings arrive after first render; before this gate the form initialised empty and,
+  // because the key never changed, never re-derived from the loaded record.)
+  if (editId && !loaded) return <EditListingLoading />;
+  if (editId && loaded && !existing) return <EditListingNotFound backHref="/dashboard/host/experiences" />;
+
+  return <ExperienceForm key={existing?.id ?? "new"} existing={existing} />;
 }
 
 function ExperienceForm({ existing }: { existing?: Experience }) {

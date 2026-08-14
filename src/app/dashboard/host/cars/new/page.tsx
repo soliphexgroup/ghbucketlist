@@ -19,6 +19,7 @@ import { ListingImageManager } from "@/components/dashboard/listing-image-manage
 import { carFeatures } from "@/data/car-features";
 import { useCurrentHostId } from "@/lib/host-repository";
 import { createCarListing, updateCarListing, useHostDbCarListings } from "@/lib/db-listings";
+import { EditListingLoading, EditListingNotFound } from "@/components/dashboard/edit-listing-gate";
 import type { Car, CarCancellationPolicy, CarCategory, TransmissionType } from "@/lib/car-types";
 
 function slugify(text: string) {
@@ -44,10 +45,14 @@ export default function AddCarPage() {
 function CarFormResolver() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
-  const hostCars = useHostDbCarListings(useCurrentHostId());
+  const { items: hostCars, loaded } = useHostDbCarListings(useCurrentHostId());
   const existing = editId ? hostCars.find((c) => c.id === editId) : undefined;
 
-  return <CarForm key={existing?.id ?? editId ?? "new"} existing={existing} />;
+  // When editing, wait for the listing to load so the form mounts pre-filled instead of blank.
+  if (editId && !loaded) return <EditListingLoading />;
+  if (editId && loaded && !existing) return <EditListingNotFound backHref="/dashboard/host/cars" />;
+
+  return <CarForm key={existing?.id ?? "new"} existing={existing} />;
 }
 
 function CarForm({ existing }: { existing?: Car }) {

@@ -24,7 +24,7 @@ import { getPriceFrom } from "@/data/experiences";
 import { formatGHS } from "@/lib/format";
 
 export default function MyExperiencesPage() {
-  const experiences = useHostDbExperienceListings(useCurrentHostId());
+  const { items: experiences } = useHostDbExperienceListings(useCurrentHostId());
   const bookings = useHostBookings();
   const [pausedIds, setPausedIds] = useState<Set<string>>(new Set());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());

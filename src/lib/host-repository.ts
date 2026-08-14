@@ -88,7 +88,7 @@ function useHostExperiencesDemo() {
 /** The host's experience listings — real from the DB for a signed-in host, demo in preview. */
 export function useHostExperiences() {
   const real = useIsRealHost();
-  const db = useHostDbExperienceListings(useCurrentHostId());
+  const { items: db } = useHostDbExperienceListings(useCurrentHostId());
   const demo = useHostExperiencesDemo();
   return real ? db : demo;
 }
@@ -113,7 +113,7 @@ function useHostPropertiesDemo() {
 /** The host's stay listings — real from the DB for a signed-in host, demo in preview. */
 export function useHostProperties() {
   const real = useIsRealHost();
-  const db = useHostDbStayListings(useCurrentHostId());
+  const { items: db } = useHostDbStayListings(useCurrentHostId());
   const demo = useHostPropertiesDemo();
   return real ? db : demo;
 }
@@ -135,7 +135,7 @@ function useHostCarsDemo(): Car[] {
 /** The host's car listings — real from the DB for a signed-in host, demo in preview. */
 export function useHostCars(): Car[] {
   const real = useIsRealHost();
-  const db = useHostDbCarListings(useCurrentHostId());
+  const { items: db } = useHostDbCarListings(useCurrentHostId());
   const demo = useHostCarsDemo();
   return real ? db : demo;
 }

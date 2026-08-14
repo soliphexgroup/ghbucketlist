@@ -26,7 +26,7 @@ import { formatGHS } from "@/lib/format";
 const categoryLabels = { economy: "Economy", suv: "SUV", luxury: "Luxury", van: "Van" };
 
 export default function MyCarsPage() {
-  const cars = useHostDbCarListings(useCurrentHostId());
+  const { items: cars } = useHostDbCarListings(useCurrentHostId());
   const [pausedIds, setPausedIds] = useState<Set<string>>(new Set());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 

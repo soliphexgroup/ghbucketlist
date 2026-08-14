@@ -25,7 +25,7 @@ import { formatGHS } from "@/lib/format";
 const propertyTypeLabels = { hotel: "Hotel", apartment: "Apartment", vacation: "Vacation Home" };
 
 export default function MyPropertiesPage() {
-  const properties = useHostDbStayListings(useCurrentHostId());
+  const { items: properties } = useHostDbStayListings(useCurrentHostId());
   const bookings = useHostStayBookings();
   const [pausedIds, setPausedIds] = useState<Set<string>>(new Set());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
