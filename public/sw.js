@@ -4,9 +4,11 @@
 // requests (Supabase / Paystack / RSC) pass straight through to the network, so the rest of the site
 // is untouched. Bump VERSION on any change here to force clients onto the new caches.
 
-const VERSION = "ghb-pos-v2";
+const VERSION = "ghb-pos-v3";
 const ASSET_CACHE = `${VERSION}-assets`;
 const PAGE_CACHE = `${VERSION}-pages`;
+const TOKEN_CACHE = "ghb-pos-token"; // version-INDEPENDENT: survives SW updates
+const TOKEN_KEY = "/__pos_token";
 const POS_KEY = "/rewards/pos"; // one cache key for the shell, regardless of the ?t= token
 
 self.addEventListener("install", (event) => {
@@ -49,7 +51,10 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => !k.startsWith(VERSION)).map((k) => caches.delete(k)));
+      // Drop old versioned caches, but keep the token store (not version-scoped).
+      await Promise.all(
+        keys.filter((k) => k !== TOKEN_CACHE && !k.startsWith(VERSION)).map((k) => caches.delete(k))
+      );
       await self.clients.claim();
     })()
   );
@@ -62,11 +67,12 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // Supabase/Paystack/etc. — never intercept.
 
-  // The POS page itself: try network, fall back to the cached shell when offline. Cached under a
-  // token-agnostic key because the token is read client-side (the HTML is identical for any partner).
+  // The POS page. Remember the token when present; if a launch arrives WITHOUT one (e.g. an installed
+  // shortcut whose start_url lost the token), redirect to the remembered token so it self-heals.
+  // Offline, fall back to the cached shell.
   if (req.mode === "navigate") {
     if (url.pathname === "/rewards/pos" || url.pathname.startsWith("/rewards/pos/")) {
-      event.respondWith(pageNetworkFirst(req));
+      event.respondWith(handlePosNavigation(req, url));
     }
     return; // other navigations: default network behaviour, no caching.
   }
@@ -81,6 +87,39 @@ self.addEventListener("fetch", (event) => {
   }
   // Anything else falls through to the network.
 });
+
+async function storeToken(token) {
+  try {
+    const cache = await caches.open(TOKEN_CACHE);
+    await cache.put(TOKEN_KEY, new Response(token));
+  } catch {
+    /* ignore */
+  }
+}
+
+async function getStoredToken() {
+  try {
+    const cache = await caches.open(TOKEN_CACHE);
+    const res = await cache.match(TOKEN_KEY);
+    return res ? await res.text() : null;
+  } catch {
+    return null;
+  }
+}
+
+async function handlePosNavigation(req, url) {
+  const token = url.searchParams.get("t");
+  if (token) {
+    await storeToken(token); // remember it for future token-less launches
+    return pageNetworkFirst(req);
+  }
+  // No token in this launch — recover the last one we saw and redirect so the page gets it.
+  const saved = await getStoredToken();
+  if (saved) {
+    return Response.redirect(`/rewards/pos?t=${encodeURIComponent(saved)}`, 302);
+  }
+  return pageNetworkFirst(req); // never seen a token — show the "device not set up" screen.
+}
 
 async function pageNetworkFirst(req) {
   const cache = await caches.open(PAGE_CACHE);

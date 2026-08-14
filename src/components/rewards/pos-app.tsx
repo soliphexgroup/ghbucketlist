@@ -47,6 +47,14 @@ function Pos() {
       if (urlToken) {
         window.localStorage.setItem(TOKEN_KEY, urlToken);
         setToken(urlToken);
+        // Also stash it in Cache Storage so the service worker can redirect a future token-less
+        // launch (e.g. an installed shortcut whose start_url lost the token) back to this partner.
+        if (typeof caches !== "undefined") {
+          caches
+            .open("ghb-pos-token")
+            .then((c) => c.put("/__pos_token", new Response(urlToken)))
+            .catch(() => {});
+        }
       } else {
         setToken(window.localStorage.getItem(TOKEN_KEY) ?? "");
       }
