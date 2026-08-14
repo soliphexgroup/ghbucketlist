@@ -10,6 +10,21 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i.pravatar.cc" },
     ],
   },
+  // The service worker and the per-partner manifest MUST NOT be cached by the CDN — the browser
+  // relies on fetching the current bytes to detect updates. A cached sw.js silently blocks every
+  // PWA update (the whole point of the offline counter app).
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
+      },
+      {
+        source: "/api/pos-manifest",
+        headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
