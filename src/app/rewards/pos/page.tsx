@@ -18,6 +18,9 @@ import {
   type DeviceInfo,
   type Provisional,
 } from "@/lib/db-br-pos";
+import { PosPwa } from "@/components/rewards/pos-pwa";
+
+const TOKEN_KEY = "br:device-token";
 
 export default function BrPosPage() {
   return (
@@ -34,7 +37,25 @@ type Outcome =
   | null;
 
 function Pos() {
-  const token = useSearchParams().get("t") ?? "";
+  // The token comes from the ?t= link, but we remember it so an installed home-screen shortcut
+  // (which opens /rewards/pos with no query) still knows which partner this device is for.
+  const urlToken = useSearchParams().get("t") ?? "";
+  const [token, setToken] = useState(urlToken);
+  const [tokenReady, setTokenReady] = useState(Boolean(urlToken));
+  useEffect(() => {
+    try {
+      if (urlToken) {
+        window.localStorage.setItem(TOKEN_KEY, urlToken);
+        setToken(urlToken);
+      } else {
+        setToken(window.localStorage.getItem(TOKEN_KEY) ?? "");
+      }
+    } catch {
+      /* storage unavailable — fall back to the URL token */
+    }
+    setTokenReady(true);
+  }, [urlToken]);
+
   const [stage, setStage] = useState<Stage>("phone");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
@@ -151,13 +172,15 @@ function Pos() {
   if (!token) {
     return (
       <Shell online={online} queued={queued} onSync={sync}>
-        <div className="flex flex-col items-center gap-3 py-10 text-center">
-          <XCircle className="size-10 text-destructive" />
-          <p className="font-heading text-lg font-semibold text-foreground">Device not set up</p>
-          <p className="text-sm text-muted-foreground">
-            This link is missing its device code. Ask GHBucketlist for your Bucket Rewards device link.
-          </p>
-        </div>
+        {tokenReady && (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <XCircle className="size-10 text-destructive" />
+            <p className="font-heading text-lg font-semibold text-foreground">Device not set up</p>
+            <p className="text-sm text-muted-foreground">
+              This link is missing its device code. Ask GHBucketlist for your Bucket Rewards device link.
+            </p>
+          </div>
+        )}
       </Shell>
     );
   }
@@ -314,6 +337,7 @@ function Shell({
           {partnerName && <span className="mt-0.5 pl-7 text-xs text-muted-foreground">{partnerName}</span>}
         </span>
         <div className="flex items-center gap-2 text-xs">
+          <PosPwa />
           {!online && (
             <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-muted-foreground">
               <WifiOff className="size-3.5" /> Offline
