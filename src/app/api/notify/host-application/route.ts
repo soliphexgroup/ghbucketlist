@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
   const { data: isAdmin } = await supabase.rpc("is_admin");
-  if (isAdmin === false) return NextResponse.json({ ok: true });
+  if (isAdmin !== true) return NextResponse.json({ ok: true }); // fail closed on null/error
 
   const { data } = await supabase
     .from("host_applications")

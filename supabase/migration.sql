@@ -35,8 +35,11 @@ revoke update on public.profiles from authenticated;
 grant update (full_name, avatar_url) on public.profiles to authenticated;
 
 -- 2. Auto-create a profile row whenever someone signs up ----------------
--- `role` and `full_name` come from the metadata passed to supabase.auth.signUp()
--- at signup time (see src/app/signup/page.tsx). Defaults to 'customer' if absent.
+-- New accounts are ALWAYS 'customer'. Never trust a `role` from signup metadata: the anon key is
+-- public, so anyone could call auth.signUp({ options: { data: { role: 'admin' } } }) directly and
+-- self-provision an admin/host. Host access comes through an approved application
+-- (approve_host_application in admin.sql); admin is granted manually via SQL. Only `full_name`
+-- (harmless display text) is taken from metadata.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -46,7 +49,7 @@ begin
   insert into public.profiles (id, role, full_name)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data ->> 'role', 'customer'),
+    'customer',
     new.raw_user_meta_data ->> 'full_name'
   );
   return new;
