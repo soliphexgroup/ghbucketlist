@@ -178,6 +178,53 @@ drop policy if exists "Admins update payouts" on public.payouts;
 create policy "Admins update payouts" on public.payouts
   for update using (public.is_admin()) with check (public.is_admin());
 
+-- Payout requests go through this validated RPC, not a direct insert, so a host can't request more
+-- than they've actually earned. Available balance mirrors the earnings page: 95% of the gross of
+-- their completed bookings (5% platform fee), minus payouts already pending or approved.
+drop policy if exists "Hosts create own payouts" on public.payouts;
+
+create or replace function public.request_payout(p_amount numeric, p_method text)
+returns public.payouts
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  uid uuid := auth.uid();
+  v_gross numeric;
+  v_taken numeric;
+  v_available numeric;
+  result public.payouts;
+begin
+  if uid is null then raise exception 'You must be signed in to request a payout.' using errcode = '28000'; end if;
+  if p_amount is null or p_amount <= 0 then raise exception 'Amount must be greater than zero.'; end if;
+
+  -- Earned = completed bookings on the host's own listings (stay/car/experience).
+  select coalesce(sum(b.total), 0) into v_gross
+  from public.bookings b
+  join public.listings l on l.id = b.listing_id
+  where l.created_by = uid
+    and b.kind in ('stay', 'car', 'experience')
+    and (b.status = 'completed' or (b.status = 'confirmed' and b.end_date <= current_date));
+
+  -- Everything already requested that isn't rejected reduces what's still available.
+  select coalesce(sum(amount), 0) into v_taken
+  from public.payouts
+  where host_id = uid and status <> 'rejected';
+
+  v_available := round(v_gross * 0.95, 2) - v_taken;
+
+  if p_amount > v_available + 0.01 then
+    raise exception 'Amount exceeds your available balance.';
+  end if;
+
+  insert into public.payouts (host_id, amount, method)
+  values (uid, p_amount, p_method)
+  returning * into result;
+  return result;
+end $$;
+
+grant execute on function public.request_payout(numeric, text) to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- 7. Admin user directory + status changes ----------------------------------
 -- Email lives in auth.users (not profiles); this returns it for admins only.

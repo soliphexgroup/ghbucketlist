@@ -38,17 +38,20 @@ function toPayout(r: Row): Payout {
   };
 }
 
-/** Host requests a payout for their own account. */
+/**
+ * Host requests a payout. Goes through the request_payout RPC, which validates the amount against
+ * the host's real available balance server-side (direct inserts into payouts are revoked), so a
+ * host can't request more than they've earned even by calling the API directly.
+ */
 export async function requestPayout(input: { amount: number; method: string }): Promise<WriteResult> {
   const supabase = createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) return { ok: false, reason: "signin", message: "Please sign in to request a payout." };
-  const { error } = await supabase.from("payouts").insert({
-    host_id: session.user.id,
-    amount: input.amount,
-    method: input.method,
+  const { error } = await supabase.rpc("request_payout", {
+    p_amount: input.amount,
+    p_method: input.method,
   });
   if (error) return { ok: false, reason: "error", message: error.message };
   return { ok: true };
