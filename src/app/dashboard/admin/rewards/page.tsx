@@ -131,6 +131,51 @@ export default function AdminRewardsPage() {
     );
   }, [redemptions, redemptionQuery, partnerNameById]);
 
+  // Totals for whatever redemptions are currently shown (all, or one partner when searched).
+  const shownTotals = useMemo(
+    () =>
+      shownRedemptions.reduce(
+        (acc, r) => {
+          acc.amount += r.amount;
+          acc.saving += r.customerSaving;
+          acc.commission += r.commission;
+          return acc;
+        },
+        { amount: 0, saving: 0, commission: 0 }
+      ),
+    [shownRedemptions]
+  );
+
+  // Per-partner totals across all redemptions (the all-at-once breakdown), biggest amount first.
+  const partnerTotals = useMemo(() => {
+    const m = new Map<string, { count: number; amount: number; saving: number; commission: number }>();
+    for (const r of redemptions) {
+      const cur = m.get(r.partnerId) ?? { count: 0, amount: 0, saving: 0, commission: 0 };
+      cur.count += 1;
+      cur.amount += r.amount;
+      cur.saving += r.customerSaving;
+      cur.commission += r.commission;
+      m.set(r.partnerId, cur);
+    }
+    return [...m.entries()]
+      .map(([partnerId, t]) => ({ partnerId, name: partnerNameById.get(partnerId) ?? "—", ...t }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [redemptions, partnerNameById]);
+
+  const grandTotals = useMemo(
+    () =>
+      partnerTotals.reduce(
+        (a, p) => ({
+          count: a.count + p.count,
+          amount: a.amount + p.amount,
+          saving: a.saving + p.saving,
+          commission: a.commission + p.commission,
+        }),
+        { count: 0, amount: 0, saving: 0, commission: 0 }
+      ),
+    [partnerTotals]
+  );
+
   const shownMembers = useMemo(() => {
     const q = memberQuery.trim().toLowerCase();
     if (!q) return members;
@@ -150,7 +195,8 @@ export default function AdminRewardsPage() {
         r.settledAt ? "yes" : "no",
       ].join(",")
     );
-    const csv = [header.join(","), ...lines].join("\n");
+    const totals = ["", "TOTAL", `${shownRedemptions.length} redemptions`, shownTotals.amount, shownTotals.saving, shownTotals.commission, ""].join(",");
+    const csv = [header.join(","), ...lines, totals].join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     const a = document.createElement("a");
     a.href = url;
@@ -287,7 +333,60 @@ export default function AdminRewardsPage() {
               Export CSV
             </Button>
           </div>
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
+
+          {/* Totals by partner (all at once). Click a partner to filter the detailed list below. */}
+          {partnerTotals.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Totals by partner
+              </p>
+              <div className="overflow-x-auto rounded-2xl border border-border">
+                <table className="w-full text-sm">
+                  <thead className="bg-secondary/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Partner</th>
+                      <th className="px-4 py-3 font-medium">Redemptions</th>
+                      <th className="px-4 py-3 font-medium">Amount</th>
+                      <th className="px-4 py-3 font-medium">Saving</th>
+                      <th className="px-4 py-3 font-medium">Commission</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {partnerTotals.map((p) => (
+                      <tr key={p.partnerId} className="border-t border-border">
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => setRedemptionQuery(p.name)}
+                            className="text-left font-medium text-foreground hover:text-primary"
+                          >
+                            {p.name}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{p.count}</td>
+                        <td className="px-4 py-3 text-foreground">{formatGHS(p.amount)}</td>
+                        <td className="px-4 py-3 text-success">{formatGHS(p.saving)}</td>
+                        <td className="px-4 py-3 text-foreground">{formatGHS(p.commission)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-border bg-secondary/30 font-semibold text-foreground">
+                      <td className="px-4 py-3">All partners</td>
+                      <td className="px-4 py-3 text-muted-foreground">{grandTotals.count}</td>
+                      <td className="px-4 py-3">{formatGHS(grandTotals.amount)}</td>
+                      <td className="px-4 py-3 text-success">{formatGHS(grandTotals.saving)}</td>
+                      <td className="px-4 py-3">{formatGHS(grandTotals.commission)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <p className="mt-6 mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            All redemptions{redemptionQuery.trim() ? ` · “${redemptionQuery.trim()}”` : ""}
+          </p>
+          <div className="overflow-x-auto rounded-2xl border border-border">
             <table className="w-full text-sm">
               <thead className="bg-secondary/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
@@ -328,6 +427,19 @@ export default function AdminRewardsPage() {
                   </tr>
                 )}
               </tbody>
+              {shownRedemptions.length > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 border-border bg-secondary/30 font-semibold text-foreground">
+                    <td className="px-4 py-3" colSpan={3}>
+                      Total ({shownRedemptions.length})
+                    </td>
+                    <td className="px-4 py-3">{formatGHS(shownTotals.amount)}</td>
+                    <td className="px-4 py-3 text-success">{formatGHS(shownTotals.saving)}</td>
+                    <td className="px-4 py-3">{formatGHS(shownTotals.commission)}</td>
+                    <td className="px-4 py-3" />
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </TabsContent>
