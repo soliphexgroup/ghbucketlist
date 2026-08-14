@@ -81,10 +81,16 @@ begin
   ) into v_ok;
   if not v_ok then raise exception 'You can only review something you booked.'; end if;
 
+  -- Identity comes from the reviewer's own profile, never the client payload, so a reviewer can't
+  -- display someone else's name/avatar. p_user_name/p_user_avatar are kept for signature
+  -- compatibility but deliberately ignored.
   insert into public.reviews
     (listing_id, kind, user_id, booking_reference, rating, text, category_ratings, user_name, user_avatar)
-  values
-    (p_listing_id, p_kind, auth.uid(), p_booking_reference, p_rating, p_text, p_category_ratings, p_user_name, p_user_avatar);
+  values (
+    p_listing_id, p_kind, auth.uid(), p_booking_reference, p_rating, p_text, p_category_ratings,
+    (select full_name from public.profiles where id = auth.uid()),
+    (select avatar_url from public.profiles where id = auth.uid())
+  );
 end;
 $$;
 

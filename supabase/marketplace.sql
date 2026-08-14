@@ -91,6 +91,9 @@ create index if not exists bookings_listing_idx on public.bookings (listing_id, 
 create index if not exists bookings_user_idx on public.bookings (user_id);
 create index if not exists bookings_status_idx on public.bookings (status);
 
+-- Set once by the booking-email route so re-POSTing /api/notify/booking can't re-send (spam guard).
+alter table public.bookings add column if not exists notified_at timestamptz;
+
 alter table public.bookings enable row level security;
 
 -- A guest sees their own bookings; a host sees bookings for listings they own.
