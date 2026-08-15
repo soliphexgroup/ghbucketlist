@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Copy, Pause, Play, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, Copy, Pause, Play, Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,6 +95,12 @@ export default function MyPropertiesPage() {
                   <Link href={`/dashboard/host/properties/new?edit=${property.id}`}>
                     <Pencil className="size-3.5" />
                     Edit
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/dashboard/host/properties/${property.id}`}>
+                    <CalendarClock className="size-3.5" />
+                    Calendar sync
                   </Link>
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => togglePause(property.id)}>
