@@ -71,6 +71,7 @@ Run once per Supabase project. All three are idempotent (safe to re-run).
 | `supabase/bucket-rewards.sql` | **Bucket Rewards**: partners, members, redemptions + token-gated `br_signup` / `br_lookup_member` / `br_redeem` RPCs. Also the **offline** additions — `br_member_digest` (hashed member list), `br_failed_redemptions`, `br_redeem_offline`, extended `br_device_info`, and the `pgcrypto` extension | **run / re-run this** 🔴 |
 | `supabase/reviews.sql` | **Reviews**: reviews table + verified `create_review` RPC + `listing_ratings` view (ratings computed from real reviews) | **run this** 🔴 |
 | `supabase/payment-gating.sql` | **Payment-gated bookings** (security): `verified_payments`, `bookings.payment_reference`, server-only `create_paid_booking`, and **revokes** the client-callable `create_booking`. Run AFTER marketplace + admin. **After running, bookings only work through `/api/bookings/create`, so verify a real booking on staging.** | **run this** 🔴 |
+| `supabase/security-hardening.sql` | **Security Advisor fixes**: revokes `create_paid_booking` from anon/authenticated (service-role only — the important one), revokes admin RPCs from anon, pins `unit_capacity` search_path, drops the wide-open `br_members` insert policy. Run AFTER payment-gating + admin. Also enable **Auth → Leaked Password Protection** (dashboard toggle). | **run this** 🔴 |
 
 `admin.sql` and `bucket-rewards.sql` depend on `migration.sql` + `marketplace.sql` (and
 `bucket-rewards.sql` also needs `is_admin()` from `admin.sql`). Until they're run, the admin
