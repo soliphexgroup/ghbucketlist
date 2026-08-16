@@ -131,12 +131,32 @@ On **Dashboard → My Properties → Calendar sync** for a listing:
 
 Phase 1 covers **stays** (whole-unit). Hotel room-type-level feeds can be added later via `?unit=`.
 
-## 6. Already done / not needed
+## 6. CDN caching (Hostinger `hcdn`) — important
+Hostinger's CDN caches responses aggressively, and caching the **wrong** thing has broken the site
+twice:
+- A stale cached **`/sw.js`** blocked every PWA/service-worker update.
+- A stale cached **HTML page** kept referencing `_next/static` chunk hashes from an *old* build →
+  those 404 → the site rendered **unstyled**.
+
+**Both are fixed in `next.config.ts` → `headers()` (already in the code):**
+- `/sw.js` and `/api/pos-manifest` → `no-cache, no-store, must-revalidate`.
+- **HTML page routes → `no-store`** (matcher excludes `/_next/`, `/api/`, and any file-extension path)
+  so the CDN never caches a document. It now serves HTML as `x-hcdn-cache: DYNAMIC`.
+- `/_next/static/*` → cached hard (`public, max-age=31536000, immutable`) — safe, they're content-hashed.
+
+**Verify after a deploy:** `curl -I https://ghbucketlist.com/` should show `Cache-Control: no-store`
+and `x-hcdn-cache: DYNAMIC`.
+
+**If a deploy ever "doesn't take" or the site looks stale/unstyled:** suspect the CDN first. Compare
+`curl https://ghbucketlist.com/<path>` vs `curl https://ghbucketlist.com/<path>?v=123` (cache-buster)
+— if they differ, the CDN is serving a stale copy → **Purge the Hostinger CDN cache** in hPanel.
+
+## 7. Already done / not needed
 - **Image optimization** — `next.config.ts` sets `images.unoptimized: true`, so there is no
   `sharp` native dependency to install on Hostinger; images pass straight through.
 - **No `output: export`** — intentionally; the app must stay a running Node server.
 
-## 6. Smoke test after deploy
+## 8. Smoke test after deploy
 - Home page loads.
 - A stay/car/activity/service **detail page** loads (proves server rendering + Supabase reads work).
 - Visiting `/dashboard/user` while signed out redirects to `/login` (proves middleware runs).
