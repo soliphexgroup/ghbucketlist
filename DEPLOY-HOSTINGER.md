@@ -103,16 +103,18 @@ After running `calendar-sync.sql` and setting `CRON_SECRET`, schedule the sync w
 calendars refresh automatically. A host can already press **"Sync now"** without this — the cron just
 automates the periodic pull.
 
-**Option A — Hostinger cron (hPanel → Advanced → Cron Jobs).** Every 5 minutes:
-```bash
-curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" https://ghbucketlist.com/api/cron/sync-calendars
-```
-(Replace `$CRON_SECRET` with the actual value if the cron shell doesn't have it in its environment.
-Hostinger's cron minimum is 1 minute; 5 min is a good balance — Booking.com's export doesn't update
-faster than that anyway.)
+**Note:** Hostinger **Web Apps** (Node.js) have **no Cron Jobs feature** in hPanel — that's only on
+shared-hosting/WordPress sites. So schedule it from Supabase instead:
 
-**Option B — Supabase `pg_cron` + `pg_net`** (if Hostinger cron is limited on your plan): schedule a
-job that POSTs the same URL with the `Authorization: Bearer` header every few minutes.
+**Recommended — Supabase `pg_cron` (`supabase/calendar-cron.sql`).** Fill your `CRON_SECRET` into that
+file and run it once in the SQL Editor. It enables `pg_cron` + `pg_net` and schedules a POST to the
+worker every 5 minutes. Check runs with `select * from cron.job_run_details order by start_time desc;`.
+
+**Alternatives:** a free external pinger like **cron-job.org** (POST the URL every 5 min with header
+`Authorization: Bearer <secret>`), or the Cron Jobs on your **shared-hosting** site (e.g. the
+WordPress site) running `curl -fsS -X POST -H "Authorization: Bearer <secret>"
+https://ghbucketlist.com/api/cron/sync-calendars` — the curl just makes an HTTP call, so it works
+from any host.
 
 **Sync speed (set expectations with hosts):** inbound (Booking.com → GHBucketlist) refreshes within
 your cron interval (~5 min); outbound (GHBucketlist → Booking.com) is on **Booking.com's** schedule
