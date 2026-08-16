@@ -125,6 +125,7 @@ function PropertyForm({ existing }: { existing?: Property }) {
     address.trim().length > 0 ? null : "Add an address.",
     validRooms.length > 0 ? null : "Add at least one room with a name.",
     Number(pricePerNight) > 0 ? null : "Set a nightly price greater than 0.",
+    images.length >= 2 ? null : "Add at least 2 photos of the property.",
   ].filter((e): e is string => e !== null);
   const canSubmit = validationErrors.length === 0;
 
@@ -243,7 +244,7 @@ function PropertyForm({ existing }: { existing?: Property }) {
         <Separator />
 
         <section>
-          <ListingImageManager value={images} onChange={setImages} />
+          <ListingImageManager value={images} onChange={setImages} minImages={2} />
         </section>
 
         <Separator />

@@ -96,6 +96,7 @@ function CarForm({ existing }: { existing?: Car }) {
     Number(year) > 1980 ? null : "Enter a valid year (after 1980).",
     pickupLocation.trim().length > 0 ? null : "Add a pickup location.",
     Number(pricePerDay) > 0 ? null : "Set a daily price greater than 0.",
+    images.length >= 2 ? null : "Add at least 2 photos of the car.",
   ].filter((e): e is string => e !== null);
   const canSubmit = validationErrors.length === 0;
 
@@ -219,7 +220,7 @@ function CarForm({ existing }: { existing?: Car }) {
         <Separator />
 
         <section>
-          <ListingImageManager value={images} onChange={setImages} />
+          <ListingImageManager value={images} onChange={setImages} minImages={2} />
         </section>
 
         <Separator />

@@ -140,6 +140,7 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
     scheduleDays.length > 0 ? null : "Pick at least one day it runs.",
     scheduleTime.trim().length > 0 ? null : "Add a start time.",
     isFree || validTickets.length > 0 ? null : "Add a ticket type with a price, or mark the experience free.",
+    images.length >= 2 ? null : "Add at least 2 photos of the experience.",
   ].filter((e): e is string => e !== null);
   const canSubmit = validationErrors.length === 0;
 
@@ -292,7 +293,7 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
         <Separator />
 
         <section>
-          <ListingImageManager value={images} onChange={setImages} />
+          <ListingImageManager value={images} onChange={setImages} minImages={2} />
         </section>
 
         <Separator />

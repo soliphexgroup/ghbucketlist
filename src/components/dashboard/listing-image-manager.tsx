@@ -18,11 +18,14 @@ export function ListingImageManager({
   onChange,
   label = "Photos",
   hint = "The first photo is the cover shown on search results and listing cards.",
+  minImages = 0,
 }: {
   value: string[];
   onChange: (images: string[]) => void;
   label?: string;
   hint?: string;
+  /** Minimum photos required to publish. When > 0 the manager shows a live requirement/counter. */
+  minImages?: number;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -178,10 +181,18 @@ export function ListingImageManager({
         </ul>
       )}
 
-      {value.length === 0 && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          No photos yet — we&apos;ll use stock images until you add some.
+      {minImages > 0 ? (
+        <p className={cn("mt-2 text-xs", value.length < minImages ? "text-destructive" : "text-muted-foreground")}>
+          {value.length < minImages
+            ? `Add at least ${minImages} photos to publish — ${value.length} added so far.`
+            : `${value.length} photos added.`}
         </p>
+      ) : (
+        value.length === 0 && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            No photos yet — we&apos;ll use stock images until you add some.
+          </p>
+        )
       )}
     </div>
   );
