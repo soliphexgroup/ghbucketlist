@@ -34,6 +34,7 @@ Copy the values from your local `.env.local`:
 | `RESEND_API_KEY` | **server-only** | Resend API key for transactional email (`re_...`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | **server-only** | Supabase → Project Settings → API → service_role key. Bypasses RLS — server only; used to look up host emails for notifications |
 | `EMAIL_FROM` | server-only | Sender, e.g. `GH Bucketlist <no-reply@ghbucketlist.com>` (must be a verified Resend sender) |
+| `CRON_SECRET` | **server-only** | Any long random string. The calendar-sync cron job sends it as a Bearer token so only your scheduler can trigger the sync. |
 
 `NEXT_PUBLIC_*` vars are inlined at **build time**, so if you change them you must rebuild.
 
@@ -72,6 +73,7 @@ Run once per Supabase project. All three are idempotent (safe to re-run).
 | `supabase/reviews.sql` | **Reviews**: reviews table + verified `create_review` RPC + `listing_ratings` view (ratings computed from real reviews) | **run this** 🔴 |
 | `supabase/payment-gating.sql` | **Payment-gated bookings** (security): `verified_payments`, `bookings.payment_reference`, server-only `create_paid_booking`, and **revokes** the client-callable `create_booking`. Run AFTER marketplace + admin. **After running, bookings only work through `/api/bookings/create`, so verify a real booking on staging.** | **run this** 🔴 |
 | `supabase/security-hardening.sql` | **Security Advisor fixes**: revokes `create_paid_booking` from anon/authenticated (service-role only — the important one), revokes admin RPCs from anon, pins `unit_capacity` search_path, drops the wide-open `br_members` insert policy. Run AFTER payment-gating + admin. Also enable **Auth → Leaked Password Protection** (dashboard toggle). | **run this** 🔴 |
+| `supabase/calendar-sync.sql` | **Calendar sync** (Booking.com iCal): `calendar_feeds` table (owner-RLS) + tags `blocked_dates` with `source`/`feed_id`. Run AFTER marketplace. Then set `CRON_SECRET` and schedule the cron below. | **run this** 🔴 |
 
 `admin.sql` and `bucket-rewards.sql` depend on `migration.sql` + `marketplace.sql` (and
 `bucket-rewards.sql` also needs `is_admin()` from `admin.sql`). Until they're run, the admin
@@ -96,7 +98,38 @@ catalog so the marketplace shows only real host-published listings. It's not par
 it only when you're ready to go live. It previews what it will delete first, and only ever removes
 seeded rows (`created_by IS NULL`), never real host listings.
 
-## 5. Already done / not needed
+## 5. Calendar sync (Booking.com iCal) — scheduling + host guide
+After running `calendar-sync.sql` and setting `CRON_SECRET`, schedule the sync worker so connected
+calendars refresh automatically. A host can already press **"Sync now"** without this — the cron just
+automates the periodic pull.
+
+**Option A — Hostinger cron (hPanel → Advanced → Cron Jobs).** Every 5 minutes:
+```bash
+curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" https://ghbucketlist.com/api/cron/sync-calendars
+```
+(Replace `$CRON_SECRET` with the actual value if the cron shell doesn't have it in its environment.
+Hostinger's cron minimum is 1 minute; 5 min is a good balance — Booking.com's export doesn't update
+faster than that anyway.)
+
+**Option B — Supabase `pg_cron` + `pg_net`** (if Hostinger cron is limited on your plan): schedule a
+job that POSTs the same URL with the `Authorization: Bearer` header every few minutes.
+
+**Sync speed (set expectations with hosts):** inbound (Booking.com → GHBucketlist) refreshes within
+your cron interval (~5 min); outbound (GHBucketlist → Booking.com) is on **Booking.com's** schedule
+(a few hours) and cannot be sped up with iCal. Real-time both ways needs a paid channel manager.
+
+### Host guide — "Connect Booking.com" (for support to share)
+On **Dashboard → My Properties → Calendar sync** for a listing:
+1. **Bring Booking.com in:** in the Booking.com extranet go to **Calendar → Sync calendars → Export**,
+   copy the link (ends in `.ics`), paste it into the GHBucketlist field, choose source **Booking.com**,
+   click **Add calendar**, then **Sync now**. Dates booked on Booking.com now show unavailable here.
+2. **Send GHBucketlist out:** copy the **export link** shown on the same page and paste it into
+   Booking.com under **Calendar → Sync calendars → Import**. Bookings made on GHBucketlist now block
+   those dates on Booking.com too.
+
+Phase 1 covers **stays** (whole-unit). Hotel room-type-level feeds can be added later via `?unit=`.
+
+## 6. Already done / not needed
 - **Image optimization** — `next.config.ts` sets `images.unoptimized: true`, so there is no
   `sharp` native dependency to install on Hostinger; images pass straight through.
 - **No `output: export`** — intentionally; the app must stay a running Node server.

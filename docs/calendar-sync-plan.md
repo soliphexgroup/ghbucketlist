@@ -1,5 +1,13 @@
 # Plan — Cross-Channel Calendar Sync (iCal two-way)
 
+> **STATUS (Aug 2026): Phases 0–4 + 6 BUILT.** Engine (`src/lib/ical.ts`, `calendar-sync-core.ts`,
+> `/api/cron/sync-calendars`, `/api/calendar/sync-now`, `/api/listings/[id]/calendar.ics`), schema
+> (`supabase/calendar-sync.sql`), host UI (`properties/[id]` panel), and docs are done. Implementation
+> note: used a dependency-free iCal parser instead of `node-ical`. **To activate:** run
+> `calendar-sync.sql`, set `CRON_SECRET` (+ service-role key), deploy, and add the cron job
+> (Phase 5 — see `DEPLOY-HOSTINGER.md` §5). Scope: stays, whole-unit.
+
+
 ## Goal
 Stop the same night being sold twice when a host lists the same stay on **Booking.com**
 (or Airbnb/VRBO) **and** GH Bucketlist. When a date is taken on either side, it shows as
