@@ -79,7 +79,8 @@ function CalendarSync({ listingId, title }: { listingId: string; title: string }
       <h1 className="font-heading text-2xl font-bold text-foreground">Calendar Sync</h1>
       <p className="mt-1 text-muted-foreground">
         Keep <span className="font-medium text-foreground">{title}</span> from being double-booked across
-        Booking.com and GHBucketlist. Connect both directions once and dates sync automatically.
+        GHBucketlist and the other sites you list it on — Booking.com, Airbnb, VRBO and more. Connect each
+        calendar once and dates sync automatically.
       </p>
 
       {/* 1. Import */}
@@ -156,10 +157,6 @@ function CalendarSync({ listingId, title }: { listingId: string; title: string }
         </div>
       </section>
 
-      <p className="mt-8 text-xs text-muted-foreground">
-        Note: calendar sync is not instant — dates coming in from Booking.com update within a few minutes; dates going
-        out to Booking.com update on Booking.com&apos;s own schedule (up to a few hours).
-      </p>
     </div>
   );
 }
