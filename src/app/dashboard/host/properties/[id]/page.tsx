@@ -86,11 +86,12 @@ function CalendarSync({ listingId, title }: { listingId: string; title: string }
       {/* 1. Import */}
       <section className="mt-8">
         <h2 className="font-heading text-lg font-semibold text-foreground">
-          1. Bring your Booking.com calendar in
+          1. Bring another calendar in
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          In Booking.com go to <span className="font-medium text-foreground">Calendar → Sync calendars → Export</span>,
-          copy the link (it ends in <code>.ics</code>), and paste it below. Dates booked there will show unavailable here.
+          On the other site (Booking.com, Airbnb, VRBO…), open its calendar sync settings and copy the{" "}
+          <span className="font-medium text-foreground">Export / iCal</span> link — it ends in <code>.ics</code>.
+          Paste it below and pick the source. Dates booked there will show unavailable here.
         </p>
 
         <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-border p-4">
@@ -144,9 +145,9 @@ function CalendarSync({ listingId, title }: { listingId: string; title: string }
           2. Send your GHBucketlist calendar out
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Copy this link and paste it into Booking.com under{" "}
-          <span className="font-medium text-foreground">Calendar → Sync calendars → Import</span>. Bookings made here
-          will then block those dates on Booking.com too.
+          Copy this link and paste it into the other site&apos;s{" "}
+          <span className="font-medium text-foreground">Import calendar</span> setting. Bookings made on
+          GHBucketlist will then block those dates there too.
         </p>
         <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-border p-4 sm:flex-row sm:items-center">
           <Input readOnly value={exportUrl} className="flex-1 text-xs text-muted-foreground" onFocus={(e) => e.currentTarget.select()} />
