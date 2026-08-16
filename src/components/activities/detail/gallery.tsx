@@ -15,6 +15,95 @@ export function Gallery({ images, title }: { images: string[]; title: string }) 
     setLightboxOpen(true);
   }
 
+  if (images.length === 0) {
+    return <div className="aspect-16/9 w-full rounded-2xl bg-muted" />;
+  }
+
+  // A single photo can't use the grid layout (the big image relies on sibling thumbnails for its
+  // height, so with one image the row collapses). Render it full-width instead.
+  if (images.length === 1) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => openAt(0)}
+          className="group relative block aspect-16/9 w-full overflow-hidden rounded-2xl"
+        >
+          <Image
+            src={images[0]}
+            alt={title}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </button>
+        {renderLightbox()}
+      </>
+    );
+  }
+
+  function renderLightbox() {
+    return (
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-4xl border-none bg-black p-0 sm:rounded-2xl"
+        >
+          <DialogTitle className="sr-only">{title} photos</DialogTitle>
+          <div className="relative aspect-4/3 w-full sm:aspect-16/10">
+            <Image
+              src={images[index]}
+              alt={`${title} photo ${index + 1}`}
+              fill
+              sizes="100vw"
+              className="object-contain"
+            />
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(false)}
+              aria-label="Close gallery"
+              className="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+            >
+              <X className="size-4" />
+            </button>
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIndex((index - 1 + images.length) % images.length)}
+                  aria-label="Previous photo"
+                  className="absolute top-1/2 left-3 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIndex((index + 1) % images.length)}
+                  aria-label="Next photo"
+                  className="absolute top-1/2 right-3 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+              </>
+            )}
+          </div>
+          <div className="flex justify-center gap-1.5 p-3">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "size-1.5 rounded-full transition-colors duration-200",
+                  i === index ? "bg-white" : "bg-white/30"
+                )}
+              />
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:grid-rows-2">
