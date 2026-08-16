@@ -23,6 +23,18 @@ const nextConfig: NextConfig = {
         source: "/api/pos-manifest",
         headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
       },
+      // Hashed build assets are content-addressed and immutable — cache them hard.
+      {
+        source: "/_next/static/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+      // HTML page routes (no file extension) MUST NOT be cached by the CDN. Otherwise a stale cached
+      // page keeps referencing chunk hashes from a previous build (which 404), and the site renders
+      // unstyled. Excludes /_next/, /api/, and any path with a file extension (assets).
+      {
+        source: "/((?!_next/|api/|.*\\.).*)",
+        headers: [{ key: "Cache-Control", value: "no-store" }],
+      },
     ];
   },
 };
