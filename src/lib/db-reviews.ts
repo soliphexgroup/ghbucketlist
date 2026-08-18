@@ -201,10 +201,7 @@ export function useHostReviews(listingIds: string[]): DbReview[] {
   const [reviews, setReviews] = useState<DbReview[]>([]);
   const key = listingIds.slice().sort().join(",");
   useEffect(() => {
-    if (listingIds.length === 0) {
-      setReviews([]);
-      return;
-    }
+    if (listingIds.length === 0) return;
     let active = true;
     createClient()
       .from("reviews")
@@ -220,5 +217,6 @@ export function useHostReviews(listingIds: string[]): DbReview[] {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
-  return reviews;
+  // No listings ⇒ no reviews, derived during render (the effect no longer clears state synchronously).
+  return listingIds.length === 0 ? [] : reviews;
 }

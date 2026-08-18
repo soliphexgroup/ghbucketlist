@@ -25,6 +25,9 @@ export function ResetPasswordForm() {
     const hashParams = new URLSearchParams(window.location.hash.slice(1));
     const hashError = hashParams.get("error_description") ?? hashParams.get("error");
     if (hashError) {
+      // One-time read of the error carried back in the URL hash (client-only, no SSR equivalent),
+      // so the synchronous setState on mount is intentional.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(decodeURIComponent(hashError.replace(/\+/g, " ")));
       setStatus("invalid");
       return;

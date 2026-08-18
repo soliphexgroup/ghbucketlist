@@ -96,10 +96,11 @@ export function useDbStayListings(): Property[] {
 /** The given host's own stay listings (their seeded ones plus anything they've created). */
 export function useHostDbStayListings(hostId: string): { items: Property[]; loaded: boolean } {
   const [rows, setRows] = useState<Property[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  // Track which host the current rows belong to, so `loaded` is derived during render
+  // (false the moment hostId changes) instead of being reset with a synchronous setState.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
-    setLoaded(false);
     createClient()
       .from("listings")
       .select("data")
@@ -108,13 +109,13 @@ export function useHostDbStayListings(hostId: string): { items: Property[]; load
       .then(({ data }) => {
         if (!active) return;
         setRows(((data ?? []) as ListingRow[]).map((r) => r.data));
-        setLoaded(true);
+        setLoadedFor(hostId);
       });
     return () => {
       active = false;
     };
   }, [hostId]);
-  return { items: rows, loaded };
+  return { items: rows, loaded: loadedFor === hostId };
 }
 
 // --- Cars (a car's owner is its vendorId; whole-unit, one bookable vehicle each) ---
@@ -175,10 +176,10 @@ export function useDbCarListings(): Car[] {
 /** The given host's own car listings. */
 export function useHostDbCarListings(hostId: string): { items: Car[]; loaded: boolean } {
   const [rows, setRows] = useState<Car[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  // Derive `loaded` during render (see useHostDbStayListings) rather than resetting it in the effect.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
-    setLoaded(false);
     createClient()
       .from("listings")
       .select("data")
@@ -187,13 +188,13 @@ export function useHostDbCarListings(hostId: string): { items: Car[]; loaded: bo
       .then(({ data }) => {
         if (!active) return;
         setRows(((data ?? []) as { data: Car }[]).map((r) => r.data));
-        setLoaded(true);
+        setLoadedFor(hostId);
       });
     return () => {
       active = false;
     };
   }, [hostId]);
-  return { items: rows, loaded };
+  return { items: rows, loaded: loadedFor === hostId };
 }
 
 // --- Experiences (capacity-based single-day sessions; owner is the experience's hostId) ---
@@ -257,10 +258,10 @@ export function useDbExperienceListings(): Experience[] {
 /** The given host's own experience listings. */
 export function useHostDbExperienceListings(hostId: string): { items: Experience[]; loaded: boolean } {
   const [rows, setRows] = useState<Experience[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  // Derive `loaded` during render (see useHostDbStayListings) rather than resetting it in the effect.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
-    setLoaded(false);
     createClient()
       .from("listings")
       .select("data")
@@ -269,13 +270,13 @@ export function useHostDbExperienceListings(hostId: string): { items: Experience
       .then(({ data }) => {
         if (!active) return;
         setRows(((data ?? []) as { data: Experience }[]).map((r) => r.data));
-        setLoaded(true);
+        setLoadedFor(hostId);
       });
     return () => {
       active = false;
     };
   }, [hostId]);
-  return { items: rows, loaded };
+  return { items: rows, loaded: loadedFor === hostId };
 }
 
 // --- Services (handyman providers; read-only catalog — no self-serve host CRUD) ---

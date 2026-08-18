@@ -46,6 +46,9 @@ function Pos() {
     try {
       if (urlToken) {
         window.localStorage.setItem(TOKEN_KEY, urlToken);
+        // One-time reconcile of the token against the ?t= link / localStorage on mount; this is a
+        // client-only read (no SSR equivalent), so the synchronous setState here is intentional.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setToken(urlToken);
         // Also stash it in Cache Storage so the service worker can redirect a future token-less
         // launch (e.g. an installed shortcut whose start_url lost the token) back to this partner.
@@ -99,6 +102,9 @@ function Pos() {
   }, []);
 
   useEffect(() => {
+    // Seed live browser/queue state on mount — both are client-only reads with no SSR value, so the
+    // synchronous setState is intentional (the online/offline listeners below keep them current).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOnline(navigator.onLine);
     setQueued(queuedCount());
     if (navigator.onLine && token) void refreshMemberDigest(token);

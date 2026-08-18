@@ -56,10 +56,7 @@ function useOwnedBookingRows(): { rows: Row[]; uid: string | null } {
   const uid = user?.id ?? null;
   const [rows, setRows] = useState<Row[]>([]);
   useEffect(() => {
-    if (!uid) {
-      setRows([]);
-      return;
-    }
+    if (!uid) return;
     let active = true;
     createClient()
       .from("bookings")
@@ -76,7 +73,8 @@ function useOwnedBookingRows(): { rows: Row[]; uid: string | null } {
       active = false;
     };
   }, [uid]);
-  return { rows, uid };
+  // Signed out ⇒ no rows, derived during render rather than cleared with a synchronous setState.
+  return { rows: uid ? rows : [], uid };
 }
 
 /** Unified ledger (experiences + stays + cars) for the signed-in host, from real bookings. */
