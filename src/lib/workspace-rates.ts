@@ -1,4 +1,4 @@
-import { addDays, addWeeks, addMonths, addHours } from "date-fns";
+import { addDays, addWeeks, addMonths } from "date-fns";
 import type { Experience, RateUnit, WorkspaceRate } from "@/lib/types";
 
 /**
@@ -33,11 +33,15 @@ export function rateUnitSuffix(unit: RateUnit): string {
  * End of the occupancy span for `count` units of `unit` starting at `start`. End-exclusive,
  * matching the platform's checkout-exclusive range convention. Months are calendar months
  * (Jan 15 → Feb 15), not a flat 30 days.
+ *
+ * Hourly is day-granular: the bookings table stores whole dates (start_date/end_date with a
+ * `end_date > start_date` check), so an hourly booking is priced by the hour but holds the desk
+ * for that whole calendar day. True intra-day desk turnover needs a timestamptz schema change.
  */
 export function spanEnd(start: Date, unit: RateUnit, count: number): Date {
   switch (unit) {
     case "hour":
-      return addHours(start, count);
+      return addDays(start, 1);
     case "day":
       return addDays(start, count);
     case "week":
@@ -55,12 +59,4 @@ export function workspaceSubtotal(rate: WorkspaceRate, count: number, desks: num
 /** Cheapest rate in a card, for a "from ₵X / unit" headline price. */
 export function cheapestRate(rates: WorkspaceRate[]): WorkspaceRate | undefined {
   return rates.slice().sort((a, b) => a.price - b.price)[0];
-}
-
-/**
- * Rates offered for online booking today. Phase 1 excludes hourly, which needs time-of-day
- * slot selection the date-range engine can't express yet (Phase 2).
- */
-export function bookableRates(rates: WorkspaceRate[]): WorkspaceRate[] {
-  return rates.filter((r) => r.unit !== "hour");
 }

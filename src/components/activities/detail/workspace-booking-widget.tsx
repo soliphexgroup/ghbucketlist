@@ -18,7 +18,6 @@ import { toISODate } from "@/lib/availability";
 import { startOfToday } from "@/lib/dates";
 import { useListingBookedRanges, dbSeatsLeft } from "@/lib/db-availability";
 import {
-  bookableRates,
   cheapestRate,
   rateUnitLabel,
   rateUnitSuffix,
@@ -32,7 +31,7 @@ function clamp(value: number, min: number, max: number) {
 }
 
 export function WorkspaceBookingWidget({ experience }: { experience: Experience }) {
-  const rates = bookableRates(experience.workspaceRates ?? []);
+  const rates = experience.workspaceRates ?? [];
   const [unit, setUnit] = useState<RateUnit>(rates[0]?.unit ?? "day");
   const rate = rates.find((r) => r.unit === unit) ?? rates[0];
 
@@ -115,7 +114,7 @@ export function WorkspaceBookingWidget({ experience }: { experience: Experience 
             <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Rate
             </Label>
-            <div className="mt-2 grid grid-cols-3 gap-2">
+            <div className="mt-2 grid grid-cols-2 gap-2">
               {rates.map((r) => (
                 <button
                   key={r.unit}
@@ -181,6 +180,12 @@ export function WorkspaceBookingWidget({ experience }: { experience: Experience 
               incLabel="Increase duration"
             />
           </div>
+          {rate.unit === "hour" && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Hourly pass — your {experience.deskBased ? "desk is" : "space is"} reserved for the
+              whole day.
+            </p>
+          )}
         </div>
 
         {experience.deskBased && (

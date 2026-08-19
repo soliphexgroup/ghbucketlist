@@ -26,8 +26,10 @@ import type { Experience, RateUnit, TicketType, WorkspaceRate } from "@/lib/type
 
 const SCHEDULE_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-// Rate units a host can price today. Hourly is Phase 2 (needs time-of-day slot booking).
+// Rate units a host can price. Hourly is day-granular (desk held for the day, priced per hour) —
+// see spanEnd() in src/lib/workspace-rates.ts.
 const WORKSPACE_UNITS: { unit: RateUnit; label: string; hint: string }[] = [
+  { unit: "hour", label: "Hourly", hint: "per hour" },
   { unit: "day", label: "Daily", hint: "per day" },
   { unit: "week", label: "Weekly", hint: "per week" },
   { unit: "month", label: "Monthly", hint: "per month" },
@@ -183,7 +185,7 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
       : "Add a ticket type with a price, or mark the experience free.",
     !isWorkspaceListing || workspaceRatesToSave.length > 0
       ? null
-      : "Add at least one workspace rate (daily, weekly, or monthly) with a price.",
+      : "Add at least one workspace rate (hourly, daily, weekly, or monthly) with a price.",
     images.length >= 2 ? null : "Add at least 2 photos of the experience.",
   ].filter((e): e is string => e !== null);
   const canSubmit = validationErrors.length === 0;
@@ -507,7 +509,8 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
                 </div>
               ))}
               <p className="text-xs text-muted-foreground">
-                Turn on the rates you offer and set a price. Hourly booking is coming soon.
+                Turn on the rates you offer and set a price. The hourly rate reserves the space for
+                the day.
               </p>
             </div>
           ) : (
