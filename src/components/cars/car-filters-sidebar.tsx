@@ -7,7 +7,6 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CategoryIcon } from "@/components/category-icon";
 import { carFeatures } from "@/data/car-features";
-import { carPriceBounds } from "@/lib/car-repository";
 import { formatGHS } from "@/lib/format";
 import type { CarCategory } from "@/lib/car-types";
 import type { CarFilterState } from "@/components/cars/car-browser";
@@ -23,12 +22,16 @@ export function CarFiltersSidebar({
   filters,
   onChange,
   onClear,
+  maxBound,
 }: {
   filters: CarFilterState;
   onChange: (next: Partial<CarFilterState>) => void;
   onClear: () => void;
+  /** Live price ceiling from the DB catalog — the top of the slider. */
+  maxBound: number;
 }) {
-  const bounds = carPriceBounds();
+  // Uncapped (Infinity) shows the slider at its ceiling and reads as "no cap".
+  const sliderValue = Number.isFinite(filters.maxPrice) ? filters.maxPrice : maxBound;
 
   function toggleCategory(category: CarCategory, checked: boolean) {
     const next = checked ? [...filters.categories, category] : filters.categories.filter((c) => c !== category);
@@ -93,14 +96,14 @@ export function CarFiltersSidebar({
       <div>
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Price per day</p>
-          <span className="text-xs font-medium text-foreground">Up to {formatGHS(filters.maxPrice)}</span>
+          <span className="text-xs font-medium text-foreground">Up to {formatGHS(sliderValue)}</span>
         </div>
         <Slider
           className="mt-4"
-          min={bounds.min}
-          max={bounds.max}
+          min={0}
+          max={maxBound}
           step={20}
-          value={[filters.maxPrice]}
+          value={[sliderValue]}
           onValueChange={([value]) => onChange({ maxPrice: value })}
         />
       </div>

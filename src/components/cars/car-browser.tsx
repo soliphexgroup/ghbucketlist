@@ -39,7 +39,9 @@ function defaultFilters(): CarFilterState {
   return {
     q: "",
     categories: [] as CarCategory[],
-    maxPrice: carPriceBounds().max,
+    // Uncapped by default — the ceiling is derived from the live catalog and only caps once a
+    // guest drags the slider. Infinity never excludes a car regardless of price.
+    maxPrice: Infinity,
     features: [],
     driverAvailableOnly: false,
     instantBookOnly: false,
@@ -82,6 +84,9 @@ function CarBrowserInner({
       }),
     [rawCatalog, listingRatings]
   );
+  // The price ceiling tracks the live catalog, so pricier real cars stay reachable.
+  const priceCeiling = useMemo(() => carPriceBounds(catalog).max, [catalog]);
+
   const { byListing } = useAllBookedRanges();
   const matched = useMemo(
     () =>
@@ -89,7 +94,8 @@ function CarBrowserInner({
         {
           q: filters.q,
           categories: filters.categories,
-          maxPrice: filters.maxPrice,
+          // Infinity (the uncapped default) means "no price filter".
+          maxPrice: Number.isFinite(filters.maxPrice) ? filters.maxPrice : undefined,
           seats: filters.seats > 1 ? filters.seats : undefined,
           transmission: filters.transmission,
           features: filters.features,
@@ -146,7 +152,7 @@ function CarBrowserInner({
                 <SheetTitle>Filters</SheetTitle>
               </SheetHeader>
               <div className="px-4 pb-8">
-                <CarFiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} />
+                <CarFiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} maxBound={priceCeiling} />
               </div>
             </SheetContent>
           </Sheet>
@@ -168,7 +174,7 @@ function CarBrowserInner({
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
         <aside className="hidden lg:block">
-          <CarFiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} />
+          <CarFiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} maxBound={priceCeiling} />
         </aside>
 
         <div>

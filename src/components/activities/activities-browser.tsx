@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { listExperiences, priceRangeBounds } from "@/lib/repository";
+import { listExperiences, priceRangeBounds, listNeighbourhoods } from "@/lib/repository";
 import { useDbExperienceListings } from "@/lib/db-listings";
 import { useListingRatings } from "@/lib/db-reviews";
 import { useAllBookedRanges, dbSeatsLeft } from "@/lib/db-availability";
@@ -62,11 +62,11 @@ const sortOptions: { value: NonNullable<ExperienceFilters["sort"]>; label: strin
 ];
 
 function initialFilters(params: URLSearchParams): FilterState {
-  const bounds = priceRangeBounds();
   return {
     q: params.get("q") ?? "",
     categories: params.get("category") ? [params.get("category")!] : [],
-    maxPrice: params.get("maxPrice") ? Number(params.get("maxPrice")) : bounds.max,
+    // Uncapped unless the URL carries an explicit maxPrice; the live ceiling drives the slider.
+    maxPrice: params.get("maxPrice") ? Number(params.get("maxPrice")) : Infinity,
     duration: (params.get("duration") as FilterState["duration"]) ?? undefined,
     neighbourhood: params.get("neighbourhood") ?? undefined,
     minRating: params.get("minRating") ? Number(params.get("minRating")) : undefined,
@@ -86,7 +86,6 @@ export function ActivitiesBrowser({
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const bounds = priceRangeBounds();
   const [filters, setFilters] = useState<FilterState>(() => initialFilters(searchParams));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -101,6 +100,9 @@ export function ActivitiesBrowser({
       }),
     [rawCatalog, listingRatings]
   );
+  // Price ceiling and neighbourhood suggestions track the live catalog, not the seed.
+  const priceCeiling = useMemo(() => priceRangeBounds(catalog).max, [catalog]);
+  const neighbourhoods = useMemo(() => listNeighbourhoods(catalog), [catalog]);
   const { byListing } = useAllBookedRanges();
   const matched = useMemo(() => listExperiences(filters, catalog), [filters, catalog]);
 
@@ -121,7 +123,7 @@ export function ActivitiesBrowser({
     const params = new URLSearchParams();
     if (merged.q) params.set("q", merged.q);
     if (merged.categories.length === 1) params.set("category", merged.categories[0]);
-    if (merged.maxPrice !== bounds.max) params.set("maxPrice", String(merged.maxPrice));
+    if (Number.isFinite(merged.maxPrice)) params.set("maxPrice", String(merged.maxPrice));
     if (merged.duration) params.set("duration", merged.duration);
     if (merged.neighbourhood) params.set("neighbourhood", merged.neighbourhood);
     if (merged.minRating) params.set("minRating", String(merged.minRating));
@@ -133,7 +135,7 @@ export function ActivitiesBrowser({
   }
 
   function clearFilters() {
-    setFilters({ q: "", categories: [], maxPrice: bounds.max, sort: "recommended" });
+    setFilters({ q: "", categories: [], maxPrice: Infinity, sort: "recommended" });
     router.replace(basePath, { scroll: false });
   }
 
@@ -172,7 +174,7 @@ export function ActivitiesBrowser({
                 <SheetTitle>Filters</SheetTitle>
               </SheetHeader>
               <div className="px-4 pb-8">
-                <FiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} />
+                <FiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} maxBound={priceCeiling} neighbourhoods={neighbourhoods} />
               </div>
             </SheetContent>
           </Sheet>
@@ -197,7 +199,7 @@ export function ActivitiesBrowser({
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
         <aside className="hidden lg:block">
-          <FiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} />
+          <FiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} maxBound={priceCeiling} neighbourhoods={neighbourhoods} />
         </aside>
 
         <div>

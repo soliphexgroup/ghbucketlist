@@ -104,9 +104,12 @@ export function listCarCategories(): CarCategory[] {
   return Array.from(new Set(cars.map((c) => c.category)));
 }
 
-export function carPriceBounds() {
-  const prices = cars.map((c) => c.pricePerDay);
-  // Floor the slider at GHS 10,000 so the "up to" filter has real headroom; it still
-  // stretches further automatically if a pricier car is ever listed.
+/**
+ * Price range for the slider/filter. Pass the live DB catalog so the ceiling tracks real
+ * listings — defaulting to the seed would cap search below any pricier real car. The 10,000
+ * floor gives the slider headroom when the catalog is empty or all-cheap.
+ */
+export function carPriceBounds(source: Car[] = cars) {
+  const prices = source.map((c) => c.pricePerDay);
   return { min: 0, max: Math.max(...prices, 10000) };
 }

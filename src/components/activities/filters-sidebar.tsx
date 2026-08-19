@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { categories } from "@/data/categories";
-import { listNeighbourhoods, priceRangeBounds } from "@/lib/repository";
 import { formatGHS } from "@/lib/format";
 import type { ExperienceFilters } from "@/lib/repository";
 
@@ -40,13 +39,19 @@ export function FiltersSidebar({
   filters,
   onChange,
   onClear,
+  maxBound,
+  neighbourhoods,
 }: {
   filters: FilterState;
   onChange: (next: Partial<FilterState>) => void;
   onClear: () => void;
+  /** Live price ceiling from the DB catalog — the top of the slider. */
+  maxBound: number;
+  /** Neighbourhoods with published activities, from the live DB catalog. */
+  neighbourhoods: string[];
 }) {
-  const bounds = priceRangeBounds();
-  const neighbourhoods = listNeighbourhoods();
+  // Uncapped (Infinity) shows the slider at its ceiling and reads as "no cap".
+  const sliderValue = Number.isFinite(filters.maxPrice) ? filters.maxPrice : maxBound;
 
   function toggleCategory(slug: string, checked: boolean) {
     const next = checked
@@ -110,15 +115,15 @@ export function FiltersSidebar({
             Price range
           </p>
           <span className="text-xs font-medium text-foreground">
-            Up to {formatGHS(filters.maxPrice)}
+            Up to {formatGHS(sliderValue)}
           </span>
         </div>
         <Slider
           className="mt-4"
-          min={bounds.min}
-          max={bounds.max}
+          min={0}
+          max={maxBound}
           step={10}
-          value={[filters.maxPrice]}
+          value={[sliderValue]}
           onValueChange={([value]) => onChange({ maxPrice: value })}
         />
       </div>

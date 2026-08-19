@@ -131,11 +131,13 @@ export function listBlogPosts(limit?: number) {
   return limit ? blogPosts.slice(0, limit) : blogPosts;
 }
 
-export function listNeighbourhoods() {
-  return Array.from(new Set(experiences.map((e) => e.neighbourhood))).sort();
+/** Neighbourhoods with published activities, for the filter. Pass the live DB catalog. */
+export function listNeighbourhoods(source: Experience[] = experiences) {
+  return Array.from(new Set(source.map((e) => e.neighbourhood))).sort();
 }
 
-export function priceRangeBounds() {
-  const prices = experiences.map((e) => getPriceFrom(e));
+/** Activity price range for the slider/filter. Pass the live DB catalog so it tracks real prices. */
+export function priceRangeBounds(source: Experience[] = experiences) {
+  const prices = source.map((e) => getPriceFrom(e));
   return { min: 0, max: Math.max(...prices, 500) };
 }
