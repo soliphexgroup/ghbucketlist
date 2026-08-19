@@ -40,7 +40,7 @@ export function StayLanding() {
 
       {searched ? (
         <>
-          <MobileSearchBar activeTab="stays" />
+          <MobileSearchBar activeTab="stays" showOnDesktop />
           <StayBrowser />
         </>
       ) : (

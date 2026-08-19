@@ -9,6 +9,7 @@ import { MobileActivitySearch } from "@/components/home/mobile-activity-search";
 import { MobileCarSearch } from "@/components/home/mobile-car-search";
 import { MobileServiceSearch } from "@/components/home/mobile-service-search";
 import { parseDateParam } from "@/lib/dates";
+import { cn } from "@/lib/utils";
 import type { ServiceTabId } from "@/lib/service-tabs";
 
 const listingPathByTab: Record<ServiceTabId, string> = {
@@ -73,10 +74,13 @@ function summarise(activeTab: ServiceTabId, params: URLSearchParams) {
 export function MobileSearchBar({
   activeTab,
   mode = "listing",
+  showOnDesktop = false,
 }: {
   activeTab: ServiceTabId;
   /** "current" re-searches the page you're on (so a detail page reprices in place). */
   mode?: "listing" | "current";
+  /** By default the bar is mobile-only; set this to also show it above desktop results. */
+  showOnDesktop?: boolean;
 }) {
   const params = useSearchParams();
   const pathname = usePathname();
@@ -103,11 +107,16 @@ export function MobileSearchBar({
 
   return (
     <>
-      <div className="sticky top-16 z-40 border-b border-border bg-background px-4 py-2.5 lg:hidden">
+      <div
+        className={cn(
+          "sticky top-16 z-40 border-b border-border bg-background px-4 py-2.5",
+          !showOnDesktop && "lg:hidden"
+        )}
+      >
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex w-full items-center gap-3 rounded-xl border-2 border-search-accent bg-white px-4 py-2.5 text-left shadow-sm"
+          className="mx-auto flex w-full max-w-[64rem] items-center gap-3 rounded-xl border-2 border-search-accent bg-white px-4 py-2.5 text-left shadow-sm"
         >
           <Search className="size-4 shrink-0 text-muted-foreground" />
           <span className="min-w-0 flex-1">
