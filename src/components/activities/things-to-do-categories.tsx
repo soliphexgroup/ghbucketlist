@@ -68,6 +68,11 @@ const categoryTiles: { slug: string; label: string; image: string }[] = [
     label: "Workshops",
     image: "https://images.unsplash.com/photo-1757085242652-f8cd4d3de889?auto=format&fit=crop&w=700&h=560&q=80",
   },
+  {
+    slug: "workspace",
+    label: "Rent a workspace",
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=700&h=560&q=80",
+  },
 ];
 
 export function ThingsToDoCategories() {
