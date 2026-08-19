@@ -7,7 +7,6 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CategoryIcon } from "@/components/category-icon";
 import { amenities } from "@/data/amenities";
-import { propertyPriceBounds } from "@/lib/stay-repository";
 import { formatGHS } from "@/lib/format";
 import type { PropertyType } from "@/lib/stay-types";
 import type { StayFilterState } from "@/components/stay/stay-browser";
@@ -22,12 +21,16 @@ export function StayFiltersSidebar({
   filters,
   onChange,
   onClear,
+  maxBound,
 }: {
   filters: StayFilterState;
   onChange: (next: Partial<StayFilterState>) => void;
   onClear: () => void;
+  /** Live price ceiling from the DB catalog — the top of the slider. */
+  maxBound: number;
 }) {
-  const bounds = propertyPriceBounds();
+  // Uncapped (Infinity) shows the slider at its ceiling and reads as "no cap".
+  const sliderValue = Number.isFinite(filters.maxPrice) ? filters.maxPrice : maxBound;
 
   function togglePropertyType(type: PropertyType, checked: boolean) {
     const next = checked ? [...filters.propertyTypes, type] : filters.propertyTypes.filter((t) => t !== type);
@@ -92,14 +95,14 @@ export function StayFiltersSidebar({
       <div>
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Price per night</p>
-          <span className="text-xs font-medium text-foreground">Up to {formatGHS(filters.maxPrice)}</span>
+          <span className="text-xs font-medium text-foreground">Up to {formatGHS(sliderValue)}</span>
         </div>
         <Slider
           className="mt-4"
-          min={bounds.min}
-          max={bounds.max}
+          min={0}
+          max={maxBound}
           step={20}
-          value={[filters.maxPrice]}
+          value={[sliderValue]}
           onValueChange={([value]) => onChange({ maxPrice: value })}
         />
       </div>

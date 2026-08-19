@@ -86,7 +86,12 @@ export function listPropertyNeighbourhoods() {
   return Array.from(new Set(properties.map((p) => p.neighbourhood))).sort();
 }
 
-export function propertyPriceBounds() {
-  const prices = properties.map((p) => p.pricePerNight);
+/**
+ * Price range for the slider/filter. Pass the live DB catalog so the ceiling tracks real
+ * listings — defaulting to the seed catalog would cap search below any pricier real place.
+ * The 500 floor keeps the slider usable when the catalog is empty or all-cheap.
+ */
+export function propertyPriceBounds(source: Property[] = properties) {
+  const prices = source.map((p) => p.pricePerNight);
   return { min: 0, max: Math.max(...prices, 500) };
 }

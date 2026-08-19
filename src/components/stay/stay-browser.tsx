@@ -36,7 +36,9 @@ function defaultFilters(): StayFilterState {
   return {
     q: "",
     propertyTypes: [] as PropertyType[],
-    maxPrice: propertyPriceBounds().max,
+    // Uncapped by default — the ceiling is derived from the live catalog below, and only caps
+    // once a guest drags the slider. Infinity never excludes a listing regardless of price.
+    maxPrice: Infinity,
     amenities: [],
     instantBookOnly: false,
     sort: "recommended",
@@ -85,6 +87,9 @@ function StayBrowserInner({
       }),
     [rawCatalog, listingRatings]
   );
+  // The price ceiling tracks the live catalog, so pricier real listings stay reachable.
+  const priceCeiling = useMemo(() => propertyPriceBounds(catalog).max, [catalog]);
+
   const { byListing } = useAllBookedRanges();
   const matched = useMemo(
     () =>
@@ -92,7 +97,8 @@ function StayBrowserInner({
         {
           q: filters.q,
           propertyTypes: filters.propertyTypes,
-          maxPrice: filters.maxPrice,
+          // Infinity (the uncapped default) means "no price filter".
+          maxPrice: Number.isFinite(filters.maxPrice) ? filters.maxPrice : undefined,
           bedrooms: filters.bedrooms || undefined,
           amenities: filters.amenities,
           instantBookOnly: filters.instantBookOnly,
@@ -151,7 +157,7 @@ function StayBrowserInner({
                 <SheetTitle>Filters</SheetTitle>
               </SheetHeader>
               <div className="px-4 pb-8">
-                <StayFiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} />
+                <StayFiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} maxBound={priceCeiling} />
               </div>
             </SheetContent>
           </Sheet>
@@ -173,7 +179,7 @@ function StayBrowserInner({
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
         <aside className="hidden lg:block">
-          <StayFiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} />
+          <StayFiltersSidebar filters={filters} onChange={updateFilters} onClear={clearFilters} maxBound={priceCeiling} />
         </aside>
 
         <div>
