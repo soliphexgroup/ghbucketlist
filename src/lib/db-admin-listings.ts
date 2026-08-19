@@ -66,6 +66,14 @@ export async function setListingActive(id: string, active: boolean): Promise<Wri
   return { ok: true };
 }
 
+/** Admin: pause or reactivate every listing owned by a host in one go (admin RLS allows it). */
+export async function setHostListingsActive(hostId: string, active: boolean): Promise<WriteResult> {
+  const supabase = createClient();
+  const { error } = await supabase.from("listings").update({ is_active: active }).eq("host_id", hostId);
+  if (error) return { ok: false, reason: "error", message: error.message };
+  return { ok: true };
+}
+
 /**
  * Admin: grant or revoke a service provider's verified badge. The flag lives inside the listing's
  * `data` jsonb, so we read the current data, merge the new value, and write it back (admin RLS

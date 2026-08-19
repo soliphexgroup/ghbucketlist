@@ -6,30 +6,67 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   useHostApplications,
   approveHostApplication,
   declineHostApplication,
 } from "@/lib/db-host-applications";
-import { useAdminUsers } from "@/lib/db-admin-users";
-import { useAdminListings } from "@/lib/db-admin-listings";
+import { useAdminUsers, setUserStatus, type UserStatus } from "@/lib/db-admin-users";
+import { useAdminListings, setHostListingsActive } from "@/lib/db-admin-listings";
 import { notifyHostApplication } from "@/lib/email/notify";
 
 export default function AdminHostsPage() {
   const { applications, refresh: refreshApps } = useHostApplications();
   const { users, refresh: refreshUsers } = useAdminUsers();
-  const { listings } = useAdminListings();
+  const { listings, refresh: refreshListings } = useAdminListings();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const pending = applications.filter((a) => a.status === "pending");
 
   const hostRows = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const l of listings) counts.set(l.hostId, (counts.get(l.hostId) ?? 0) + 1);
+    const counts = new Map<string, { total: number; active: number }>();
+    for (const l of listings) {
+      const c = counts.get(l.hostId) ?? { total: 0, active: 0 };
+      c.total += 1;
+      if (l.isActive) c.active += 1;
+      counts.set(l.hostId, c);
+    }
     return users
       .filter((u) => u.role === "host" || u.role === "admin")
-      .map((u) => ({ ...u, listingCount: counts.get(u.id) ?? 0 }));
+      .map((u) => {
+        const c = counts.get(u.id) ?? { total: 0, active: 0 };
+        return { ...u, listingCount: c.total, activeCount: c.active };
+      });
   }, [users, listings]);
+
+  async function toggleSuspend(userId: string, current: UserStatus) {
+    setBusyId(userId);
+    setError(null);
+    const res = await setUserStatus(userId, current === "active" ? "suspended" : "active");
+    setBusyId(null);
+    if (!res.ok) return setError(res.message);
+    refreshUsers();
+  }
+
+  async function togglePauseAll(hostId: string, anyActive: boolean) {
+    setBusyId(hostId);
+    setError(null);
+    const res = await setHostListingsActive(hostId, !anyActive);
+    setBusyId(null);
+    if (!res.ok) return setError(res.message);
+    refreshListings();
+  }
 
   async function decide(id: string, approve: boolean) {
     setBusyId(id);
@@ -69,12 +106,13 @@ export default function AdminHostsPage() {
                 <th className="px-4 py-3 font-medium">Listings</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Joined</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {hostRows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
                     No hosts yet.
                   </td>
                 </tr>
@@ -94,6 +132,61 @@ export default function AdminHostsPage() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {new Date(h.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {h.listingCount > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={busyId === h.id}
+                            onClick={() => togglePauseAll(h.id, h.activeCount > 0)}
+                          >
+                            {h.activeCount > 0 ? "Pause all" : "Activate all"}
+                          </Button>
+                        )}
+                        {h.role === "host" &&
+                          (h.status === "active" ? (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive hover:text-destructive"
+                                  disabled={busyId === h.id}
+                                >
+                                  Suspend
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Suspend {h.fullName ?? h.email ?? "this host"}?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Their listings are immediately hidden from the marketplace and they
+                                    can&apos;t create new ones until reactivated. Existing bookings are
+                                    unaffected.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => toggleSuspend(h.id, h.status)}>
+                                    Suspend host
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          ) : (
+                            <Button
+                              size="sm"
+                              disabled={busyId === h.id}
+                              onClick={() => toggleSuspend(h.id, h.status)}
+                            >
+                              Reactivate
+                            </Button>
+                          ))}
+                      </div>
                     </td>
                   </tr>
                 ))
