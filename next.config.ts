@@ -32,6 +32,10 @@ const nextConfig: NextConfig = {
     ],
     // Cache the optimized variants on the server for 31 days (source URLs are content-addressed).
     minimumCacheTTL: 2678400,
+    // Cap the largest variant at 1600px (default goes up to 3840). No listing image — not even a
+    // full-width detail gallery — needs 4K, and a pre-compression original (e.g. a 2MB upload) was
+    // otherwise served at ~780KB. Capped, that same image is ~150–250KB at full width.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1600],
   },
   // The service worker and the per-partner manifest MUST NOT be cached by the CDN — the browser
   // relies on fetching the current bytes to detect updates. A cached sw.js silently blocks every
