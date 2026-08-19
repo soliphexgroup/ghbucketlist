@@ -28,27 +28,28 @@ select 'reviews', count(*) from public.reviews
   where listing_id in (select id from public.listings where created_by is null);
 
 -- ---------------------------------------------------------------------------
--- STEP 2 — Clear the seed (RECOMMENDED: keep Handyman services)
--- Removes seeded stays, cars, and experiences. Real hosts repopulate these from the host
--- dashboard. Handyman services are kept because there is no self-serve way to add providers yet.
--- Uncomment the delete below to run it.
+-- STEP 2 (RECOMMENDED) — Clear ALL seeded listings, including services
+-- Every vertical is now self-serve: hosts repopulate stays, cars, experiences, AND handyman
+-- services from the host dashboard (e.g. My Services → Add New Service), and admins grant the
+-- verified badge from Admin → Listings. So the whole demo catalog can go. Uncomment to run.
+-- ---------------------------------------------------------------------------
+-- delete from public.listings
+-- where created_by is null;
+
+-- ---------------------------------------------------------------------------
+-- STEP 2 (ALTERNATIVE) — Keep the seeded Handyman services
+-- Use this if you'd rather the Services page isn't empty on day one — it keeps the demo providers
+-- visible and clears only stays, cars, and experiences. (Real hosts can still add their own
+-- services alongside them.) Use this INSTEAD of the recommended delete above, not in addition.
 -- ---------------------------------------------------------------------------
 -- delete from public.listings
 -- where created_by is null
 --   and kind in ('stay', 'car', 'experience');
 
 -- ---------------------------------------------------------------------------
--- STEP 2 (ALTERNATIVE) — Clear EVERYTHING, including services
--- Handyman Services will be empty at launch with no UI to add providers (re-add later via SQL).
--- Use this INSTEAD of the recommended delete above, not in addition.
--- ---------------------------------------------------------------------------
--- delete from public.listings
--- where created_by is null;
-
--- ---------------------------------------------------------------------------
 -- STEP 3 — Verify (after deleting)
--- Should show only real host listings (created_by not null), plus kept services if you used the
--- recommended option.
+-- Should show only real host listings (created_by not null) — plus the seeded services if you
+-- used the alternative that keeps them.
 -- ---------------------------------------------------------------------------
 -- select kind, created_by is null as is_seed, count(*)
 -- from public.listings
