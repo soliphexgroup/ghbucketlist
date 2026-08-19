@@ -7,7 +7,6 @@ import { Container } from "@/components/container";
 import { PropertyCard } from "@/components/stay/property-card";
 import { listProperties } from "@/lib/stay-repository";
 import { useDbStayListings } from "@/lib/db-listings";
-import { properties as seedProperties } from "@/data/properties";
 import { ACCRA_CENTER, haversineKm, neighbourhoodCoords, type LatLng } from "@/lib/accra-geo";
 import type { Property } from "@/lib/stay-types";
 
@@ -90,9 +89,10 @@ function HotelCarousel({
  * central Accra otherwise so the row is always populated.
  */
 export function HotelsCarousels() {
-  const dbCatalog = useDbStayListings();
-  // The DB hook is empty on first paint; fall back to the seed catalog so the sections never flash empty.
-  const catalog = dbCatalog.length > 0 ? dbCatalog : seedProperties;
+  // Real, published stays only — no seed fallback. While the DB loads (or when it's genuinely
+  // empty) the catalog is empty and each HotelCarousel renders nothing (returns null for 0 cards),
+  // so the sections appear once real listings arrive rather than showing demo data.
+  const catalog = useDbStayListings();
 
   const recommended = useMemo<Card[]>(
     () => listProperties({ sort: "recommended" }, catalog).slice(0, HOW_MANY).map((property) => ({ property })),
