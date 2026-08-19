@@ -14,7 +14,6 @@ import {
   useHostBookings,
   useHostLedger,
 } from "@/lib/host-repository";
-import { getExperienceById } from "@/data/experiences";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -171,7 +170,7 @@ export default function HostOverviewPage() {
               <p className="text-sm text-muted-foreground">No upcoming sessions scheduled.</p>
             ) : (
               sessionList.slice(0, 6).map((session) => {
-                const exp = getExperienceById(session.experienceId);
+                const exp = experiences.find((e) => e.id === session.experienceId);
                 if (!exp) return null;
                 return (
                   <div

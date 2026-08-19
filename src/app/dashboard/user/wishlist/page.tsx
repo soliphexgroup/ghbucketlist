@@ -7,17 +7,25 @@ import { PropertyCard } from "@/components/stay/property-card";
 import { CarCard } from "@/components/cars/car-card";
 import { ProviderCard } from "@/components/services/provider-card";
 import { useWishlistIds } from "@/lib/wishlist-store";
-import { getExperienceById } from "@/data/experiences";
-import { getPropertyById } from "@/data/properties";
-import { getCarById } from "@/data/cars";
-import { getServiceProviderById } from "@/data/service-providers";
+import {
+  useDbStayListings,
+  useDbCarListings,
+  useDbExperienceListings,
+  useDbServiceListings,
+} from "@/lib/db-listings";
 
 export default function MyWishlistPage() {
   const ids = useWishlistIds();
-  const experiences = ids.map(getExperienceById).filter((e) => e !== undefined);
-  const stays = ids.map(getPropertyById).filter((p) => p !== undefined);
-  const rentalCars = ids.map(getCarById).filter((c) => c !== undefined);
-  const providers = ids.map(getServiceProviderById).filter((p) => p !== undefined);
+  // Resolve saved ids against the live DB catalogs so host-created listings show too (the static
+  // seed lookups only knew the demo catalog). Mapping over ids preserves the save order.
+  const dbExperiences = useDbExperienceListings();
+  const dbStays = useDbStayListings();
+  const dbCars = useDbCarListings();
+  const dbServices = useDbServiceListings();
+  const experiences = ids.map((id) => dbExperiences.find((e) => e.id === id)).filter((e) => e !== undefined);
+  const stays = ids.map((id) => dbStays.find((p) => p.id === id)).filter((p) => p !== undefined);
+  const rentalCars = ids.map((id) => dbCars.find((c) => c.id === id)).filter((c) => c !== undefined);
+  const providers = ids.map((id) => dbServices.find((p) => p.id === id)).filter((p) => p !== undefined);
   const isEmpty = experiences.length === 0 && stays.length === 0 && rentalCars.length === 0 && providers.length === 0;
 
   return (

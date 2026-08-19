@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useHostExperiences, useHostBookings } from "@/lib/host-repository";
-import { getExperienceById } from "@/data/experiences";
 
 export default function CheckInPage() {
   const experiences = useHostExperiences();
@@ -66,7 +65,10 @@ export default function CheckInPage() {
     });
   }
 
-  const activeExperience = activeSession ? getExperienceById(activeSession.experienceId) : undefined;
+  // The host's own experiences (DB-backed) are already loaded above; look up within them.
+  const activeExperience = activeSession
+    ? experiences.find((e) => e.id === activeSession.experienceId)
+    : undefined;
 
   return (
     <div>
@@ -80,7 +82,7 @@ export default function CheckInPage() {
           </SelectTrigger>
           <SelectContent>
             {sessions.map((s) => {
-              const exp = getExperienceById(s.experienceId);
+              const exp = experiences.find((e) => e.id === s.experienceId);
               return (
                 <SelectItem key={s.key} value={s.key}>
                   {exp?.title} —{" "}

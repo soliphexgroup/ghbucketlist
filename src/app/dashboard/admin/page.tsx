@@ -6,13 +6,15 @@ import { EarningsSparkline } from "@/components/dashboard/earnings-sparkline";
 import { useAllPlatformBookings } from "@/lib/admin-repository";
 import { platformUsers } from "@/data/platform-users";
 import { pendingListings } from "@/data/pending-listings";
-import { experiences } from "@/data/experiences";
+import { useDbExperienceListings } from "@/lib/db-listings";
 import { getExperienceCategory } from "@/lib/repository";
 import { platformFee } from "@/lib/host-repository";
 import { formatGHS } from "@/lib/format";
 
 export default function AdminOverviewPage() {
   const bookings = useAllPlatformBookings();
+  // Live experience catalog, so bookings map to real (host-created) experiences, not just seed.
+  const experiences = useDbExperienceListings();
   const active = bookings.filter((b) => b.status !== "cancelled");
   const grossRevenue = active.reduce((sum, b) => sum + b.total, 0);
   // Platform earnings = the 12% commission on all active bookings.
