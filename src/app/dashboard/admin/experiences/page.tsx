@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Pause, Play, Trash2 } from "lucide-react";
+import { BadgeCheck, Pause, Play, ShieldCheck, ShieldX, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAdminListings, setListingActive, removeListing } from "@/lib/db-admin-listings";
+import { useAdminListings, setListingActive, setServiceVerified, removeListing } from "@/lib/db-admin-listings";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ListingKind } from "@/lib/db-availability";
@@ -54,6 +54,15 @@ export default function AdminExperiencesPage() {
     setBusy(id);
     setError(null);
     const res = await setListingActive(id, active);
+    setBusy(null);
+    if (!res.ok) return setError(res.message);
+    refresh();
+  }
+
+  async function toggleVerified(id: string, verified: boolean) {
+    setBusy(id);
+    setError(null);
+    const res = await setServiceVerified(id, verified);
     setBusy(null);
     if (!res.ok) return setError(res.message);
     refresh();
@@ -133,15 +142,42 @@ export default function AdminExperiencesPage() {
                 <td className="px-4 py-3 text-muted-foreground">{l.city ?? "—"}</td>
                 <td className="px-4 py-3 text-foreground">{formatGHS(l.priceFrom)}</td>
                 <td className="px-4 py-3">
-                  <Badge
-                    className={cn(l.isActive ? "bg-success/10 text-success" : "")}
-                    variant={l.isActive ? "default" : "outline"}
-                  >
-                    {l.isActive ? "Active" : "Paused"}
-                  </Badge>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge
+                      className={cn(l.isActive ? "bg-success/10 text-success" : "")}
+                      variant={l.isActive ? "default" : "outline"}
+                    >
+                      {l.isActive ? "Active" : "Paused"}
+                    </Badge>
+                    {l.kind === "service" &&
+                      (l.verified ? (
+                        <Badge variant="outline" className="gap-1 text-primary">
+                          <BadgeCheck className="size-3.5" />
+                          Verified
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground">
+                          Pending
+                        </Badge>
+                      ))}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
+                    {l.kind === "service" && (
+                      <button
+                        onClick={() => toggleVerified(l.id, !l.verified)}
+                        disabled={busy === l.id}
+                        className={cn(
+                          "hover:text-foreground disabled:opacity-40",
+                          l.verified ? "text-primary" : "text-muted-foreground"
+                        )}
+                        aria-label={l.verified ? "Remove verified badge" : "Verify provider"}
+                        title={l.verified ? "Remove verified badge" : "Verify provider"}
+                      >
+                        {l.verified ? <ShieldX className="size-4" /> : <ShieldCheck className="size-4" />}
+                      </button>
+                    )}
                     <button
                       onClick={() => togglePause(l.id, !l.isActive)}
                       disabled={busy === l.id}
