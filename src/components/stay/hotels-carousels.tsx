@@ -156,12 +156,12 @@ export function HotelsCarousels() {
   return (
     <>
       <HotelCarousel
-        title="Recommended hotels"
+        title="Recommended Stays"
         subtitle="Top-rated stays on GHBucketlist"
         cards={recommended}
       />
       <HotelCarousel
-        title="Nearby hotels"
+        title="Nearby Stays"
         subtitle={
           located
             ? "Closest to you right now"
