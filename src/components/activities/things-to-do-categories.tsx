@@ -4,9 +4,24 @@ import { Container } from "@/components/container";
 
 const categoryTiles: { slug: string; label: string; image: string }[] = [
   {
+    slug: "tours",
+    label: "Tours & Sightseeing",
+    image: "https://images.unsplash.com/photo-1614105561029-994eebfc29ac?auto=format&fit=crop&w=700&h=560&q=80",
+  },
+  {
     slug: "outdoor",
     label: "Outdoor Adventures",
     image: "https://images.unsplash.com/photo-1616878443605-aca041c01763?auto=format&fit=crop&w=700&h=560&q=80",
+  },
+  {
+    slug: "workshops",
+    label: "Workshops",
+    image: "https://images.unsplash.com/photo-1757085242652-f8cd4d3de889?auto=format&fit=crop&w=700&h=560&q=80",
+  },
+  {
+    slug: "workspace",
+    label: "Rent a workspace",
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=700&h=560&q=80",
   },
   {
     slug: "food-drink",
@@ -19,9 +34,9 @@ const categoryTiles: { slug: string; label: string; image: string }[] = [
     image: "https://images.unsplash.com/photo-1758380742154-44738eb92832?auto=format&fit=crop&w=700&h=560&q=80",
   },
   {
-    slug: "sports-fitness",
-    label: "Sports & Fitness",
-    image: "https://images.unsplash.com/photo-1518310383802-640c2de311b2?auto=format&fit=crop&w=700&h=560&q=80",
+    slug: "parties",
+    label: "Parties & Events",
+    image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=700&h=560&q=80",
   },
   {
     slug: "nightlife",
@@ -32,11 +47,6 @@ const categoryTiles: { slug: string; label: string; image: string }[] = [
     slug: "music",
     label: "Music & Concerts",
     image: "https://images.unsplash.com/photo-1758550445758-165aeab5b26e?auto=format&fit=crop&w=700&h=560&q=80",
-  },
-  {
-    slug: "tours",
-    label: "Tours & Sightseeing",
-    image: "https://images.unsplash.com/photo-1614105561029-994eebfc29ac?auto=format&fit=crop&w=700&h=560&q=80",
   },
   {
     slug: "photography",
@@ -59,19 +69,9 @@ const categoryTiles: { slug: string; label: string; image: string }[] = [
     image: "https://images.unsplash.com/photo-1753600517924-331b18192f4c?auto=format&fit=crop&w=700&h=560&q=80",
   },
   {
-    slug: "parties",
-    label: "Parties & Events",
-    image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=700&h=560&q=80",
-  },
-  {
-    slug: "workshops",
-    label: "Workshops",
-    image: "https://images.unsplash.com/photo-1757085242652-f8cd4d3de889?auto=format&fit=crop&w=700&h=560&q=80",
-  },
-  {
-    slug: "workspace",
-    label: "Rent a workspace",
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=700&h=560&q=80",
+    slug: "sports-fitness",
+    label: "Sports & Fitness",
+    image: "https://images.unsplash.com/photo-1518310383802-640c2de311b2?auto=format&fit=crop&w=700&h=560&q=80",
   },
 ];
 
