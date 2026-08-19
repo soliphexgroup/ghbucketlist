@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Search } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,6 +14,7 @@ import {
 } from "@/components/home/mobile-search-fields";
 import { parseDateParam } from "@/lib/dates";
 import { listPropertyNeighbourhoods } from "@/lib/stay-repository";
+import { useDbStayListings } from "@/lib/db-listings";
 import { cn } from "@/lib/utils";
 
 export type StaySearchInitial = {
@@ -60,7 +61,9 @@ export function MobileStaySearch({
   onSearch?: (params: URLSearchParams) => void;
 } = {}) {
   const router = useRouter();
-  const neighbourhoods = listPropertyNeighbourhoods();
+  // Neighbourhood suggestions come from real published stays, not the seed catalog.
+  const stayCatalog = useDbStayListings();
+  const neighbourhoods = useMemo(() => listPropertyNeighbourhoods(stayCatalog), [stayCatalog]);
 
   const [location, setLocation] = useState(initial?.q ?? "");
   const [locationOpen, setLocationOpen] = useState(false);
@@ -119,6 +122,9 @@ export function MobileStaySearch({
             Neighbourhoods with places to stay
           </p>
           <div className="flex max-h-72 flex-col overflow-y-auto">
+            {neighbourhoods.length === 0 && (
+              <p className="px-2 py-2 text-sm text-muted-foreground">No places listed yet.</p>
+            )}
             {neighbourhoods.map((n) => {
               const isSelected = n === location;
               return (

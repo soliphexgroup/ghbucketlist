@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CalendarIcon, Check, ChevronDown, MapPin, Minus, Plus, Search, Users, Wrench } from "lucide-react";
@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { listPropertyNeighbourhoods } from "@/lib/stay-repository";
+import { useDbStayListings } from "@/lib/db-listings";
 import type { ServiceTabId } from "@/lib/service-tabs";
 
 function addDays(date: Date, days: number) {
@@ -41,13 +42,15 @@ function LocationField({
   value,
   onChange,
   placeholder,
+  neighbourhoods,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  /** Neighbourhoods with published stays, sourced from the live DB catalog. */
+  neighbourhoods: string[];
 }) {
   const [open, setOpen] = useState(false);
-  const neighbourhoods = listPropertyNeighbourhoods();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -67,6 +70,9 @@ function LocationField({
           Neighbourhoods with places to stay
         </p>
         <div className="flex max-h-72 flex-col overflow-y-auto">
+          {neighbourhoods.length === 0 && (
+            <p className="px-2 py-2 text-sm text-muted-foreground">No places listed yet.</p>
+          )}
           {neighbourhoods.map((n) => {
             const isSelected = n === value;
             return (
@@ -293,6 +299,10 @@ function GuestsRoomsField({
 export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
   const router = useRouter();
 
+  // Neighbourhood suggestions come from real published stays, not the seed catalog.
+  const stayCatalog = useDbStayListings();
+  const neighbourhoods = useMemo(() => listPropertyNeighbourhoods(stayCatalog), [stayCatalog]);
+
   const [location, setLocation] = useState("");
   const [checkIn, setCheckIn] = useState<Date | undefined>(addDays(new Date(), 7));
   const [checkOut, setCheckOut] = useState<Date | undefined>(addDays(new Date(), 9));
@@ -363,7 +373,7 @@ export function SearchWidget({ activeTab }: { activeTab: ServiceTabId }) {
     >
       {activeTab === "stays" && (
         <>
-          <LocationField value={location} onChange={setLocation} placeholder="Where do you want to go?" />
+          <LocationField value={location} onChange={setLocation} placeholder="Where do you want to go?" neighbourhoods={neighbourhoods} />
           <DateRangeField checkIn={checkIn} checkOut={checkOut} onSelect={({ from, to }) => { setCheckIn(from); setCheckOut(to); }} />
           <GuestsRoomsField value={stayGuests} onChange={setStayGuests} />
         </>

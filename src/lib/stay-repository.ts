@@ -82,8 +82,13 @@ export function getPropertyHost(property: Property) {
   return hosts.find((h) => h.id === property.hostId);
 }
 
-export function listPropertyNeighbourhoods() {
-  return Array.from(new Set(properties.map((p) => p.neighbourhood))).sort();
+/**
+ * Neighbourhoods that actually have published stays, for the search dropdown. Pass the live DB
+ * catalog so it tracks real listings — defaulting to the seed would offer stale/empty areas and
+ * miss real ones (e.g. a host listing in Kokrobite).
+ */
+export function listPropertyNeighbourhoods(source: Property[] = properties) {
+  return Array.from(new Set(source.map((p) => p.neighbourhood))).sort();
 }
 
 /**
