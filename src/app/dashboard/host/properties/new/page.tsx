@@ -85,7 +85,6 @@ function PropertyForm({ existing }: { existing?: Property }) {
   const [rooms, setRooms] = useState<PropertyRoom[]>(existing && existing.rooms.length > 0 ? existing.rooms : defaultRooms);
   const [pricePerNight, setPricePerNight] = useState(String(existing?.pricePerNight ?? 300));
   const [weekendPrice, setWeekendPrice] = useState(existing?.weekendPrice ? String(existing.weekendPrice) : "");
-  const [cleaningFee, setCleaningFee] = useState(String(existing?.cleaningFee ?? 50));
   const [minNights, setMinNights] = useState(String(existing?.minNights ?? 1));
   const [maxNights, setMaxNights] = useState(existing?.maxNights ? String(existing.maxNights) : "");
   const [checkInTime, setCheckInTime] = useState(existing?.checkInTime ?? "2:00 PM");
@@ -149,7 +148,7 @@ function PropertyForm({ existing }: { existing?: Property }) {
       rooms: validRooms,
       pricePerNight: Number(pricePerNight) || 0,
       weekendPrice: weekendPrice ? Number(weekendPrice) : undefined,
-      cleaningFee: Number(cleaningFee) || 0,
+      cleaningFee: 0,
       minNights: Number(minNights) || 1,
       maxNights: maxNights ? Number(maxNights) : undefined,
       checkInTime: checkInTime.trim(),
@@ -342,10 +341,6 @@ function PropertyForm({ existing }: { existing?: Property }) {
             <div>
               <Label htmlFor="weekend-price">Weekend price (optional)</Label>
               <Input id="weekend-price" type="number" min={0} value={weekendPrice} onChange={(e) => setWeekendPrice(e.target.value)} className="mt-1.5" />
-            </div>
-            <div>
-              <Label htmlFor="cleaning-fee">Cleaning fee</Label>
-              <Input id="cleaning-fee" type="number" min={0} value={cleaningFee} onChange={(e) => setCleaningFee(e.target.value)} className="mt-1.5" />
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

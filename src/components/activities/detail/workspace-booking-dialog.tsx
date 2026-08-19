@@ -37,7 +37,6 @@ export type WorkspaceBookingDetails = {
   start: Date;
   end: Date; // end-exclusive
   subtotal: number;
-  serviceFee: number;
   total: number;
 };
 
@@ -236,19 +235,9 @@ export function WorkspaceBookingDialog({
 
             <Separator />
 
-            <div className="flex flex-col gap-2 text-sm">
-              <div className="flex justify-between text-muted-foreground">
-                <span>Subtotal</span>
-                <span>{formatGHS(details.subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Service fee</span>
-                <span>{formatGHS(details.serviceFee)}</span>
-              </div>
-              <div className="flex justify-between text-base font-semibold text-foreground">
-                <span>Total</span>
-                <span>{formatGHS(details.total)}</span>
-              </div>
+            <div className="flex justify-between text-base font-semibold text-foreground">
+              <span>Total</span>
+              <span>{formatGHS(details.total)}</span>
             </div>
 
             {details.total > 0 && (

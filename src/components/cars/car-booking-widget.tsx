@@ -43,8 +43,7 @@ export function CarBookingWidget({ car }: { car: Car }) {
   const days = daysBetween(range.from, range.to);
   const dailyRate = withDriver ? car.withDriverPricePerDay : car.pricePerDay;
   const subtotal = dailyRate * days;
-  const serviceFee = subtotal * 0.05;
-  const total = subtotal + serviceFee;
+  const total = subtotal;
   const isInstant = car.bookingType === "instant";
 
   function handleReserve() {
@@ -57,7 +56,6 @@ export function CarBookingWidget({ car }: { car: Car }) {
       withDriver,
       dailyRate,
       subtotal,
-      serviceFee,
       total,
     });
     setDialogOpen(true);
@@ -116,10 +114,6 @@ export function CarBookingWidget({ car }: { car: Car }) {
               {formatGHS(dailyRate)} × {days} day{days > 1 ? "s" : ""}
             </span>
             <span>{formatGHS(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Service fee</span>
-            <span>{formatGHS(serviceFee)}</span>
           </div>
         </div>
 

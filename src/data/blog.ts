@@ -29,7 +29,7 @@ export const blogPosts: BlogPost[] = [
       "Hosting on GHBucketlist starts with one question: what do you already do that other people would pay to be part of? It doesn't need to be exotic — some of our most-booked hosts teach skills as simple as cooking or pottery.",
       "Once you know what you want to host, the listing process walks you through the basics: a title, a description, your location, and how long the experience runs. You'll set your own pricing and ticket types, and decide whether the experience is public or invite-only.",
       "Every new listing goes through a quick review before it goes live — usually within a couple of business days. After that, bookings, payments, and guest communication all happen inside your host dashboard.",
-      "GHBucketlist takes a flat 5% commission on paid bookings, and payouts are processed within 1–2 business days of a completed session. No hidden fees, no long contracts.",
+      "GHBucketlist takes a flat 12% commission on paid bookings, and payouts are processed within 1–2 business days of a completed session. Guests pay no booking fees — no hidden charges, no long contracts.",
     ],
     coverImage: "https://picsum.photos/seed/blog-hosting/1200/800",
     author: "GHBucketlist Team",

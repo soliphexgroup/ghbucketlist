@@ -53,10 +53,7 @@ export function WorkspaceBookingWidget({ experience }: { experience: Experience 
   const available = rate != null && seatsLeft >= desks && desks >= 1;
 
   const subtotal = rate ? workspaceSubtotal(rate, count, desks) : 0;
-  // Matches the platform's current guest service fee (5%). Moves to the shared fee module when
-  // the pending 10% + 2% VAT change is confirmed.
-  const serviceFee = subtotal * 0.05;
-  const total = subtotal + serviceFee;
+  const total = subtotal;
 
   const fromRate = cheapestRate(rates);
 
@@ -76,7 +73,6 @@ export function WorkspaceBookingWidget({ experience }: { experience: Experience 
       start,
       end,
       subtotal,
-      serviceFee,
       total,
     });
     setDialogOpen(true);
@@ -221,10 +217,6 @@ export function WorkspaceBookingWidget({ experience }: { experience: Experience 
               {experience.deskBased && desks > 1 ? ` × ${desks} desks` : ""}
             </span>
             <span>{formatGHS(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Service fee</span>
-            <span>{formatGHS(serviceFee)}</span>
           </div>
         </div>
 

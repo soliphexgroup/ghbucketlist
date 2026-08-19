@@ -8,13 +8,15 @@ import { platformUsers } from "@/data/platform-users";
 import { pendingListings } from "@/data/pending-listings";
 import { experiences } from "@/data/experiences";
 import { getExperienceCategory } from "@/lib/repository";
+import { platformFee } from "@/lib/host-repository";
 import { formatGHS } from "@/lib/format";
 
 export default function AdminOverviewPage() {
   const bookings = useAllPlatformBookings();
   const active = bookings.filter((b) => b.status !== "cancelled");
   const grossRevenue = active.reduce((sum, b) => sum + b.total, 0);
-  const platformEarnings = grossRevenue * 0.05;
+  // Platform earnings = the 12% commission on all active bookings.
+  const platformEarnings = platformFee(grossRevenue);
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

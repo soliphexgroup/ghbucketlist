@@ -305,8 +305,14 @@ export function useHostBookings(): HostBooking[] {
   return real ? db : demo;
 }
 
+// The platform's commission — a flat 12% of the booking subtotal, deducted from the host's gross
+// earnings. This is the only fee on the platform: guests pay no service fee, and it is the
+// platform's earnings. Single source of truth — every host/admin fee figure derives from here.
+export const PLATFORM_FEE_RATE = 0.12;
+
+/** The platform commission (its earnings) on a booking. */
 export function platformFee(gross: number) {
-  return gross * 0.05;
+  return gross * PLATFORM_FEE_RATE;
 }
 
 export function netPayout(gross: number) {

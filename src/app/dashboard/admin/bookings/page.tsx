@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAdminBookings, setBookingStatus, type BookingDbStatus } from "@/lib/db-admin-bookings";
+import { platformFee, netPayout } from "@/lib/host-repository";
 import { formatGHS } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +59,7 @@ export default function AdminBookingsPage() {
   }
 
   function exportCsv() {
-    const header = ["Reference", "Guest", "Kind", "Listing", "Start", "End", "Gross", "Platform Fee", "Net to Host", "Status"];
+    const header = ["Reference", "Guest", "Kind", "Listing", "Start", "End", "Gross", "Commission", "Net to Host", "Status"];
     const lines = rows.map((b) =>
       [
         b.reference,
@@ -68,8 +69,8 @@ export default function AdminBookingsPage() {
         b.startDate,
         b.endDate,
         b.total,
-        (b.total * 0.05).toFixed(2),
-        (b.total * 0.95).toFixed(2),
+        platformFee(b.total).toFixed(2),
+        netPayout(b.total).toFixed(2),
         b.status,
       ].join(",")
     );

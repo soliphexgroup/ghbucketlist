@@ -37,8 +37,6 @@ export type StayBookingDetails = {
   /** Hotels only: which room types were picked, and how many of each. */
   selectedRooms?: { offer: RoomOffer; qty: number }[];
   subtotal: number;
-  cleaningFee: number;
-  serviceFee: number;
   total: number;
 };
 
@@ -102,7 +100,7 @@ export function StayBookingDialog({
         pricePerNight: offer.pricePerNight,
       })),
       nightlyRate: bookingDetails.property.pricePerNight,
-      cleaningFee: bookingDetails.cleaningFee,
+      cleaningFee: 0,
       total: bookingDetails.total,
       bookingType: isInstant ? "instant" : "request",
       status,
@@ -257,14 +255,6 @@ export function StayBookingDialog({
                   <span className="font-medium text-foreground">{formatGHS(details.subtotal)}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Cleaning fee</span>
-                <span className="font-medium text-foreground">{formatGHS(details.cleaningFee)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Service fee</span>
-                <span className="font-medium text-foreground">{formatGHS(details.serviceFee)}</span>
-              </div>
             </div>
 
             <Separator />

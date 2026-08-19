@@ -116,8 +116,7 @@ export function RoomOfferTable({ property }: { property: Property }) {
     .filter((s) => s.qty > 0);
   const totalRooms = selectedRooms.reduce((n, s) => n + s.qty, 0);
   const subtotal = selectedRooms.reduce((sum, s) => sum + s.offer.pricePerNight * nights * s.qty, 0);
-  const serviceFee = subtotal * 0.05;
-  const total = subtotal > 0 ? subtotal + property.cleaningFee + serviceFee : 0;
+  const total = subtotal;
   const isInstant = property.bookingType === "instant";
 
   function setQty(id: string, qty: number) {
@@ -136,8 +135,6 @@ export function RoomOfferTable({ property }: { property: Property }) {
       rooms: totalRooms,
       selectedRooms,
       subtotal,
-      cleaningFee: property.cleaningFee,
-      serviceFee,
       total,
     });
     setDialogOpen(true);

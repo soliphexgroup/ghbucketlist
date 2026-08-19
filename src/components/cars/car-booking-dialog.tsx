@@ -34,7 +34,6 @@ export type CarBookingDetails = {
   withDriver: boolean;
   dailyRate: number;
   subtotal: number;
-  serviceFee: number;
   total: number;
 };
 
@@ -209,10 +208,6 @@ export function CarBookingDialog({
                   {formatGHS(details.dailyRate)} × {details.days} day{details.days > 1 ? "s" : ""}
                 </span>
                 <span className="font-medium text-foreground">{formatGHS(details.subtotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Service fee</span>
-                <span className="font-medium text-foreground">{formatGHS(details.serviceFee)}</span>
               </div>
             </div>
 

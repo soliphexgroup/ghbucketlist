@@ -2,7 +2,7 @@ import type { StoredStayBooking } from "@/lib/stay-bookings-store";
 
 // Seeded demo stay bookings for host-kwabena's two properties, so the host dashboard has
 // stay activity to show. Fiction, not live data — the guest's own live bookings come from
-// the store. Totals follow the booking maths: nightlyRate × nights × rooms + cleaning + 5% fee.
+// the store. Totals follow the booking maths: nightlyRate × nights × rooms (no add-on fees).
 
 const AIRPORT = {
   propertyId: "prop-airport-suite",
@@ -12,7 +12,7 @@ const AIRPORT = {
   neighbourhood: "Airport Residential",
   city: "Accra",
   nightlyRate: 320,
-  cleaningFee: 40,
+  cleaningFee: 0,
 };
 
 const TESANO = {
@@ -23,14 +23,13 @@ const TESANO = {
   neighbourhood: "Tesano",
   city: "Accra",
   nightlyRate: 220,
-  cleaningFee: 25,
+  cleaningFee: 0,
 };
 
 const HOST_NAME = "Kwabena Mensah";
 
-function total(nightly: number, nights: number, rooms: number, cleaning: number) {
-  const subtotal = nightly * nights * rooms;
-  return subtotal + cleaning + subtotal * 0.05;
+function total(nightly: number, nights: number, rooms: number) {
+  return nightly * nights * rooms;
 }
 
 export const hostStayBookings: StoredStayBooking[] = [
@@ -47,7 +46,7 @@ export const hostStayBookings: StoredStayBooking[] = [
     guestsAdults: 2,
     guestsChildren: 0,
     rooms: 1,
-    total: total(320, 3, 1, 40),
+    total: total(320, 3, 1),
     bookingType: "instant",
     status: "completed",
     createdAtISO: "2026-05-28T09:14:00.000Z",
@@ -65,7 +64,7 @@ export const hostStayBookings: StoredStayBooking[] = [
     guestsAdults: 2,
     guestsChildren: 1,
     rooms: 1,
-    total: total(320, 3, 1, 40),
+    total: total(320, 3, 1),
     bookingType: "instant",
     status: "confirmed",
     createdAtISO: "2026-07-15T18:40:00.000Z",
@@ -83,7 +82,7 @@ export const hostStayBookings: StoredStayBooking[] = [
     guestsAdults: 1,
     guestsChildren: 0,
     rooms: 1,
-    total: total(320, 3, 1, 40),
+    total: total(320, 3, 1),
     bookingType: "instant",
     status: "cancelled",
     createdAtISO: "2026-06-20T11:02:00.000Z",
@@ -101,7 +100,7 @@ export const hostStayBookings: StoredStayBooking[] = [
     guestsAdults: 1,
     guestsChildren: 0,
     rooms: 1,
-    total: total(220, 4, 1, 25),
+    total: total(220, 4, 1),
     bookingType: "instant",
     status: "completed",
     createdAtISO: "2026-06-05T14:30:00.000Z",
@@ -119,7 +118,7 @@ export const hostStayBookings: StoredStayBooking[] = [
     guestsAdults: 2,
     guestsChildren: 0,
     rooms: 1,
-    total: total(220, 3, 1, 25),
+    total: total(220, 3, 1),
     bookingType: "instant",
     status: "confirmed",
     createdAtISO: "2026-07-10T08:20:00.000Z",
@@ -137,7 +136,7 @@ export const hostStayBookings: StoredStayBooking[] = [
     guestsAdults: 2,
     guestsChildren: 0,
     rooms: 1,
-    total: total(220, 3, 1, 25),
+    total: total(220, 3, 1),
     bookingType: "request",
     status: "pending_request",
     createdAtISO: "2026-07-19T20:05:00.000Z",

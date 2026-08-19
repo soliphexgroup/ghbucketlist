@@ -63,8 +63,7 @@ export function StayBookingWidget({ property }: { property: Property }) {
 
   const nights = nightsBetween(range.from, range.to);
   const subtotal = property.pricePerNight * nights * rooms;
-  const serviceFee = subtotal * 0.05;
-  const total = subtotal + property.cleaningFee + serviceFee;
+  const total = subtotal;
   const totalGuests = adults + children;
   const isInstant = property.bookingType === "instant";
 
@@ -79,8 +78,6 @@ export function StayBookingWidget({ property }: { property: Property }) {
       children,
       rooms,
       subtotal,
-      cleaningFee: property.cleaningFee,
-      serviceFee,
       total,
     });
     setDialogOpen(true);
@@ -151,14 +148,6 @@ export function StayBookingWidget({ property }: { property: Property }) {
               {rooms > 1 && ` × ${rooms} rooms`}
             </span>
             <span>{formatGHS(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Cleaning fee</span>
-            <span>{formatGHS(property.cleaningFee)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Service fee</span>
-            <span>{formatGHS(serviceFee)}</span>
           </div>
         </div>
 

@@ -112,7 +112,7 @@ export default function EarningsPage() {
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <SummaryCard label="Total earned" value={formatGHS(grossEarned)} />
-        <SummaryCard label="Platform fee (5%)" value={`-${formatGHS(feeTotal)}`} />
+        <SummaryCard label="Commission (12%)" value={`-${formatGHS(feeTotal)}`} />
         <SummaryCard label="Net payout" value={formatGHS(netEarned)} />
         <SummaryCard label="Available balance" value={formatGHS(availableBalance)} highlight />
       </div>
