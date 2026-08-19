@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, ImagePlus, Link2, Loader2, Star, Trash2 } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { IMAGE_ACCEPT_ATTR, uploadListingImage } from "@/lib/listing-images";
+import { IMAGE_ACCEPT_ATTR, uploadListingImage, isAllowedImageUrl, ALLOWED_URL_HOSTS_HINT } from "@/lib/listing-images";
 import { cn } from "@/lib/utils";
 
 /**
@@ -55,8 +55,15 @@ export function ListingImageManager({
   function addUrl() {
     const url = urlDraft.trim();
     if (!url) return;
+    // The image optimizer only serves whitelisted hosts, so a link from anywhere else would
+    // render broken. Uploading is always available and gets compressed for you.
+    if (!isAllowedImageUrl(url)) {
+      setErrors([`That image link isn't supported. ${ALLOWED_URL_HOSTS_HINT}`]);
+      return;
+    }
     onChange([...value, url]);
     setUrlDraft("");
+    setErrors([]);
   }
 
   function removeAt(index: number) {
@@ -94,8 +101,7 @@ export function ListingImageManager({
               )}
             >
               <div className="relative aspect-4/3 w-full bg-muted">
-                {/* Remote hosts vary (Supabase, picsum, pasted URLs), so skip the optimizer. */}
-                <Image src={src} alt={`Photo ${index + 1}`} fill unoptimized className="object-cover" />
+                <Image src={src} alt={`Photo ${index + 1}`} fill sizes="200px" className="object-cover" />
               </div>
 
               {index === 0 && (
