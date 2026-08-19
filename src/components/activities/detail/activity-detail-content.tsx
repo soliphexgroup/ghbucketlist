@@ -7,9 +7,11 @@ import { ListingRatingStars } from "@/components/reviews/listing-rating-stars";
 import { Separator } from "@/components/ui/separator";
 import { Gallery } from "@/components/activities/detail/gallery";
 import { BookingWidget } from "@/components/activities/detail/booking-widget";
+import { WorkspaceBookingWidget } from "@/components/activities/detail/workspace-booking-widget";
 import { VenueMap } from "@/components/activities/detail/venue-map";
 import { ReviewsSection } from "@/components/activities/detail/reviews-section";
 import { formatDuration, formatGHS, formatScheduleDays } from "@/lib/format";
+import { isWorkspace, rateUnitLabel } from "@/lib/workspace-rates";
 import type { Category, Experience, Host } from "@/lib/types";
 
 export function ActivityDetailContent({
@@ -22,6 +24,7 @@ export function ActivityDetailContent({
   host: Host | undefined;
 }) {
   const mapQuery = `${experience.venueName}, ${experience.neighbourhood}, ${experience.city}`;
+  const workspace = isWorkspace(experience);
 
   return (
     <Container className="py-6 sm:py-8">
@@ -92,49 +95,81 @@ export function ActivityDetailContent({
             </p>
 
             <div className="mt-5 flex flex-wrap gap-4">
-              <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-sm text-foreground">
-                <Clock className="size-4" />
-                {formatDuration(experience.durationMinutes)}
-              </span>
+              {!workspace && (
+                <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-sm text-foreground">
+                  <Clock className="size-4" />
+                  {formatDuration(experience.durationMinutes)}
+                </span>
+              )}
               <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-sm text-foreground">
                 <Users className="size-4" />
-                Up to {experience.maxCapacity} guests
+                {workspace
+                  ? experience.deskBased
+                    ? `${experience.maxCapacity} desks`
+                    : "Whole space"
+                  : `Up to ${experience.maxCapacity} guests`}
               </span>
             </div>
           </section>
 
           <Separator />
 
-          <section>
-            <h2 className="font-heading text-xl font-semibold text-foreground">Ticket Types</h2>
-            <div className="mt-4 flex flex-col gap-3">
-              {experience.ticketTypes.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="flex items-center justify-between rounded-xl border border-border px-4 py-3"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{ticket.name}</p>
-                    {ticket.description && (
-                      <p className="text-sm text-muted-foreground">{ticket.description}</p>
-                    )}
+          {workspace ? (
+            <section>
+              <h2 className="font-heading text-xl font-semibold text-foreground">Rates</h2>
+              <div className="mt-4 flex flex-col gap-3">
+                {(experience.workspaceRates ?? []).map((r) => (
+                  <div
+                    key={r.unit}
+                    className="flex items-center justify-between rounded-xl border border-border px-4 py-3"
+                  >
+                    <p className="font-medium capitalize text-foreground">{rateUnitLabel(r.unit)}</p>
+                    <p className="font-heading font-semibold text-foreground">
+                      {formatGHS(r.price)}
+                      <span className="text-sm font-normal text-muted-foreground">
+                        {" "}
+                        / {rateUnitLabel(r.unit)}
+                        {experience.deskBased ? " · desk" : ""}
+                      </span>
+                    </p>
                   </div>
-                  <p className="font-heading font-semibold text-foreground">
-                    {formatGHS(ticket.priceGHS)}
-                  </p>
+                ))}
+              </div>
+            </section>
+          ) : (
+            <>
+              <section>
+                <h2 className="font-heading text-xl font-semibold text-foreground">Ticket Types</h2>
+                <div className="mt-4 flex flex-col gap-3">
+                  {experience.ticketTypes.map((ticket) => (
+                    <div
+                      key={ticket.id}
+                      className="flex items-center justify-between rounded-xl border border-border px-4 py-3"
+                    >
+                      <div>
+                        <p className="font-medium text-foreground">{ticket.name}</p>
+                        {ticket.description && (
+                          <p className="text-sm text-muted-foreground">{ticket.description}</p>
+                        )}
+                      </div>
+                      <p className="font-heading font-semibold text-foreground">
+                        {formatGHS(ticket.priceGHS)}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
+              </section>
 
-          <Separator />
+              <Separator />
 
-          <section>
-            <h2 className="font-heading text-xl font-semibold text-foreground">Schedule</h2>
-            <p className="mt-3 text-muted-foreground">
-              {formatScheduleDays(experience.scheduleDays)} at {experience.scheduleTime}
-            </p>
-          </section>
+              <section>
+                <h2 className="font-heading text-xl font-semibold text-foreground">Schedule</h2>
+                <p className="mt-3 text-muted-foreground">
+                  {formatScheduleDays(experience.scheduleDays)} at {experience.scheduleTime}
+                </p>
+              </section>
+            </>
+          )}
 
           {experience.whatsIncluded.length > 0 && (
             <>
@@ -175,7 +210,11 @@ export function ActivityDetailContent({
         </div>
 
         <div>
-          <BookingWidget experience={experience} />
+          {workspace ? (
+            <WorkspaceBookingWidget experience={experience} />
+          ) : (
+            <BookingWidget experience={experience} />
+          )}
         </div>
       </div>
     </Container>

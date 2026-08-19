@@ -488,5 +488,9 @@ export function getExperiencesByCategory(categoryId: string) {
 
 export function getPriceFrom(exp: Experience) {
   if (exp.isFree) return 0;
+  // Workspace listings price by rate card, not ticket types.
+  if (exp.workspaceRates && exp.workspaceRates.length > 0) {
+    return Math.min(...exp.workspaceRates.map((r) => r.price));
+  }
   return Math.min(...exp.ticketTypes.map((t) => t.priceGHS));
 }

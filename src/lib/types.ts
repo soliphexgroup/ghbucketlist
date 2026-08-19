@@ -25,6 +25,18 @@ export type TicketType = {
   description?: string;
 };
 
+/** A rate unit for "Rent a workspace" listings. "hour" is Phase 2 (needs time-of-day). */
+export type RateUnit = "hour" | "day" | "week" | "month";
+
+/** One tier of a workspace rate card: a price per unit, per desk. */
+export type WorkspaceRate = {
+  unit: RateUnit;
+  price: number;
+  /** Minimum units bookable at this rate (e.g. 2 hours). Defaults to 1. */
+  minQty?: number;
+  maxQty?: number;
+};
+
 export type Experience = {
   id: string;
   slug: string;
@@ -43,6 +55,13 @@ export type Experience = {
   isFree: boolean;
   acceptsDonations: boolean;
   ticketTypes: TicketType[];
+  /**
+   * Present (non-empty) ⇒ this is a "Rent a workspace" listing: booked by rate span
+   * (day/week/month) rather than by ticketTypes on a single scheduled session.
+   */
+  workspaceRates?: WorkspaceRate[];
+  /** Workspace only: sell `maxCapacity` as individual desks (true) or as the whole room (false/absent). */
+  deskBased?: boolean;
   scheduleDays: string[];
   scheduleTime: string;
   /**

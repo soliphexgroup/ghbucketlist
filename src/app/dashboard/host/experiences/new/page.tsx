@@ -22,9 +22,16 @@ import { categories } from "@/data/categories";
 import { useCurrentHostId } from "@/lib/host-repository";
 import { createExperienceListing, updateExperienceListing, useHostDbExperienceListings } from "@/lib/db-listings";
 import { EditListingLoading, EditListingNotFound } from "@/components/dashboard/edit-listing-gate";
-import type { Experience, TicketType } from "@/lib/types";
+import type { Experience, RateUnit, TicketType, WorkspaceRate } from "@/lib/types";
 
 const SCHEDULE_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+// Rate units a host can price today. Hourly is Phase 2 (needs time-of-day slot booking).
+const WORKSPACE_UNITS: { unit: RateUnit; label: string; hint: string }[] = [
+  { unit: "day", label: "Daily", hint: "per day" },
+  { unit: "week", label: "Weekly", hint: "per week" },
+  { unit: "month", label: "Monthly", hint: "per month" },
+];
 
 function slugify(title: string) {
   return title
@@ -102,6 +109,26 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
+  // "Rent a workspace" mode: prices come from a rate card (day/week/month), not ticket types.
+  const [isWorkspaceListing, setIsWorkspaceListing] = useState(
+    Boolean(existing?.workspaceRates && existing.workspaceRates.length > 0)
+  );
+  const [deskBased, setDeskBased] = useState(existing?.deskBased ?? false);
+  const [rateEnabled, setRateEnabled] = useState<Record<RateUnit, boolean>>(() => {
+    const base: Record<RateUnit, boolean> = { hour: false, day: false, week: false, month: false };
+    for (const r of existing?.workspaceRates ?? []) base[r.unit] = true;
+    return base;
+  });
+  const [ratePrice, setRatePrice] = useState<Record<RateUnit, string>>(() => {
+    const base: Record<RateUnit, string> = { hour: "", day: "", week: "", month: "" };
+    for (const r of existing?.workspaceRates ?? []) base[r.unit] = String(r.price);
+    return base;
+  });
+
+  const workspaceRatesToSave: WorkspaceRate[] = WORKSPACE_UNITS.filter(
+    (u) => rateEnabled[u.unit] && Number(ratePrice[u.unit]) > 0
+  ).map((u) => ({ unit: u.unit, price: Number(ratePrice[u.unit]) }));
+
   function toggleScheduleDay(day: string, checked: boolean) {
     setScheduleDays((prev) => (checked ? [...prev, day] : prev.filter((d) => d !== day)));
   }
@@ -137,9 +164,15 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
     description.trim().length > 20 ? null : "Write a full description of at least 20 characters.",
     venueName.trim().length > 0 ? null : "Add a venue name.",
     neighbourhood.trim().length > 0 ? null : "Add a neighbourhood.",
-    scheduleDays.length > 0 ? null : "Pick at least one day it runs.",
-    scheduleTime.trim().length > 0 ? null : "Add a start time.",
-    isFree || validTickets.length > 0 ? null : "Add a ticket type with a price, or mark the experience free.",
+    // Schedule and ticket types apply to normal activities; workspaces use a rate card instead.
+    isWorkspaceListing || scheduleDays.length > 0 ? null : "Pick at least one day it runs.",
+    isWorkspaceListing || scheduleTime.trim().length > 0 ? null : "Add a start time.",
+    isWorkspaceListing || isFree || validTickets.length > 0
+      ? null
+      : "Add a ticket type with a price, or mark the experience free.",
+    !isWorkspaceListing || workspaceRatesToSave.length > 0
+      ? null
+      : "Add at least one workspace rate (daily, weekly, or monthly) with a price.",
     images.length >= 2 ? null : "Add at least 2 photos of the experience.",
   ].filter((e): e is string => e !== null);
   const canSubmit = validationErrors.length === 0;
@@ -152,6 +185,26 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
 
     const included = whatsIncluded.map((s) => s.trim()).filter(Boolean);
     const ticketsToSave: TicketType[] = isFree ? [{ id: "free", name: "Free Entry", priceGHS: 0 }] : validTickets;
+
+    // Workspaces have no fixed session, so schedule/duration/tickets are neutralised and the rate
+    // card drives pricing instead. Non-workspaces clear the workspace fields (supports toggling back).
+    const modeFields = isWorkspaceListing
+      ? {
+          workspaceRates: workspaceRatesToSave,
+          deskBased,
+          ticketTypes: [] as TicketType[],
+          scheduleDays: SCHEDULE_DAYS,
+          scheduleTime: "All day",
+          durationMinutes: 0,
+        }
+      : {
+          workspaceRates: undefined,
+          deskBased: undefined,
+          ticketTypes: ticketsToSave,
+          scheduleDays,
+          scheduleTime: scheduleTime.trim(),
+          durationMinutes: Number(durationMinutes) || 60,
+        };
 
     setSaving(true);
 
@@ -166,17 +219,14 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
         categoryId,
         venueName: venueName.trim(),
         neighbourhood: neighbourhood.trim(),
-        durationMinutes: Number(durationMinutes) || 60,
         maxCapacity: Number(maxCapacity) || 1,
         minAttendees: Number(minAttendees) || 1,
-        isFree,
-        acceptsDonations: isFree && acceptsDonations,
-        ticketTypes: ticketsToSave,
-        scheduleDays,
-        scheduleTime: scheduleTime.trim(),
+        isFree: isWorkspaceListing ? false : isFree,
+        acceptsDonations: !isWorkspaceListing && isFree && acceptsDonations,
         whatsIncluded: included,
         gpPoints: Number(gpPoints) || 0,
         visibility,
+        ...modeFields,
       };
       const res = await updateExperienceListing(updated, existing.hostId || hostId);
       if (!res.ok) {
@@ -203,20 +253,17 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
       venueName: venueName.trim(),
       neighbourhood: neighbourhood.trim(),
       city: "Accra",
-      durationMinutes: Number(durationMinutes) || 60,
       maxCapacity: Number(maxCapacity) || 1,
       minAttendees: Number(minAttendees) || 1,
-      isFree,
-      acceptsDonations: isFree && acceptsDonations,
-      ticketTypes: ticketsToSave,
-      scheduleDays,
-      scheduleTime: scheduleTime.trim(),
+      isFree: isWorkspaceListing ? false : isFree,
+      acceptsDonations: !isWorkspaceListing && isFree && acceptsDonations,
       whatsIncluded: included,
       gpPoints: Number(gpPoints) || 0,
       rating: 0,
       reviewCount: 0,
       visibility,
       createdAt: new Date().toISOString(),
+      ...modeFields,
     };
 
     const res = await createExperienceListing(experience, hostId);
@@ -240,6 +287,22 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 flex max-w-2xl flex-col gap-8">
+        <section className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
+          <div>
+            <Label htmlFor="is-workspace" className="text-sm font-medium text-foreground">
+              Rent a workspace
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Price by the day, week, or month instead of per-session tickets.
+            </p>
+          </div>
+          <Switch
+            id="is-workspace"
+            checked={isWorkspaceListing}
+            onCheckedChange={setIsWorkspaceListing}
+          />
+        </section>
+
         <section className="flex flex-col gap-4">
           <h2 className="font-heading text-lg font-semibold text-foreground">Basics</h2>
           <div>
@@ -327,56 +390,125 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
         <Separator />
 
         <section className="flex flex-col gap-4">
-          <h2 className="font-heading text-lg font-semibold text-foreground">Capacity & duration</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <Label htmlFor="duration">Duration (minutes)</Label>
-              <Input
-                id="duration"
-                type="number"
-                min={1}
-                value={durationMinutes}
-                onChange={(e) => setDurationMinutes(e.target.value)}
-                className="mt-1.5"
-              />
+          <h2 className="font-heading text-lg font-semibold text-foreground">
+            {isWorkspaceListing ? "Capacity" : "Capacity & duration"}
+          </h2>
+          {isWorkspaceListing ? (
+            <>
+              <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+                <div>
+                  <Label htmlFor="desk-based" className="text-sm font-medium text-foreground">
+                    Sell individual desks
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Off = the whole space is booked at once. On = guests reserve a number of desks.
+                  </p>
+                </div>
+                <Switch id="desk-based" checked={deskBased} onCheckedChange={setDeskBased} />
+              </div>
+              <div className="max-w-[220px]">
+                <Label htmlFor="max-capacity">{deskBased ? "Number of desks" : "Capacity (people)"}</Label>
+                <Input
+                  id="max-capacity"
+                  type="number"
+                  min={1}
+                  value={maxCapacity}
+                  onChange={(e) => setMaxCapacity(e.target.value)}
+                  className="mt-1.5"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <Label htmlFor="duration">Duration (minutes)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  min={1}
+                  value={durationMinutes}
+                  onChange={(e) => setDurationMinutes(e.target.value)}
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="max-capacity">Max guests</Label>
+                <Input
+                  id="max-capacity"
+                  type="number"
+                  min={1}
+                  value={maxCapacity}
+                  onChange={(e) => setMaxCapacity(e.target.value)}
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="min-attendees">Min attendees</Label>
+                <Input
+                  id="min-attendees"
+                  type="number"
+                  min={1}
+                  value={minAttendees}
+                  onChange={(e) => setMinAttendees(e.target.value)}
+                  className="mt-1.5"
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="max-capacity">Max guests</Label>
-              <Input
-                id="max-capacity"
-                type="number"
-                min={1}
-                value={maxCapacity}
-                onChange={(e) => setMaxCapacity(e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="min-attendees">Min attendees</Label>
-              <Input
-                id="min-attendees"
-                type="number"
-                min={1}
-                value={minAttendees}
-                onChange={(e) => setMinAttendees(e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-          </div>
+          )}
         </section>
 
         <Separator />
 
         <section className="flex flex-col gap-4">
-          <h2 className="font-heading text-lg font-semibold text-foreground">Pricing</h2>
-          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
-            <Label htmlFor="is-free" className="text-sm font-medium text-foreground">
-              This experience is free
-            </Label>
-            <Switch id="is-free" checked={isFree} onCheckedChange={setIsFree} />
-          </div>
+          <h2 className="font-heading text-lg font-semibold text-foreground">
+            {isWorkspaceListing ? "Rates" : "Pricing"}
+          </h2>
 
-          {isFree ? (
+          {isWorkspaceListing ? (
+            <div className="flex flex-col gap-3">
+              {WORKSPACE_UNITS.map((u) => (
+                <div
+                  key={u.unit}
+                  className="flex items-center gap-3 rounded-lg border border-border p-3"
+                >
+                  <Switch
+                    checked={rateEnabled[u.unit]}
+                    onCheckedChange={(c) => setRateEnabled((p) => ({ ...p, [u.unit]: c }))}
+                    aria-label={`Offer ${u.label} rate`}
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{u.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Price {u.hint}
+                      {deskBased ? ", per desk" : ""}
+                    </p>
+                  </div>
+                  <div className="w-32">
+                    <Input
+                      type="number"
+                      min={0}
+                      value={ratePrice[u.unit]}
+                      onChange={(e) => setRatePrice((p) => ({ ...p, [u.unit]: e.target.value }))}
+                      placeholder="GHS"
+                      disabled={!rateEnabled[u.unit]}
+                    />
+                  </div>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground">
+                Turn on the rates you offer and set a price. Hourly booking is coming soon.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+                <Label htmlFor="is-free" className="text-sm font-medium text-foreground">
+                  This experience is free
+                </Label>
+                <Switch id="is-free" checked={isFree} onCheckedChange={setIsFree} />
+              </div>
+
+              {isFree ? (
             <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
               <Label htmlFor="accepts-donations" className="text-sm font-medium text-foreground">
                 Accept optional donations
@@ -423,40 +555,46 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
                 Add ticket type
               </Button>
             </div>
+              )}
+            </>
           )}
         </section>
 
-        <Separator />
+        {!isWorkspaceListing && (
+          <>
+            <Separator />
 
-        <section className="flex flex-col gap-4">
-          <h2 className="font-heading text-lg font-semibold text-foreground">Schedule</h2>
-          <div>
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Days available
-            </Label>
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {SCHEDULE_DAYS.map((day) => (
-                <label key={day} className="flex items-center gap-2 text-sm text-foreground">
-                  <Checkbox
-                    checked={scheduleDays.includes(day)}
-                    onCheckedChange={(checked) => toggleScheduleDay(day, checked === true)}
-                  />
-                  {day}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="schedule-time">Start time</Label>
-            <Input
-              id="schedule-time"
-              value={scheduleTime}
-              onChange={(e) => setScheduleTime(e.target.value)}
-              placeholder="e.g. 9:00 AM"
-              className="mt-1.5 max-w-[200px]"
-            />
-          </div>
-        </section>
+            <section className="flex flex-col gap-4">
+              <h2 className="font-heading text-lg font-semibold text-foreground">Schedule</h2>
+              <div>
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Days available
+                </Label>
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {SCHEDULE_DAYS.map((day) => (
+                    <label key={day} className="flex items-center gap-2 text-sm text-foreground">
+                      <Checkbox
+                        checked={scheduleDays.includes(day)}
+                        onCheckedChange={(checked) => toggleScheduleDay(day, checked === true)}
+                      />
+                      {day}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="schedule-time">Start time</Label>
+                <Input
+                  id="schedule-time"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  placeholder="e.g. 9:00 AM"
+                  className="mt-1.5 max-w-[200px]"
+                />
+              </div>
+            </section>
+          </>
+        )}
 
         <Separator />
 
