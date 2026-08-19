@@ -279,7 +279,7 @@ export function useHostDbExperienceListings(hostId: string): { items: Experience
   return { items: rows, loaded: loadedFor === hostId };
 }
 
-// --- Services (handyman providers; read-only catalog — no self-serve host CRUD) ---
+// --- Services (handyman providers; whole-provider listings, one per host-created provider) ---
 
 /** Every service provider in the catalog. Empty while loading. */
 export function useDbServiceListings(): ServiceProvider[] {
@@ -299,4 +299,64 @@ export function useDbServiceListings(): ServiceProvider[] {
     };
   }, []);
   return rows;
+}
+
+function serviceColumns(p: ServiceProvider, hostId: string, createdBy: string | null) {
+  return {
+    id: p.id,
+    kind: "service" as const,
+    host_id: hostId,
+    slug: p.slug,
+    title: p.name,
+    city: p.city,
+    category: p.category,
+    price_from: p.hourlyRate,
+    rating: p.rating,
+    created_by: createdBy,
+    data: p,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+export async function createServiceListing(provider: ServiceProvider, hostId: string): Promise<WriteResult> {
+  const { supabase, userId } = await requireUser();
+  if (!userId) return { ok: false, reason: "signin", message: "Please sign in to publish a service." };
+  const { error } = await supabase.from("listings").insert(serviceColumns(provider, hostId, userId));
+  if (error) return { ok: false, reason: "error", message: error.message };
+  return { ok: true };
+}
+
+export async function updateServiceListing(provider: ServiceProvider, hostId: string): Promise<WriteResult> {
+  const { supabase, userId } = await requireUser();
+  if (!userId) return { ok: false, reason: "signin", message: "Please sign in to edit a service." };
+  const { error } = await supabase
+    .from("listings")
+    .update(serviceColumns(provider, hostId, userId))
+    .eq("id", provider.id);
+  if (error) return { ok: false, reason: "error", message: error.message };
+  return { ok: true };
+}
+
+/** The given host's own service-provider listings. */
+export function useHostDbServiceListings(hostId: string): { items: ServiceProvider[]; loaded: boolean } {
+  const [rows, setRows] = useState<ServiceProvider[]>([]);
+  // Derive `loaded` during render (see useHostDbStayListings) rather than resetting it in the effect.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    createClient()
+      .from("listings")
+      .select("data")
+      .eq("kind", "service")
+      .eq("host_id", hostId)
+      .then(({ data }) => {
+        if (!active) return;
+        setRows(((data ?? []) as { data: ServiceProvider }[]).map((r) => r.data));
+        setLoadedFor(hostId);
+      });
+    return () => {
+      active = false;
+    };
+  }, [hostId]);
+  return { items: rows, loaded: loadedFor === hostId };
 }
