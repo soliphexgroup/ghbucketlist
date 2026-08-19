@@ -105,7 +105,18 @@ export const categories: Category[] = [
     colorHex: "#8B5CF6",
     description: "Hands-on classes to learn something new",
   },
+  {
+    id: "cat-workspace",
+    name: "Rent a workspace",
+    slug: "workspace",
+    icon: "Briefcase",
+    colorHex: "#0D9488",
+    description: "Desks, offices, and coworking by the day, week, or month",
+  },
 ];
+
+/** Category every "Rent a workspace" listing belongs to (see src/lib/workspace-rates.ts). */
+export const WORKSPACE_CATEGORY_ID = "cat-workspace";
 
 export function getCategoryBySlug(slug: string) {
   return categories.find((c) => c.slug === slug);

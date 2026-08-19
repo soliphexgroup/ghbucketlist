@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ListingImageManager } from "@/components/dashboard/listing-image-manager";
-import { categories } from "@/data/categories";
+import { categories, WORKSPACE_CATEGORY_ID } from "@/data/categories";
 import { useCurrentHostId } from "@/lib/host-repository";
 import { createExperienceListing, updateExperienceListing, useHostDbExperienceListings } from "@/lib/db-listings";
 import { EditListingLoading, EditListingNotFound } from "@/components/dashboard/edit-listing-gate";
@@ -128,6 +128,17 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
   const workspaceRatesToSave: WorkspaceRate[] = WORKSPACE_UNITS.filter(
     (u) => rateEnabled[u.unit] && Number(ratePrice[u.unit]) > 0
   ).map((u) => ({ unit: u.unit, price: Number(ratePrice[u.unit]) }));
+
+  // The workspace toggle owns the category: workspaces always sit in "Rent a workspace", and
+  // turning it off restores a normal category so the picker never lands on the workspace one.
+  function toggleWorkspace(on: boolean) {
+    setIsWorkspaceListing(on);
+    if (on) {
+      setCategoryId(WORKSPACE_CATEGORY_ID);
+    } else if (categoryId === WORKSPACE_CATEGORY_ID) {
+      setCategoryId(categories.find((c) => c.id !== WORKSPACE_CATEGORY_ID)?.id ?? "");
+    }
+  }
 
   function toggleScheduleDay(day: string, checked: boolean) {
     setScheduleDays((prev) => (checked ? [...prev, day] : prev.filter((d) => d !== day)));
@@ -296,11 +307,7 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
               Price by the day, week, or month instead of per-session tickets.
             </p>
           </div>
-          <Switch
-            id="is-workspace"
-            checked={isWorkspaceListing}
-            onCheckedChange={setIsWorkspaceListing}
-          />
+          <Switch id="is-workspace" checked={isWorkspaceListing} onCheckedChange={toggleWorkspace} />
         </section>
 
         <section className="flex flex-col gap-4">
@@ -315,21 +322,25 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
               className="mt-1.5"
             />
           </div>
-          <div>
-            <Label>Category</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger className="mt-1.5 w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!isWorkspaceListing && (
+            <div>
+              <Label>Category</Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger className="mt-1.5 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories
+                    .filter((c) => c.id !== WORKSPACE_CATEGORY_ID)
+                    .map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label htmlFor="short-description">Short description</Label>
             <Input
