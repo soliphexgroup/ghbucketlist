@@ -15,14 +15,13 @@ export default function Home() {
         />
       </Suspense>
       <Suspense fallback={null}>
-        <MobileSearchBar activeTab="things-to-do" />
+        <MobileSearchBar activeTab="things-to-do" showOnDesktop />
       </Suspense>
       <div className="hidden lg:block">
         <VerticalHero
           activeTab="things-to-do"
           headline="Discover what's happening"
           subheading="Day trips, tours, attractions, and activities — discover things to do across Accra and beyond."
-          showSearch={false}
         />
       </div>
       <Suspense fallback={null}>
