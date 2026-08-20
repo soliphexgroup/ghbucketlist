@@ -64,6 +64,10 @@ export type Experience = {
   deskBased?: boolean;
   scheduleDays: string[];
   scheduleTime: string;
+  /** "recurring" (weekly, the default) or "dates" (specific one-off event dates). */
+  scheduleType?: "recurring" | "dates";
+  /** scheduleType "dates" only: the specific ISO `YYYY-MM-DD` dates the event runs. */
+  eventDates?: string[];
   /**
    * Seeded fiction (not live data): specific ISO dates this experience's session is full,
    * beyond the weekday schedule. Capacity isn't seat-counted, so a sold-out date is modelled

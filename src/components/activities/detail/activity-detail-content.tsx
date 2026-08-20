@@ -164,9 +164,25 @@ export function ActivityDetailContent({
 
               <section>
                 <h2 className="font-heading text-xl font-semibold text-foreground">Schedule</h2>
-                <p className="mt-3 text-muted-foreground">
-                  {formatScheduleDays(experience.scheduleDays)} at {experience.scheduleTime}
-                </p>
+                {experience.scheduleType === "dates" && experience.eventDates?.length ? (
+                  <div className="mt-3 flex flex-col gap-1 text-muted-foreground">
+                    {[...experience.eventDates].sort().map((iso) => (
+                      <p key={iso}>
+                        {new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}{" "}
+                        at {experience.scheduleTime}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-muted-foreground">
+                    {formatScheduleDays(experience.scheduleDays)} at {experience.scheduleTime}
+                  </p>
+                )}
               </section>
             </>
           )}

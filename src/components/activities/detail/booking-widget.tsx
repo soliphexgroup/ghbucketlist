@@ -44,12 +44,31 @@ function nextScheduledDate(scheduleDays: string[]) {
   return new Date();
 }
 
+/** For dated events: the first date that hasn't passed, else the earliest date. */
+function firstUpcomingDate(isoDates: string[]): Date | null {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const parsed = isoDates
+    .map((iso) => new Date(`${iso}T00:00:00`))
+    .filter((d) => !Number.isNaN(d.getTime()))
+    .sort((a, b) => a.getTime() - b.getTime());
+  return parsed.find((d) => d >= today) ?? parsed[0] ?? null;
+}
+
 export function BookingWidget({ experience }: { experience: Experience }) {
+  // A dated event is bookable only on its specific eventDates; otherwise the guest can pick any
+  // future day matching the recurring weekday schedule.
+  const isDatesMode = experience.scheduleType === "dates" && (experience.eventDates?.length ?? 0) > 0;
+  const eventDateSet = useMemo(() => new Set(experience.eventDates ?? []), [experience.eventDates]);
   const allowedDays = useMemo(
     () => experience.scheduleDays.map((d) => DAY_NAME_TO_INDEX[d]),
     [experience.scheduleDays]
   );
-  const [date, setDate] = useState<Date>(() => nextScheduledDate(experience.scheduleDays));
+  const [date, setDate] = useState<Date>(() =>
+    isDatesMode
+      ? firstUpcomingDate(experience.eventDates ?? []) ?? new Date()
+      : nextScheduledDate(experience.scheduleDays)
+  );
 
   // Real, shared availability from the DB: seats remaining on a given date = capacity minus
   // everyone's confirmed bookings that day (host blocks zero it out).
@@ -137,10 +156,11 @@ export function BookingWidget({ experience }: { experience: Experience }) {
               <Calendar
                 mode="single"
                 selected={date}
+                defaultMonth={date}
                 onSelect={(d) => d && setDate(d)}
                 disabled={(d) =>
                   d < new Date(new Date().setHours(0, 0, 0, 0)) ||
-                  !allowedDays.includes(d.getDay()) ||
+                  (isDatesMode ? !eventDateSet.has(toISODate(d)) : !allowedDays.includes(d.getDay())) ||
                   seatsOn(d) === 0
                 }
                 autoFocus

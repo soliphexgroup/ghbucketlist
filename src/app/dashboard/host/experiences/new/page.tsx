@@ -17,8 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
 import { ListingImageManager } from "@/components/dashboard/listing-image-manager";
 import { categories, WORKSPACE_CATEGORY_ID } from "@/data/categories";
+import { toISODate } from "@/lib/availability";
 import { useCurrentHostId } from "@/lib/host-repository";
 import { createExperienceListing, updateExperienceListing, useHostDbExperienceListings } from "@/lib/db-listings";
 import { EditListingLoading, EditListingNotFound } from "@/components/dashboard/edit-listing-gate";
@@ -101,6 +103,14 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
   );
   const [scheduleDays, setScheduleDays] = useState<string[]>(existing?.scheduleDays ?? ["Saturday"]);
   const [scheduleTime, setScheduleTime] = useState(existing?.scheduleTime ?? "10:00 AM");
+  const [scheduleType, setScheduleType] = useState<"recurring" | "dates">(
+    existing?.scheduleType ?? "recurring"
+  );
+  const [eventDates, setEventDates] = useState<Date[]>(() =>
+    (existing?.eventDates ?? [])
+      .map((iso) => new Date(`${iso}T00:00:00`))
+      .filter((d) => !Number.isNaN(d.getTime()))
+  );
   const [whatsIncluded, setWhatsIncluded] = useState<string[]>(
     existing && existing.whatsIncluded.length > 0 ? existing.whatsIncluded : [""]
   );
@@ -178,7 +188,12 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
     venueName.trim().length > 0 ? null : "Add a venue name.",
     neighbourhood.trim().length > 0 ? null : "Add a neighbourhood.",
     // Schedule and ticket types apply to normal activities; workspaces use a rate card instead.
-    isWorkspaceListing || scheduleDays.length > 0 ? null : "Pick at least one day it runs.",
+    isWorkspaceListing || scheduleType === "dates" || scheduleDays.length > 0
+      ? null
+      : "Pick at least one day it runs.",
+    isWorkspaceListing || scheduleType === "recurring" || eventDates.length > 0
+      ? null
+      : "Pick at least one event date.",
     isWorkspaceListing || scheduleTime.trim().length > 0 ? null : "Add a start time.",
     isWorkspaceListing || isFree || validTickets.length > 0
       ? null
@@ -199,6 +214,11 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
     const included = whatsIncluded.map((s) => s.trim()).filter(Boolean);
     const ticketsToSave: TicketType[] = isFree ? [{ id: "free", name: "Free Entry", priceGHS: 0 }] : validTickets;
 
+    // For a dated event, the specific dates drive the schedule; scheduleDays is derived from their
+    // weekdays so any weekday-based filtering still works.
+    const eventDatesISO = eventDates.map(toISODate).sort();
+    const daysFromDates = Array.from(new Set(eventDates.map((d) => SCHEDULE_DAYS[d.getDay()])));
+
     // Workspaces have no fixed session, so schedule/duration/tickets are neutralised and the rate
     // card drives pricing instead. Non-workspaces clear the workspace fields (supports toggling back).
     const modeFields = isWorkspaceListing
@@ -206,6 +226,8 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
           workspaceRates: workspaceRatesToSave,
           deskBased,
           ticketTypes: [] as TicketType[],
+          scheduleType: undefined,
+          eventDates: undefined,
           scheduleDays: SCHEDULE_DAYS,
           scheduleTime: "All day",
           durationMinutes: 0,
@@ -214,7 +236,9 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
           workspaceRates: undefined,
           deskBased: undefined,
           ticketTypes: ticketsToSave,
-          scheduleDays,
+          scheduleType,
+          eventDates: scheduleType === "dates" ? eventDatesISO : undefined,
+          scheduleDays: scheduleType === "dates" ? daysFromDates : scheduleDays,
           scheduleTime: scheduleTime.trim(),
           durationMinutes: Number(durationMinutes) || 60,
         };
@@ -580,22 +604,75 @@ function ExperienceForm({ existing }: { existing?: Experience }) {
 
             <section className="flex flex-col gap-4">
               <h2 className="font-heading text-lg font-semibold text-foreground">Schedule</h2>
+
               <div>
                 <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Days available
+                  How does it run?
                 </Label>
-                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {SCHEDULE_DAYS.map((day) => (
-                    <label key={day} className="flex items-center gap-2 text-sm text-foreground">
-                      <Checkbox
-                        checked={scheduleDays.includes(day)}
-                        onCheckedChange={(checked) => toggleScheduleDay(day, checked === true)}
-                      />
-                      {day}
-                    </label>
+                <div className="mt-2 grid max-w-md grid-cols-2 gap-2">
+                  {(
+                    [
+                      { value: "recurring", label: "Recurring (weekly)" },
+                      { value: "dates", label: "Specific date(s)" },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setScheduleType(opt.value)}
+                      className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                        scheduleType === opt.value
+                          ? "border-primary bg-accent font-medium text-foreground"
+                          : "border-border text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
                   ))}
                 </div>
               </div>
+
+              {scheduleType === "recurring" ? (
+                <div>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Days available
+                  </Label>
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {SCHEDULE_DAYS.map((day) => (
+                      <label key={day} className="flex items-center gap-2 text-sm text-foreground">
+                        <Checkbox
+                          checked={scheduleDays.includes(day)}
+                          onCheckedChange={(checked) => toggleScheduleDay(day, checked === true)}
+                        />
+                        {day}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Event date(s)
+                  </Label>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Tap each date this event runs. Guests can only book these dates.
+                  </p>
+                  <div className="mt-2 w-fit rounded-xl border border-border p-2">
+                    <Calendar
+                      mode="multiple"
+                      selected={eventDates}
+                      onSelect={(dates) => setEventDates(dates ?? [])}
+                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                    />
+                  </div>
+                  {eventDates.length > 0 && (
+                    <p className="mt-2 text-sm text-foreground">
+                      {eventDates.length} date{eventDates.length > 1 ? "s" : ""} selected
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="schedule-time">Start time</Label>
                 <Input
