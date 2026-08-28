@@ -15,7 +15,9 @@ export async function sendEmail({
   html: string;
 }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || "GHBucketlist <onboarding@resend.dev>";
+  // Defaults to the real GHBucketlist sender. This requires ghbucketlist.com to be a verified
+  // domain in Resend; until then, set EMAIL_FROM to a verified sender (e.g. onboarding@resend.dev).
+  const from = process.env.EMAIL_FROM || "GHBucketlist <noreply@ghbucketlist.com>";
   if (!apiKey) return { ok: false, message: "Email not configured (RESEND_API_KEY missing)." };
   if (!to) return { ok: false, message: "No recipient." };
   try {
