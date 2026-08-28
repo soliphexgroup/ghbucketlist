@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Users, Zap } from "lucide-react";
+import { isInstantBooking } from "@/lib/booking-mode";
 import type { Car } from "@/lib/car-types";
 import { StarRating } from "@/components/star-rating";
 import { WishlistButton } from "@/components/wishlist-button";
@@ -48,7 +49,7 @@ export function CarCard({
           {categoryLabels[car.category]}
         </span>
         <WishlistButton experienceId={car.id} className="absolute top-3 right-3" />
-        {car.bookingType === "instant" && (
+        {isInstantBooking(car.bookingType) && (
           <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
             <Zap className="size-3 fill-current" />
             Instant Book

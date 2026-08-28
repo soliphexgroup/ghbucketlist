@@ -16,6 +16,7 @@ import { formatGHS } from "@/lib/format";
 import { nightsBetween, parseDateParam, resolveStayRange } from "@/lib/dates";
 import { toISODate } from "@/lib/stay-availability";
 import { useListingBookedRanges, dbRoomsLeft } from "@/lib/db-availability";
+import { isInstantBooking } from "@/lib/booking-mode";
 import type { Property, RoomPerk } from "@/lib/stay-types";
 import { cn } from "@/lib/utils";
 
@@ -117,7 +118,7 @@ export function RoomOfferTable({ property }: { property: Property }) {
   const totalRooms = selectedRooms.reduce((n, s) => n + s.qty, 0);
   const subtotal = selectedRooms.reduce((sum, s) => sum + s.offer.pricePerNight * nights * s.qty, 0);
   const total = subtotal;
-  const isInstant = property.bookingType === "instant";
+  const isInstant = isInstantBooking(property.bookingType);
 
   function setQty(id: string, qty: number) {
     setQtyById((prev) => ({ ...prev, [id]: qty }));

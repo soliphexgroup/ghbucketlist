@@ -14,6 +14,7 @@ import { formatGHS } from "@/lib/format";
 import { addDays, nightsBetween, parseDateParam, resolveStayRange, startOfToday } from "@/lib/dates";
 import { isNightBlocked, toISODate } from "@/lib/availability";
 import { useListingBookedRanges, dbUnitAvailable, dbUnitBlockedRanges } from "@/lib/db-availability";
+import { isInstantBooking } from "@/lib/booking-mode";
 import type { Property } from "@/lib/stay-types";
 
 const MAX_ROOMS = 8;
@@ -65,7 +66,7 @@ export function StayBookingWidget({ property }: { property: Property }) {
   const subtotal = property.pricePerNight * nights * rooms;
   const total = subtotal;
   const totalGuests = adults + children;
-  const isInstant = property.bookingType === "instant";
+  const isInstant = isInstantBooking(property.bookingType);
 
   function handleReserve() {
     if (!available) return;

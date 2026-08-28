@@ -22,6 +22,7 @@ import { amenities } from "@/data/amenities";
 import { useCurrentHostId } from "@/lib/host-repository";
 import { createStayListing, updateStayListing, useHostDbStayListings } from "@/lib/db-listings";
 import { EditListingLoading, EditListingNotFound } from "@/components/dashboard/edit-listing-gate";
+import { INSTANT_BOOK_ONLY } from "@/lib/booking-mode";
 import type { CancellationPolicy, Property, PropertyRoom, PropertyType, StayBookingType } from "@/lib/stay-types";
 
 function slugify(title: string) {
@@ -153,7 +154,7 @@ function PropertyForm({ existing }: { existing?: Property }) {
       maxNights: maxNights ? Number(maxNights) : undefined,
       checkInTime: checkInTime.trim(),
       checkOutTime: checkOutTime.trim(),
-      bookingType,
+      bookingType: INSTANT_BOOK_ONLY ? "instant" : bookingType,
       cancellationPolicy,
       noSmoking,
       noParties,
@@ -353,18 +354,20 @@ function PropertyForm({ existing }: { existing?: Property }) {
               <Input id="max-nights" type="number" min={1} value={maxNights} onChange={(e) => setMaxNights(e.target.value)} className="mt-1.5" />
             </div>
           </div>
-          <div>
-            <Label>Booking type</Label>
-            <Select value={bookingType} onValueChange={(v) => setBookingType(v as StayBookingType)}>
-              <SelectTrigger className="mt-1.5 w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="instant">Instant Book</SelectItem>
-                <SelectItem value="request">Request to Book</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {!INSTANT_BOOK_ONLY && (
+            <div>
+              <Label>Booking type</Label>
+              <Select value={bookingType} onValueChange={(v) => setBookingType(v as StayBookingType)}>
+                <SelectTrigger className="mt-1.5 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="instant">Instant Book</SelectItem>
+                  <SelectItem value="request">Request to Book</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </section>
 
         <Separator />

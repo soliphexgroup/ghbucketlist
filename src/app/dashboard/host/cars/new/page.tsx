@@ -20,6 +20,7 @@ import { carFeatures } from "@/data/car-features";
 import { useCurrentHostId } from "@/lib/host-repository";
 import { createCarListing, updateCarListing, useHostDbCarListings } from "@/lib/db-listings";
 import { EditListingLoading, EditListingNotFound } from "@/components/dashboard/edit-listing-gate";
+import { INSTANT_BOOK_ONLY } from "@/lib/booking-mode";
 import type { Car, CarCancellationPolicy, CarCategory, TransmissionType } from "@/lib/car-types";
 
 function slugify(text: string) {
@@ -122,7 +123,7 @@ function CarForm({ existing }: { existing?: Car }) {
       mileageLimitPerDay: Number(mileageLimitPerDay) || 0,
       minRentalDays: Number(minRentalDays) || 1,
       maxRentalDays: maxRentalDays ? Number(maxRentalDays) : undefined,
-      bookingType,
+      bookingType: INSTANT_BOOK_ONLY ? "instant" : bookingType,
       cancellationPolicy,
     };
 
@@ -303,18 +304,20 @@ function CarForm({ existing }: { existing?: Car }) {
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <Label>Booking type</Label>
-              <Select value={bookingType} onValueChange={(v) => setBookingType(v as Car["bookingType"])}>
-                <SelectTrigger className="mt-1.5 w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="instant">Instant Book</SelectItem>
-                  <SelectItem value="request">Request to Book</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {!INSTANT_BOOK_ONLY && (
+              <div>
+                <Label>Booking type</Label>
+                <Select value={bookingType} onValueChange={(v) => setBookingType(v as Car["bookingType"])}>
+                  <SelectTrigger className="mt-1.5 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="instant">Instant Book</SelectItem>
+                    <SelectItem value="request">Request to Book</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label>Cancellation policy</Label>
               <Select value={cancellationPolicy} onValueChange={(v) => setCancellationPolicy(v as CarCancellationPolicy)}>

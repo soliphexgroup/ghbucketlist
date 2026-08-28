@@ -24,6 +24,7 @@ import { createDbBooking } from "@/lib/db-bookings";
 import { notifyBooking } from "@/lib/email/notify";
 import { toISODate } from "@/lib/availability";
 import { useAuth } from "@/lib/auth-context";
+import { isInstantBooking } from "@/lib/booking-mode";
 import type { Car } from "@/lib/car-types";
 
 export type CarBookingDetails = {
@@ -58,7 +59,7 @@ export function CarBookingDialog({
 
   if (!details) return null;
 
-  const isInstant = details.car.bookingType === "instant";
+  const isInstant = isInstantBooking(details.car.bookingType);
   const canPay = payerEmail.includes("@") && payerEmail.includes(".");
 
   function handleOpenChange(next: boolean) {

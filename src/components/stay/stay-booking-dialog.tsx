@@ -23,6 +23,7 @@ import { paystackReference } from "@/lib/paystack";
 import { createDbBooking } from "@/lib/db-bookings";
 import { notifyBooking } from "@/lib/email/notify";
 import { toISODate } from "@/lib/availability";
+import { isInstantBooking } from "@/lib/booking-mode";
 import { useAuth } from "@/lib/auth-context";
 import type { Property, RoomOffer } from "@/lib/stay-types";
 
@@ -61,7 +62,7 @@ export function StayBookingDialog({
 
   if (!details) return null;
 
-  const isInstant = details.property.bookingType === "instant";
+  const isInstant = isInstantBooking(details.property.bookingType);
   const canPay = payerEmail.includes("@") && payerEmail.includes(".");
 
   function handleOpenChange(next: boolean) {

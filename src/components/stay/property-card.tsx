@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BedDouble, Navigation, Zap } from "lucide-react";
+import { isInstantBooking } from "@/lib/booking-mode";
 import type { Property } from "@/lib/stay-types";
 import { ReviewScoreBadge } from "@/components/stay/review-score-badge";
 import { WishlistButton } from "@/components/wishlist-button";
@@ -50,7 +51,7 @@ export function PropertyCard({
           {propertyTypeLabels[property.propertyType]}
         </span>
         <WishlistButton experienceId={property.id} className="absolute top-3 right-3" />
-        {property.bookingType === "instant" && (
+        {isInstantBooking(property.bookingType) && (
           <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
             <Zap className="size-3 fill-current" />
             Instant Book

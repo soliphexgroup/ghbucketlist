@@ -15,6 +15,7 @@ import { formatGHS } from "@/lib/format";
 import { addDays, daysBetween, parseDateParam, resolveStayRange, startOfToday } from "@/lib/dates";
 import { isNightBlocked, toISODate } from "@/lib/availability";
 import { useListingBookedRanges, dbUnitAvailable, dbUnitBlockedRanges } from "@/lib/db-availability";
+import { isInstantBooking } from "@/lib/booking-mode";
 import type { Car } from "@/lib/car-types";
 
 export function CarBookingWidget({ car }: { car: Car }) {
@@ -44,7 +45,7 @@ export function CarBookingWidget({ car }: { car: Car }) {
   const dailyRate = withDriver ? car.withDriverPricePerDay : car.pricePerDay;
   const subtotal = dailyRate * days;
   const total = subtotal;
-  const isInstant = car.bookingType === "instant";
+  const isInstant = isInstantBooking(car.bookingType);
 
   function handleReserve() {
     if (!available) return;
