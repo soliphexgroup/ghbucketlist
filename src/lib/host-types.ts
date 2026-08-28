@@ -12,6 +12,8 @@ export type HostLedgerEntry = {
   listingTitle: string;
   guestName: string;
   guestEmail: string;
+  /** Guest's phone number, collected at checkout (empty if not provided). */
+  guestPhone?: string;
   guestAvatar: string;
   /** Experience session date, or a stay's check-in. */
   dateISO: string;
@@ -29,6 +31,7 @@ export type HostBooking = {
   experienceId: string;
   guestName: string;
   guestEmail: string;
+  guestPhone?: string;
   guestAvatar: string;
   dateISO: string;
   scheduleTime: string;

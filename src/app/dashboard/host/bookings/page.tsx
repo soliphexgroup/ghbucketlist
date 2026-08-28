@@ -46,9 +46,9 @@ export default function HostBookingsPage() {
   }
 
   function exportCsv() {
-    const header = ["Guest", "Email", "Type", "Listing", "Details", "Date", "Amount", "Status"];
+    const header = ["Guest", "Email", "Phone", "Type", "Listing", "Details", "Date", "Amount", "Status"];
     const lines = rows.map((e) =>
-      [e.guestName, e.guestEmail, e.kind, e.listingTitle, e.detail, e.dateISO.slice(0, 10), e.gross, e.status].join(",")
+      [e.guestName, e.guestEmail, e.guestPhone ?? "", e.kind, e.listingTitle, e.detail, e.dateISO.slice(0, 10), e.gross, e.status].join(",")
     );
     const csv = [header.join(","), ...lines].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -127,7 +127,15 @@ export default function HostBookingsPage() {
           <tbody>
             {rows.map((e) => (
               <tr key={e.id} className="border-t border-border">
-                <td className="px-4 py-3 text-foreground">{e.guestName}</td>
+                <td className="px-4 py-3 text-foreground">
+                  <span className="block font-medium text-foreground">{e.guestName}</span>
+                  {e.guestEmail && (
+                    <span className="block text-xs text-muted-foreground">{e.guestEmail}</span>
+                  )}
+                  {e.guestPhone && (
+                    <span className="block text-xs text-muted-foreground">{e.guestPhone}</span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   <span className="flex items-center gap-2">
                     <span className="text-foreground">{e.listingTitle}</span>

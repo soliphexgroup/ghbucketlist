@@ -52,6 +52,7 @@ export function CarBookingDialog({
   );
   const [message, setMessage] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
+  const [payerPhone, setPayerPhone] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [ref, setRef] = useState("");
   const checkout = usePaystackCheckout();
@@ -60,7 +61,7 @@ export function CarBookingDialog({
   if (!details) return null;
 
   const isInstant = isInstantBooking(details.car.bookingType);
-  const canPay = payerEmail.includes("@") && payerEmail.includes(".");
+  const canPay = payerEmail.includes("@") && payerEmail.includes(".") && payerPhone.trim().length >= 7;
 
   function handleOpenChange(next: boolean) {
     onOpenChange(next);
@@ -115,7 +116,7 @@ export function CarBookingDialog({
       total: d.total,
       guestName: payerEmail || undefined,
       guestEmail: payerEmail || undefined,
-      details: { withDriver: d.withDriver, requestOnly },
+      details: { withDriver: d.withDriver, requestOnly, guestPhone: payerPhone.trim() },
     });
   }
 
@@ -236,18 +237,33 @@ export function CarBookingDialog({
             )}
 
             {isInstant && (
-              <div>
-                <Label htmlFor="car-payer-email" className="text-xs text-muted-foreground">
-                  Email for receipt
-                </Label>
-                <Input
-                  id="car-payer-email"
-                  type="email"
-                  value={payerEmail}
-                  onChange={(e) => setPayerEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  className="mt-1.5"
-                />
+              <div className="flex flex-col gap-3">
+                <div>
+                  <Label htmlFor="car-payer-email" className="text-xs text-muted-foreground">
+                    Email for receipt
+                  </Label>
+                  <Input
+                    id="car-payer-email"
+                    type="email"
+                    value={payerEmail}
+                    onChange={(e) => setPayerEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="car-payer-phone" className="text-xs text-muted-foreground">
+                    Phone number (shared with the host)
+                  </Label>
+                  <Input
+                    id="car-payer-phone"
+                    type="tel"
+                    value={payerPhone}
+                    onChange={(e) => setPayerPhone(e.target.value)}
+                    placeholder="e.g. 024 123 4567"
+                    className="mt-1.5"
+                  />
+                </div>
               </div>
             )}
 

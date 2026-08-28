@@ -54,13 +54,14 @@ export function WorkspaceBookingDialog({
   );
   const [reference, setReference] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
+  const [payerPhone, setPayerPhone] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const checkout = usePaystackCheckout();
   const { user } = useAuth();
 
   if (!details) return null;
 
-  const canPay = payerEmail.includes("@") && payerEmail.includes(".");
+  const canPay = payerEmail.includes("@") && payerEmail.includes(".") && payerPhone.trim().length >= 7;
   const durationLabel = `${details.count} ${rateUnitLabel(details.rate.unit, details.count)}`;
   const deskLabel = details.experience.deskBased
     ? ` · ${details.desks} desk${details.desks > 1 ? "s" : ""}`
@@ -97,6 +98,7 @@ export function WorkspaceBookingDialog({
         requestOnly: false,
         workspaceRateUnit: d.rate.unit,
         workspaceCount: d.count,
+        guestPhone: payerPhone.trim(),
       },
     });
   }
@@ -241,18 +243,33 @@ export function WorkspaceBookingDialog({
             </div>
 
             {details.total > 0 && (
-              <div>
-                <Label htmlFor="payer-email" className="text-xs text-muted-foreground">
-                  Email for receipt
-                </Label>
-                <Input
-                  id="payer-email"
-                  type="email"
-                  value={payerEmail}
-                  onChange={(e) => setPayerEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  className="mt-1.5"
-                />
+              <div className="flex flex-col gap-3">
+                <div>
+                  <Label htmlFor="payer-email" className="text-xs text-muted-foreground">
+                    Email for receipt
+                  </Label>
+                  <Input
+                    id="payer-email"
+                    type="email"
+                    value={payerEmail}
+                    onChange={(e) => setPayerEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="ws-payer-phone" className="text-xs text-muted-foreground">
+                    Phone number (shared with the host)
+                  </Label>
+                  <Input
+                    id="ws-payer-phone"
+                    type="tel"
+                    value={payerPhone}
+                    onChange={(e) => setPayerPhone(e.target.value)}
+                    placeholder="e.g. 024 123 4567"
+                    className="mt-1.5"
+                  />
+                </div>
               </div>
             )}
 

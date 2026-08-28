@@ -78,6 +78,8 @@ export function bookingConfirmationCustomer(input: {
 export function newBookingHost(input: {
   listingTitle: string;
   guestName?: string | null;
+  guestEmail?: string | null;
+  guestPhone?: string | null;
   reference: string;
   startDate: string;
   endDate: string;
@@ -88,6 +90,8 @@ export function newBookingHost(input: {
     <p style="font-size:14px;line-height:1.6;">You have a ${input.requestOnly ? "new booking request" : "new booking"} for <strong>${esc(input.listingTitle)}</strong>.</p>
     <table style="width:100%;border-collapse:collapse;margin-top:12px;">
       ${detailRow("Guest", input.guestName || "—")}
+      ${input.guestEmail ? detailRow("Email", input.guestEmail) : ""}
+      ${input.guestPhone ? detailRow("Phone", input.guestPhone) : ""}
       ${detailRow("Reference", input.reference)}
       ${detailRow("Dates", `${niceDate(input.startDate)} → ${niceDate(input.endDate)}`)}
       ${detailRow("Total", ghs(input.total))}

@@ -15,7 +15,7 @@ type BookingRow = {
   total: number;
   status: string;
   notified_at: string | null;
-  details: { requestOnly?: boolean } | null;
+  details: { requestOnly?: boolean; guestPhone?: string } | null;
   listings: { title: string; created_by: string | null } | null;
 };
 
@@ -74,6 +74,8 @@ export async function POST(request: Request) {
     const t = newBookingHost({
       listingTitle,
       guestName: row.guest_name,
+      guestEmail: row.guest_email,
+      guestPhone: row.details?.guestPhone,
       reference: row.reference,
       startDate: row.start_date,
       endDate: row.end_date,

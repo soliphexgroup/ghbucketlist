@@ -54,13 +54,14 @@ export function BookingDialog({
   );
   const [reference, setReference] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
+  const [payerPhone, setPayerPhone] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const checkout = usePaystackCheckout();
   const { user } = useAuth();
 
   if (!details) return null;
 
-  const canPay = payerEmail.includes("@") && payerEmail.includes(".");
+  const canPay = payerEmail.includes("@") && payerEmail.includes(".") && payerPhone.trim().length >= 7;
 
   function handleOpenChange(next: boolean) {
     onOpenChange(next);
@@ -89,7 +90,7 @@ export function BookingDialog({
       total: d.total,
       guestName: payerEmail || undefined,
       guestEmail: payerEmail || undefined,
-      details: { ticketTypeName: d.ticketType.name, requestOnly: false },
+      details: { ticketTypeName: d.ticketType.name, requestOnly: false, guestPhone: payerPhone.trim() },
     });
   }
 
@@ -240,18 +241,33 @@ export function BookingDialog({
             </div>
 
             {details.total > 0 && (
-              <div>
-                <Label htmlFor="payer-email" className="text-xs text-muted-foreground">
-                  Email for receipt
-                </Label>
-                <Input
-                  id="payer-email"
-                  type="email"
-                  value={payerEmail}
-                  onChange={(e) => setPayerEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  className="mt-1.5"
-                />
+              <div className="flex flex-col gap-3">
+                <div>
+                  <Label htmlFor="payer-email" className="text-xs text-muted-foreground">
+                    Email for receipt
+                  </Label>
+                  <Input
+                    id="payer-email"
+                    type="email"
+                    value={payerEmail}
+                    onChange={(e) => setPayerEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="payer-phone" className="text-xs text-muted-foreground">
+                    Phone number (shared with the host)
+                  </Label>
+                  <Input
+                    id="payer-phone"
+                    type="tel"
+                    value={payerPhone}
+                    onChange={(e) => setPayerPhone(e.target.value)}
+                    placeholder="e.g. 024 123 4567"
+                    className="mt-1.5"
+                  />
+                </div>
               </div>
             )}
 

@@ -25,7 +25,7 @@ export default function GuestsPage() {
   const guests = useMemo(() => {
     const map = new Map<
       string,
-      { key: string; name: string; email: string; avatar: string; totalBookings: number; totalSpent: number; lastVisit: string }
+      { key: string; name: string; email: string; phone: string; avatar: string; totalBookings: number; totalSpent: number; lastVisit: string }
     >();
 
     for (const e of ledger) {
@@ -35,12 +35,14 @@ export default function GuestsPage() {
       if (existing) {
         existing.totalBookings += 1;
         existing.totalSpent += e.gross;
+        if (!existing.phone && e.guestPhone) existing.phone = e.guestPhone;
         if (new Date(e.dateISO) > new Date(existing.lastVisit)) existing.lastVisit = e.dateISO;
       } else {
         map.set(key, {
           key,
           name: e.guestName,
           email: e.guestEmail,
+          phone: e.guestPhone ?? "",
           avatar: e.guestAvatar,
           totalBookings: 1,
           totalSpent: e.gross,
@@ -84,6 +86,7 @@ export default function GuestsPage() {
             <tr>
               <th className="px-4 py-3 font-medium">Guest</th>
               <th className="px-4 py-3 font-medium">Email</th>
+              <th className="px-4 py-3 font-medium">Phone</th>
               <th className="px-4 py-3 font-medium">Bookings</th>
               <th className="px-4 py-3 font-medium">Total spent</th>
               <th className="px-4 py-3 font-medium">Last visit</th>
@@ -101,6 +104,7 @@ export default function GuestsPage() {
                   {g.name}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{g.email || "—"}</td>
+                <td className="px-4 py-3 text-muted-foreground">{g.phone || "—"}</td>
                 <td className="px-4 py-3 text-muted-foreground">{g.totalBookings}</td>
                 <td className="px-4 py-3 text-foreground">{formatGHS(g.totalSpent)}</td>
                 <td className="px-4 py-3 text-muted-foreground">
@@ -110,7 +114,7 @@ export default function GuestsPage() {
             ))}
             {guests.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                   No guests found.
                 </td>
               </tr>

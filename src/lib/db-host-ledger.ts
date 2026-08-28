@@ -20,7 +20,7 @@ type Row = {
   guests: number;
   total: number;
   status: string;
-  details: { withDriver?: boolean; ticketTypeName?: string } | null;
+  details: { withDriver?: boolean; ticketTypeName?: string; guestPhone?: string } | null;
   guest_name: string | null;
   guest_email: string | null;
   created_at: string;
@@ -91,6 +91,7 @@ export function useHostDbLedger(): HostLedgerEntry[] {
       listingTitle: r.listings?.title ?? "Listing",
       guestName: r.guest_name ?? "Guest",
       guestEmail: r.guest_email ?? "",
+      guestPhone: r.details?.guestPhone ?? "",
       guestAvatar: GUEST_FALLBACK_AVATAR,
       dateISO: new Date(r.start_date).toISOString(),
       endISO: new Date(r.end_date).toISOString(),
@@ -120,6 +121,7 @@ export function useHostDbExperienceBookings(): HostBooking[] {
       experienceId: r.listing_id,
       guestName: r.guest_name ?? "Guest",
       guestEmail: r.guest_email ?? "",
+      guestPhone: r.details?.guestPhone ?? "",
       guestAvatar: GUEST_FALLBACK_AVATAR,
       dateISO: new Date(r.start_date).toISOString(),
       scheduleTime: r.listings?.data?.scheduleTime ?? "",
