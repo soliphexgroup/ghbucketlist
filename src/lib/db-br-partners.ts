@@ -81,16 +81,23 @@ export function useBrPartners(): { partners: BrPartner[]; loaded: boolean } {
 export type AdminBrPartner = BrPartner & {
   status: BrPartnerStatus;
   deviceToken: string;
+  statsPin: string | null;
   createdAt: string;
 };
 
-type AdminRow = PublicRow & { status: string; device_token: string; created_at: string };
+type AdminRow = PublicRow & {
+  status: string;
+  device_token: string;
+  stats_pin: string | null;
+  created_at: string;
+};
 
 function toAdminPartner(r: AdminRow): AdminBrPartner {
   return {
     ...toPartner(r),
     status: (r.status as BrPartnerStatus) ?? "active",
     deviceToken: r.device_token,
+    statsPin: r.stats_pin ?? null,
     createdAt: r.created_at,
   };
 }
@@ -104,6 +111,7 @@ export type BrPartnerInput = {
   customerPct: number;
   commissionPct: number;
   description: string;
+  statsPin: string;
 };
 
 function slugify(name: string) {
@@ -120,6 +128,7 @@ function columns(input: BrPartnerInput) {
     customer_pct: input.customerPct,
     commission_pct: input.commissionPct,
     description: input.description.trim() || null,
+    stats_pin: input.statsPin.trim() || null,
     updated_at: new Date().toISOString(),
   };
 }
@@ -160,7 +169,7 @@ export function useAdminBrPartners(): { partners: AdminBrPartner[]; loaded: bool
     let active = true;
     createClient()
       .from("br_partners")
-      .select("id,name,slug,category,area,tier,status,total_discount_pct,customer_pct,commission_pct,image_url,description,device_token,created_at")
+      .select("id,name,slug,category,area,tier,status,total_discount_pct,customer_pct,commission_pct,image_url,description,device_token,stats_pin,created_at")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         if (!active) return;

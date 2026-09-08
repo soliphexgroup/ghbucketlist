@@ -2,21 +2,25 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertTriangle, CheckCircle2, CloudOff, Gift, Loader2, RefreshCw, WifiOff, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, CloudOff, Gift, Loader2, Lock, RefreshCw, WifiOff, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatGHS } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import {
   brDeviceInfo,
   brLookupMember,
+  brPartnerStats,
   brRedeem,
   flushQueue,
   memberStatusOffline,
   queuedCount,
   refreshMemberDigest,
   type DeviceInfo,
+  type PartnerStats,
   type Provisional,
+  type StatsPeriod,
 } from "@/lib/db-br-pos";
 import { PosPwa } from "@/components/rewards/pos-pwa";
 
@@ -322,7 +326,155 @@ function Pos() {
           <Button size="lg" className="h-14 w-full text-base" onClick={reset}>New sale</Button>
         </div>
       )}
+
+      <OwnerSummary token={token} />
     </Shell>
+  );
+}
+
+const PERIODS: { key: StatsPeriod; label: string }[] = [
+  { key: "today", label: "Today" },
+  { key: "7d", label: "7 days" },
+  { key: "30d", label: "30 days" },
+  { key: "all", label: "All" },
+];
+
+// Collapsible owner-only totals, gated by the PIN an admin set for this partner. The PIN is verified
+// server-side; unlocking is remembered only for this session (state), never persisted to the device.
+function OwnerSummary({ token }: { token: string }) {
+  const [open, setOpen] = useState(false);
+  const [pin, setPin] = useState("");
+  const [unlockedPin, setUnlockedPin] = useState<string | null>(null);
+  const [period, setPeriod] = useState<StatsPeriod>("today");
+  const [stats, setStats] = useState<PartnerStats | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(
+    async (usePin: string, p: StatsPeriod) => {
+      setBusy(true);
+      setError(null);
+      const res = await brPartnerStats(token, usePin, p);
+      setBusy(false);
+      if (!res.ok) {
+        setError(res.message);
+        if (res.reason === "unauthorized") {
+          setUnlockedPin(null);
+          setStats(null);
+        }
+        return false;
+      }
+      setStats(res.stats);
+      return true;
+    },
+    [token],
+  );
+
+  async function unlock() {
+    if (busy || pin.trim().length < 4) return;
+    const ok = await load(pin.trim(), period);
+    if (ok) setUnlockedPin(pin.trim());
+  }
+
+  function changePeriod(p: StatsPeriod) {
+    setPeriod(p);
+    if (unlockedPin) void load(unlockedPin, p);
+  }
+
+  return (
+    <div className="mt-8 border-t border-border pt-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between text-sm font-medium text-muted-foreground"
+        aria-expanded={open}
+      >
+        <span className="flex items-center gap-2">
+          <Lock className="size-4" /> Owner summary
+        </span>
+        <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div className="mt-4">
+          {!unlockedPin ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-muted-foreground">Enter the owner PIN to view your business totals.</p>
+              <div className="flex gap-2">
+                <Input
+                  type="password"
+                  inputMode="numeric"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && unlock()}
+                  placeholder="PIN"
+                  className="h-12"
+                  autoComplete="off"
+                />
+                <Button className="h-12 px-6" disabled={busy || pin.trim().length < 4} onClick={unlock}>
+                  {busy ? <Loader2 className="size-4 animate-spin" /> : "View"}
+                </Button>
+              </div>
+              {error && <p className="text-xs text-destructive">{error}</p>}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap gap-1.5">
+                {PERIODS.map((pr) => (
+                  <button
+                    key={pr.key}
+                    type="button"
+                    onClick={() => changePeriod(pr.key)}
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                      period === pr.key ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground",
+                    )}
+                  >
+                    {pr.label}
+                  </button>
+                ))}
+              </div>
+
+              {error ? (
+                <p className="text-xs text-destructive">{error}</p>
+              ) : stats ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <SummaryTile label="Redeems" value={String(stats.redeems)} />
+                    <SummaryTile label="Sales through Rewards" value={formatGHS(stats.grossSales)} />
+                    <SummaryTile label="Given to customers" value={formatGHS(stats.customerSavings)} success />
+                    <SummaryTile label="Commission to GHB" value={formatGHS(stats.commissionTotal)} />
+                  </div>
+                  <div className="rounded-2xl bg-secondary/60 p-4">
+                    <p className="text-xs text-muted-foreground">Outstanding to settle (all time)</p>
+                    <p className="mt-0.5 font-heading text-xl font-bold text-foreground">
+                      {formatGHS(stats.commissionOutstanding)}
+                    </p>
+                  </div>
+                </>
+              ) : null}
+
+              {busy && (
+                <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" /> Loading…
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SummaryTile({ label, value, success }: { label: string; value: string; success?: boolean }) {
+  return (
+    <div className="rounded-2xl border border-border p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={cn("mt-0.5 font-heading text-lg font-bold", success ? "text-success" : "text-foreground")}>
+        {value}
+      </p>
+    </div>
   );
 }
 

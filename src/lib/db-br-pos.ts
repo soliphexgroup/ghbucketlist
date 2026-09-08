@@ -144,6 +144,74 @@ function queueOffline(token: string, phone: string, amount: number): RedeemResul
   return { ok: false, queued: true, message: "Saved offline — will sync when back online." };
 }
 
+// --- Partner owner summary (PIN-gated) ---
+// Live aggregate totals for the partner, gated by the owner PIN (verified server-side). Online-only
+// and aggregates-only — the RPC never returns member phone numbers.
+
+export type StatsPeriod = "today" | "7d" | "30d" | "all";
+
+export type PartnerStats = {
+  redeems: number;
+  grossSales: number;
+  customerSavings: number;
+  commissionTotal: number;
+  commissionOutstanding: number;
+};
+
+export type PartnerStatsResult =
+  | { ok: true; stats: PartnerStats }
+  | { ok: false; reason: "unauthorized" | "offline" | "error"; message: string };
+
+export async function brPartnerStats(
+  token: string,
+  pin: string,
+  period: StatsPeriod
+): Promise<PartnerStatsResult> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return { ok: false, reason: "offline", message: "Connect to the internet to view the summary." };
+  }
+  try {
+    const { data, error } = await createClient().rpc("br_partner_stats", {
+      p_token: token,
+      p_pin: pin.trim(),
+      p_period: period,
+    });
+    if (error) {
+      if (isOffline(error.message)) {
+        return { ok: false, reason: "offline", message: "Connect to the internet to view the summary." };
+      }
+      return { ok: false, reason: "error", message: error.message };
+    }
+    const row = first<{
+      authorized: boolean;
+      redeems: number;
+      gross_sales: number;
+      customer_savings: number;
+      commission_total: number;
+      commission_outstanding: number;
+    }>(data);
+    if (!row || !row.authorized) {
+      return {
+        ok: false,
+        reason: "unauthorized",
+        message: "PIN not recognised, or the summary isn’t set up for this business.",
+      };
+    }
+    return {
+      ok: true,
+      stats: {
+        redeems: Number(row.redeems) || 0,
+        grossSales: Number(row.gross_sales) || 0,
+        customerSavings: Number(row.customer_savings) || 0,
+        commissionTotal: Number(row.commission_total) || 0,
+        commissionOutstanding: Number(row.commission_outstanding) || 0,
+      },
+    };
+  } catch {
+    return { ok: false, reason: "offline", message: "Connect to the internet to view the summary." };
+  }
+}
+
 export async function brRedeem(token: string, phone: string, amount: number): Promise<RedeemResult> {
   try {
     const { data, error } = await createClient().rpc("br_redeem", {

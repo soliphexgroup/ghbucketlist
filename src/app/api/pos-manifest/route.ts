@@ -10,7 +10,7 @@ export function GET(request: Request) {
 
   const manifest = {
     name: "GHBucketlist Rewards",
-    short_name: "GHB Rewards",
+    short_name: "Bucket Rewards",
     description: "Redeem Bucket Rewards at the counter — works offline.",
     start_url: startUrl,
     scope: "/rewards/pos",

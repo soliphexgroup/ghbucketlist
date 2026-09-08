@@ -46,6 +46,7 @@ export function BrPartnerFormDialog({
   const [customer, setCustomer] = useState(String(existing?.customerPct ?? 7));
   const [commission, setCommission] = useState(String(existing?.commissionPct ?? 3));
   const [description, setDescription] = useState(existing?.description ?? "");
+  const [statsPin, setStatsPin] = useState(existing?.statsPin ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +54,8 @@ export function BrPartnerFormDialog({
   const customerN = Number(customer) || 0;
   const commissionN = Number(commission) || 0;
   const splitOk = Math.abs(customerN + commissionN - totalN) < 0.001;
-  const canSave = name.trim().length > 1 && totalN > 0 && splitOk;
+  const pinOk = statsPin.trim() === "" || /^\d{4,6}$/.test(statsPin.trim());
+  const canSave = name.trim().length > 1 && totalN > 0 && splitOk && pinOk;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +71,7 @@ export function BrPartnerFormDialog({
       customerPct: customerN,
       commissionPct: commissionN,
       description,
+      statsPin,
     };
     const res = existing ? await updateBrPartner(existing.id, input) : await createBrPartner(input);
     setSaving(false);
@@ -130,6 +133,21 @@ export function BrPartnerFormDialog({
           <div>
             <Label htmlFor="p-desc">Description (optional)</Label>
             <Textarea id="p-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="mt-1.5" />
+          </div>
+          <div>
+            <Label htmlFor="p-pin">Owner summary PIN (optional)</Label>
+            <Input
+              id="p-pin"
+              inputMode="numeric"
+              value={statsPin}
+              onChange={(e) => setStatsPin(e.target.value)}
+              placeholder="4–6 digits"
+              className="mt-1.5"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Lets the owner open the “Owner summary” totals on their counter link. Leave blank to disable. Share it with the owner only.
+            </p>
+            {!pinOk && <p className="mt-1 text-xs text-destructive">PIN must be 4–6 digits.</p>}
           </div>
           <DialogFooter className="-mx-4 -mb-4 mt-2">
             <Button type="submit" disabled={!canSave || saving} className="w-full gap-2 sm:w-auto">

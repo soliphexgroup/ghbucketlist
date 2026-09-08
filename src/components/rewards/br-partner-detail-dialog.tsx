@@ -37,6 +37,10 @@ export function BrPartnerDetailDialog({
         </DialogHeader>
         {partner && stats && (
           <div className="flex flex-col gap-4">
+            <p className="text-xs text-muted-foreground">
+              Owner summary PIN:{" "}
+              <span className="font-medium text-foreground">{partner.statsPin || "Not set"}</span>
+            </p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Stat label="Redemptions" value={String(stats.rows.length)} />
               <Stat label="Revenue driven" value={formatGHS(stats.revenue)} />

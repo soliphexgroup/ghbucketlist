@@ -325,3 +325,67 @@ end;
 $$;
 
 grant execute on function public.br_redeem_offline(text, text, numeric, timestamptz) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 7. Partner self-serve summary (owner PIN-gated) ---------------------------
+-- The partner owner can view their own totals straight from the counter link,
+-- behind a short PIN that an admin sets. Token-scoped and SECURITY DEFINER, so
+-- it returns AGGREGATES ONLY — never member phone numbers. The PIN is verified
+-- server-side (a client-side check would be trivially bypassed since the JS is
+-- public). Outstanding commission is always the running all-time balance; the
+-- other figures respect the requested period. Ghana runs on UTC (GMT, no DST),
+-- so date_trunc('day', now()) in UTC lines up with the local day.
+-- ---------------------------------------------------------------------------
+alter table public.br_partners add column if not exists stats_pin text;
+
+drop function if exists public.br_partner_stats(text, text, text);
+create or replace function public.br_partner_stats(
+  p_token text, p_pin text, p_period text default 'today'
+)
+returns table (
+  authorized boolean,
+  redeems bigint,
+  gross_sales numeric,
+  customer_savings numeric,
+  commission_total numeric,
+  commission_outstanding numeric
+)
+language plpgsql
+security definer set search_path = public
+stable
+as $$
+declare
+  v_partner public.br_partners;
+  v_since timestamptz;
+begin
+  select * into v_partner from public.br_partners where device_token = p_token and status = 'active';
+  -- Unknown/inactive device, no PIN configured, or a wrong PIN → not authorized, no data.
+  -- (We don't distinguish these to the caller, so a wrong PIN can't confirm a device exists.)
+  if not found
+     or coalesce(v_partner.stats_pin, '') = ''
+     or coalesce(trim(p_pin), '') <> v_partner.stats_pin then
+    return query select false, null::bigint, null::numeric, null::numeric, null::numeric, null::numeric;
+    return;
+  end if;
+
+  v_since := case p_period
+    when 'today' then date_trunc('day', now())
+    when '7d' then now() - interval '7 days'
+    when '30d' then now() - interval '30 days'
+    else null                                   -- 'all' (or anything else): no lower bound
+  end;
+
+  return query
+    select
+      true,
+      count(*) filter (where v_since is null or r.created_at >= v_since),
+      coalesce(sum(r.amount) filter (where v_since is null or r.created_at >= v_since), 0),
+      coalesce(sum(r.customer_saving) filter (where v_since is null or r.created_at >= v_since), 0),
+      coalesce(sum(r.commission) filter (where v_since is null or r.created_at >= v_since), 0),
+      coalesce(sum(r.commission) filter (where r.settled_at is null), 0)  -- always all-time
+    from public.br_redemptions r
+    where r.partner_id = v_partner.id;
+end;
+$$;
+
+grant execute on function public.br_partner_stats(text, text, text) to anon, authenticated;
