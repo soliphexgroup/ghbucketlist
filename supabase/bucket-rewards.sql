@@ -292,7 +292,8 @@ declare
   v_saving numeric;
   v_commission numeric;
 begin
-  select * into v_partner from public.br_partners where device_token = p_token and status = 'active';
+  -- Alias the table so its "status" column can't clash with this function's OUT column "status".
+  select p.* into v_partner from public.br_partners p where p.device_token = p_token and p.status = 'active';
   if not found then
     insert into public.br_failed_redemptions (partner_id, device_token, member_phone, amount, reason, occurred_at)
       values (null, p_token, trim(p_phone), p_amount, 'unknown_device', p_at);
@@ -410,7 +411,8 @@ as $$
 declare
   v_partner public.br_partners;
 begin
-  select * into v_partner from public.br_partners where device_token = p_token and status = 'active';
+  -- Alias the table so its "status" column can't clash with this function's OUT column "status".
+  select p.* into v_partner from public.br_partners p where p.device_token = p_token and p.status = 'active';
   if not found then return query select 'invalid'::text; return; end if;
   if coalesce(trim(p_new_pin), '') !~ '^[0-9]{4,6}$' then
     return query select 'invalid'::text; return;
