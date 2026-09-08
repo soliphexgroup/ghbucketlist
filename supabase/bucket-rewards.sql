@@ -176,15 +176,18 @@ grant execute on function public.br_redeem(text, text, numeric) to anon, authent
 
 -- Confirm a device token resolves to a partner (so the counter app can show "This device: <name>")
 -- and hand back the partner's discount rates, so the device can compute the split offline.
+-- has_stats_pin lets the counter link decide between "Set a PIN" (first run) and "Enter PIN".
+-- It's a boolean only — the PIN itself never leaves the server.
 drop function if exists public.br_device_info(text);
 create or replace function public.br_device_info(p_token text)
-returns table (name text, active boolean, total_discount_pct numeric, customer_pct numeric, commission_pct numeric)
+returns table (name text, active boolean, total_discount_pct numeric, customer_pct numeric, commission_pct numeric, has_stats_pin boolean)
 language plpgsql
 security definer set search_path = public
 as $$
 begin
   return query
-    select p.name, (p.status = 'active'), p.total_discount_pct, p.customer_pct, p.commission_pct
+    select p.name, (p.status = 'active'), p.total_discount_pct, p.customer_pct, p.commission_pct,
+           (coalesce(p.stats_pin, '') <> '')
     from public.br_partners p
     where p.device_token = p_token;
 end;
@@ -389,3 +392,39 @@ end;
 $$;
 
 grant execute on function public.br_partner_stats(text, text, text) to anon, authenticated;
+
+-- The partner sets/changes their own owner-summary PIN straight from the counter link. First-time
+-- setup (no PIN yet) needs no current PIN; changing an existing PIN requires the current one, so a
+-- cashier can't silently rotate it. An admin clearing stats_pin in the dashboard acts as a reset
+-- (forgot PIN) — after that, the next opener can set a fresh PIN. Returns:
+--   'set'           — PIN saved
+--   'wrong_current' — an existing PIN, but p_current_pin didn't match
+--   'invalid'       — unknown/inactive device, or new PIN not 4–6 digits
+create or replace function public.br_set_stats_pin(
+  p_token text, p_new_pin text, p_current_pin text default null
+)
+returns table (status text)
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_partner public.br_partners;
+begin
+  select * into v_partner from public.br_partners where device_token = p_token and status = 'active';
+  if not found then return query select 'invalid'::text; return; end if;
+  if coalesce(trim(p_new_pin), '') !~ '^[0-9]{4,6}$' then
+    return query select 'invalid'::text; return;
+  end if;
+  if coalesce(v_partner.stats_pin, '') <> ''
+     and coalesce(trim(p_current_pin), '') <> v_partner.stats_pin then
+    return query select 'wrong_current'::text; return;
+  end if;
+
+  update public.br_partners
+  set stats_pin = trim(p_new_pin), updated_at = now()
+  where id = v_partner.id;
+  return query select 'set'::text;
+end;
+$$;
+
+grant execute on function public.br_set_stats_pin(text, text, text) to anon, authenticated;

@@ -145,7 +145,9 @@ export function BrPartnerFormDialog({
               className="mt-1.5"
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Lets the owner open the “Owner summary” totals on their counter link. Leave blank to disable. Share it with the owner only.
+              Normally the owner sets this themselves the first time they open “Owner summary” on their counter link.
+              Leave blank for that. Set a value here to pre-fill it, or <span className="font-medium">clear it to reset</span> a
+              forgotten PIN so the owner can choose a new one.
             </p>
             {!pinOk && <p className="mt-1 text-xs text-destructive">PIN must be 4–6 digits.</p>}
           </div>

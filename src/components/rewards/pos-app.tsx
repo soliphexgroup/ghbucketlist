@@ -13,6 +13,7 @@ import {
   brLookupMember,
   brPartnerStats,
   brRedeem,
+  brSetStatsPin,
   flushQueue,
   memberStatusOffline,
   queuedCount,
@@ -327,7 +328,11 @@ function Pos() {
         </div>
       )}
 
-      <OwnerSummary token={token} />
+      <OwnerSummary
+        token={token}
+        hasPin={device.info?.hasStatsPin ?? false}
+        infoReady={device.status === "ready"}
+      />
     </Shell>
   );
 }
@@ -339,16 +344,27 @@ const PERIODS: { key: StatsPeriod; label: string }[] = [
   { key: "all", label: "All" },
 ];
 
-// Collapsible owner-only totals, gated by the PIN an admin set for this partner. The PIN is verified
-// server-side; unlocking is remembered only for this session (state), never persisted to the device.
-function OwnerSummary({ token }: { token: string }) {
+// Collapsible owner-only totals, gated by a PIN the partner sets themselves on first open (an admin
+// can also pre-set or clear it as a reset). The PIN is verified server-side; unlocking is remembered
+// only for this session (state), never persisted to the device. `hasPin` comes from the device info
+// (a boolean — the PIN itself never reaches the client).
+function OwnerSummary({ token, hasPin, infoReady }: { token: string; hasPin: boolean; infoReady: boolean }) {
   const [open, setOpen] = useState(false);
-  const [pin, setPin] = useState("");
+  const [pinJustSet, setPinJustSet] = useState(false);
+  const pinExists = hasPin || pinJustSet;
+
+  const [pin, setPin] = useState(""); // enter-PIN field
+  const [newPin, setNewPin] = useState(""); // setup / change
+  const [confirmPin, setConfirmPin] = useState("");
+  const [changing, setChanging] = useState(false); // change-PIN form while unlocked
+
   const [unlockedPin, setUnlockedPin] = useState<string | null>(null);
   const [period, setPeriod] = useState<StatsPeriod>("today");
   const [stats, setStats] = useState<PartnerStats | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); // stats fetch / unlock
+  const [pinError, setPinError] = useState<string | null>(null); // set / change PIN
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(
     async (usePin: string, p: StatsPeriod) => {
@@ -373,7 +389,53 @@ function OwnerSummary({ token }: { token: string }) {
   async function unlock() {
     if (busy || pin.trim().length < 4) return;
     const ok = await load(pin.trim(), period);
-    if (ok) setUnlockedPin(pin.trim());
+    if (ok) {
+      setUnlockedPin(pin.trim());
+      setPin("");
+    }
+  }
+
+  function validNewPin(): string | null {
+    const np = newPin.trim();
+    if (!/^\d{4,6}$/.test(np)) return "PIN must be 4–6 digits.";
+    if (np !== confirmPin.trim()) return "PINs don’t match.";
+    return null;
+  }
+
+  async function createPin() {
+    if (busy) return;
+    const bad = validNewPin();
+    if (bad) return setPinError(bad);
+    const np = newPin.trim();
+    setBusy(true);
+    setPinError(null);
+    const res = await brSetStatsPin(token, np);
+    if (!res.ok) {
+      setBusy(false);
+      return setPinError(res.message);
+    }
+    setPinJustSet(true);
+    setUnlockedPin(np);
+    setNewPin("");
+    setConfirmPin("");
+    await load(np, period); // toggles busy itself
+  }
+
+  async function changePin() {
+    if (busy || !unlockedPin) return;
+    const bad = validNewPin();
+    if (bad) return setPinError(bad);
+    const np = newPin.trim();
+    setBusy(true);
+    setPinError(null);
+    const res = await brSetStatsPin(token, np, unlockedPin);
+    setBusy(false);
+    if (!res.ok) return setPinError(res.message);
+    setUnlockedPin(np);
+    setNewPin("");
+    setConfirmPin("");
+    setChanging(false);
+    setNotice("PIN updated.");
   }
 
   function changePeriod(p: StatsPeriod) {
@@ -397,27 +459,66 @@ function OwnerSummary({ token }: { token: string }) {
 
       {open && (
         <div className="mt-4">
-          {!unlockedPin ? (
-            <div className="flex flex-col gap-3">
-              <p className="text-xs text-muted-foreground">Enter the owner PIN to view your business totals.</p>
-              <div className="flex gap-2">
+          {!infoReady ? (
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="size-3.5 animate-spin" /> Loading…
+            </p>
+          ) : !unlockedPin ? (
+            pinExists ? (
+              // Enter existing PIN
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-muted-foreground">Enter the owner PIN to view your business totals.</p>
+                <div className="flex gap-2">
+                  <Input
+                    type="password"
+                    inputMode="numeric"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && unlock()}
+                    placeholder="PIN"
+                    className="h-12"
+                    autoComplete="off"
+                  />
+                  <Button className="h-12 px-6" disabled={busy || pin.trim().length < 4} onClick={unlock}>
+                    {busy ? <Loader2 className="size-4 animate-spin" /> : "View"}
+                  </Button>
+                </div>
+                {error && <p className="text-xs text-destructive">{error}</p>}
+              </div>
+            ) : (
+              // First run — set a PIN
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-muted-foreground">
+                  Set a 4–6 digit PIN to protect your business summary. You’ll use it to view your totals on this
+                  device — keep it to the owner.
+                </p>
                 <Input
                   type="password"
                   inputMode="numeric"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && unlock()}
-                  placeholder="PIN"
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value)}
+                  placeholder="New PIN"
                   className="h-12"
                   autoComplete="off"
                 />
-                <Button className="h-12 px-6" disabled={busy || pin.trim().length < 4} onClick={unlock}>
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : "View"}
+                <Input
+                  type="password"
+                  inputMode="numeric"
+                  value={confirmPin}
+                  onChange={(e) => setConfirmPin(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && createPin()}
+                  placeholder="Confirm PIN"
+                  className="h-12"
+                  autoComplete="off"
+                />
+                <Button className="h-12" disabled={busy || newPin.trim().length < 4} onClick={createPin}>
+                  {busy ? <Loader2 className="size-4 animate-spin" /> : "Create PIN"}
                 </Button>
+                {pinError && <p className="text-xs text-destructive">{pinError}</p>}
               </div>
-              {error && <p className="text-xs text-destructive">{error}</p>}
-            </div>
+            )
           ) : (
+            // Unlocked — totals
             <div className="flex flex-col gap-4">
               <div className="flex flex-wrap gap-1.5">
                 {PERIODS.map((pr) => (
@@ -458,6 +559,62 @@ function OwnerSummary({ token }: { token: string }) {
                 <p className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Loader2 className="size-3.5 animate-spin" /> Loading…
                 </p>
+              )}
+              {notice && <p className="text-xs text-success">{notice}</p>}
+
+              {!changing ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChanging(true);
+                    setPinError(null);
+                    setNotice(null);
+                  }}
+                  className="self-start text-xs font-medium text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  Change PIN
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2 rounded-2xl border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Choose a new 4–6 digit PIN.</p>
+                  <Input
+                    type="password"
+                    inputMode="numeric"
+                    value={newPin}
+                    onChange={(e) => setNewPin(e.target.value)}
+                    placeholder="New PIN"
+                    className="h-11"
+                    autoComplete="off"
+                  />
+                  <Input
+                    type="password"
+                    inputMode="numeric"
+                    value={confirmPin}
+                    onChange={(e) => setConfirmPin(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && changePin()}
+                    placeholder="Confirm PIN"
+                    className="h-11"
+                    autoComplete="off"
+                  />
+                  <div className="flex gap-2">
+                    <Button className="h-10" disabled={busy || newPin.trim().length < 4} onClick={changePin}>
+                      {busy ? <Loader2 className="size-4 animate-spin" /> : "Save PIN"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="h-10"
+                      onClick={() => {
+                        setChanging(false);
+                        setNewPin("");
+                        setConfirmPin("");
+                        setPinError(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                  {pinError && <p className="text-xs text-destructive">{pinError}</p>}
+                </div>
               )}
             </div>
           )}

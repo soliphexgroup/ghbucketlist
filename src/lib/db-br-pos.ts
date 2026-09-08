@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 // flushed through br_redeem_offline() on reconnect, which logs any that turn out invalid.
 
 export type Rates = { totalPct: number; customerPct: number; commissionPct: number };
-export type DeviceInfo = { name: string; active: boolean; rates: Rates } | null;
+export type DeviceInfo = { name: string; active: boolean; rates: Rates; hasStatsPin: boolean } | null;
 
 export type LookupResult =
   | { ok: true; found: boolean; name: string | null }
@@ -106,6 +106,7 @@ export async function brDeviceInfo(token: string): Promise<DeviceInfo> {
     total_discount_pct: number;
     customer_pct: number;
     commission_pct: number;
+    has_stats_pin: boolean;
   }>(data);
   if (!row) return null;
   const rates: Rates = {
@@ -114,7 +115,7 @@ export async function brDeviceInfo(token: string): Promise<DeviceInfo> {
     commissionPct: Number(row.commission_pct),
   };
   cacheRates(token, rates);
-  return { name: row.name, active: row.active, rates };
+  return { name: row.name, active: row.active, rates, hasStatsPin: !!row.has_stats_pin };
 }
 
 export async function brLookupMember(token: string, phone: string): Promise<LookupResult> {
@@ -209,6 +210,42 @@ export async function brPartnerStats(
     };
   } catch {
     return { ok: false, reason: "offline", message: "Connect to the internet to view the summary." };
+  }
+}
+
+export type SetPinResult =
+  | { ok: true }
+  | { ok: false; reason: "wrong_current" | "invalid" | "offline" | "error"; message: string };
+
+/** Partner sets (first run) or changes their own owner-summary PIN. Pass currentPin when changing. */
+export async function brSetStatsPin(
+  token: string,
+  newPin: string,
+  currentPin?: string
+): Promise<SetPinResult> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return { ok: false, reason: "offline", message: "Connect to the internet to set a PIN." };
+  }
+  try {
+    const { data, error } = await createClient().rpc("br_set_stats_pin", {
+      p_token: token,
+      p_new_pin: newPin.trim(),
+      p_current_pin: currentPin?.trim() ?? null,
+    });
+    if (error) {
+      if (isOffline(error.message)) {
+        return { ok: false, reason: "offline", message: "Connect to the internet to set a PIN." };
+      }
+      return { ok: false, reason: "error", message: error.message };
+    }
+    const status = first<{ status: string }>(data)?.status;
+    if (status === "set") return { ok: true };
+    if (status === "wrong_current") {
+      return { ok: false, reason: "wrong_current", message: "Current PIN is incorrect." };
+    }
+    return { ok: false, reason: "invalid", message: "PIN must be 4–6 digits." };
+  } catch {
+    return { ok: false, reason: "offline", message: "Connect to the internet to set a PIN." };
   }
 }
 
